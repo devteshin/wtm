@@ -3,7 +3,7 @@ version: "3.5"
 services:
   wtm:
     container_name: WTM
-    image: ghcr.io/devteshin/wtm:{TAG:-latest}
+    image: ghcr.io/devteshin/wtm:test
     restart: always
     volumes:
       - ./config.toml:/app/config.toml:ro
