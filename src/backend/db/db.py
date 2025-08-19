@@ -292,6 +292,31 @@ async def check_can_login(conn: Connection, user_id: int):
     return can_login
 
 
+async def select_operations(conn: Connection, user_id: int, stock_id: int):
+    q = """
+SELECT
+    operation
+    , COUNT(operation) AS operations_count
+FROM
+    production_task_executor AS pte
+LEFT JOIN production_task_doc AS ptd ON
+    ptd.id = pte.doc_id AND
+    ptd.stock = %(stock_id)s
+WHERE
+    pte.type = 1 AND
+    executor_id = %(user_id)s
+GROUP BY
+    operation
+ORDER BY
+    operation
+    """
+    operations = []
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"user_id": user_id, "stock_id":stock_id})
+        operations = await cur.fetchall()
+    return operations
+
+
 async def select_stocks(conn: Connection, user_id: int):
     q = """
 SELECT

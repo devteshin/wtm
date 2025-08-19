@@ -52,6 +52,17 @@ class ClientAPI {
         return this.token ? { token: this.token } : {};
     }
 
+    async fetchOperations(stockID: number) {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/operations`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
     async fetchStocks() {
         this.checkToken();
         const response = await fetch(`${BASE_URL}/stocks`, { headers: this.requestHeaders() });

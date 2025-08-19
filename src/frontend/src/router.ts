@@ -26,7 +26,15 @@ const routes: Array<RouteRecordRaw> = [
             taskID: (typeof route.params.taskID === "string") ? parseInt(route.params.taskID) : null,
             materialID: (typeof route.params.materialID === "string") ? parseInt(route.params.materialID) : null
         })
+    },
+    {
+        path: "/stock/:stockID/operations",
+        component: () => import("@/Pages/OperationsPage.vue"),
+        props: route => ({
+            stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null
+        })
     }
+
 ];
 const router = createRouter({
     history: createWebHistory(),

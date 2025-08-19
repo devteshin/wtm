@@ -80,6 +80,11 @@ const routes = computed(() => {
             path: `/stock/${route.params.stockID as string}`,
             icon: "MessageBox"
         });
+        menuRoutes.push({
+            label: "Список операций",
+            path: `/stock/${route.params.stockID as string}/operations`,
+            icon: "MessageBox"
+        });
     }
     return menuRoutes;
 });

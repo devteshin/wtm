@@ -1,4 +1,11 @@
 declare namespace frontend {
+    /** Операции */
+    export type IOperation = {
+        id: number
+        name: string
+        operations_count: number
+    }
+
     /** Склад */
     export type IStock = {
         id: number

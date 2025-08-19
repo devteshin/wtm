@@ -1,6 +1,6 @@
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, Request
 from db import (check_user, select_task, select_tasks, change_password,
-                select_stocks, update_job_status, select_tasks_progress, update_rest_gross_weight,
+                select_stocks, select_operations, update_job_status, select_tasks_progress, update_rest_gross_weight,
                 check_material_item
                 )
 from utils import jsonify
@@ -34,6 +34,16 @@ async def change_password_handler(request: Request):
         await change_password(conn, request.user_id, password_hash)
     return HTTPCreated()
 
+
+async def get_operations(request: Request):
+    """ получени списка операций """
+    stock_id = request.match_info.get("stockID", None)
+    if stock_id is None:
+        raise HTTPBadRequest()
+    operations = []
+    async with request.app["db"].acquire() as conn:
+        operations = await select_operations(conn, request.user_id, stock_id)
+    return await jsonify(operations, request)
 
 async def get_stocks(request: Request):
     """ получени списка складов """
