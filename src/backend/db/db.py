@@ -295,18 +295,26 @@ async def check_can_login(conn: Connection, user_id: int):
 async def select_operations(conn: Connection, user_id: int, stock_id: int):
     q = """
 SELECT
-    operation
-    , COUNT(operation) AS operations_count
+    ptd.operation
+    , IFNULL(m.material, '') AS product
+    , IFNULL(doc_count, 0) AS doc_count
 FROM
     production_task_executor AS pte
 LEFT JOIN production_task_doc AS ptd ON
     ptd.id = pte.doc_id AND
     ptd.stock = %(stock_id)s
+LEFT JOIN material AS m ON
+	m.id = ptd.product
+LEFT JOIN
+	(
+	SELECT operation, COUNT(doc_number) AS doc_count FROM arrival_doc AS doc
+	WHERE operation <> ''
+	GROUP BY operation
+	) a ON
+	a.operation = ptd.operation	
 WHERE
     pte.type = 1 AND
     executor_id = %(user_id)s
-GROUP BY
-    operation
 ORDER BY
     operation
     """

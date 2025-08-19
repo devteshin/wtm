@@ -51,8 +51,12 @@ const columns = [
         prop: "operation"
     },
     {
+        label: "Продукт",
+        prop: "product"
+    },
+    {
         label: "Кол-во операций",
-        prop: "operation_count"
+        prop: "doc_coount"
     }
 ];
 </script>
