@@ -35,8 +35,9 @@ const props = defineProps({
 
 const router = useRouter();
 const store = useApplicationStore();
-/** Обработчик нажатия строки таблицы - переход на список заданий на складе */
-const handleRowClick = (row: frontend.IStock) => router.push(`/stock/${row.id}`);
+/** Обработчик нажатия строки таблицы - переход на операцию */
+//const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${row.id}`);
+const handleRowClick = (row: frontend.IOperation) => router.push(`/operation/${row.operation_task_id}`);
 /** Получение данных от API со списком операций */
 onMounted(async () => {
     //await store.fetchStocks();
@@ -56,7 +57,7 @@ const columns = [
     },
     {
         label: "Кол-во операций",
-        prop: "doc_coount"
+        prop: "doc_count"
     }
 ];
 </script>

@@ -29,11 +29,19 @@ const routes: Array<RouteRecordRaw> = [
     },
     {
         path: "/stock/:stockID/operations",
-        component: () => import("@/Pages/OperationsPage.vue"),
+        component: () => import("@/Pages/OperationsListPage.vue"),
         props: route => ({
             stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null
         })
-    }
+    },
+    {
+        path: "/operation/:operationTaskID",
+        component: () => import("@/Pages/OperationPage/index.vue"),
+        props: route => ({
+            stockID: (typeof route.params.operationTaskID === "string") ? parseInt(route.params.operationTaskID) : null
+        })
+    },
+
 
 ];
 const router = createRouter({

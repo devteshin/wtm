@@ -295,7 +295,8 @@ async def check_can_login(conn: Connection, user_id: int):
 async def select_operations(conn: Connection, user_id: int, stock_id: int):
     q = """
 SELECT
-    ptd.operation
+    ptd.id AS operation_task_id
+    , ptd.operation
     , IFNULL(m.material, '') AS product
     , IFNULL(doc_count, 0) AS doc_count
 FROM
