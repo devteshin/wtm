@@ -294,30 +294,26 @@ async def check_can_login(conn: Connection, user_id: int):
 
 async def select_operations(conn: Connection, user_id: int, stock_id: int):
     q = """
-SELECT
-    ptd.id AS operation_task_id
-    , ptd.operation
-    , IFNULL(m.material, '') AS product
-    , IFNULL(doc_count, 0) AS doc_count
+SELECT 
+	o.id
+	, o.name AS operation 
+	, a.doc_count 
 FROM
-    production_task_executor AS pte
-LEFT JOIN production_task_doc AS ptd ON
-    ptd.id = pte.doc_id AND
-    ptd.stock = %(stock_id)s
-LEFT JOIN material AS m ON
-	m.id = ptd.product
-LEFT JOIN
+	production_sequence_items AS psi
+INNER JOIN production_sequences AS ps ON 
+	ps.id = psi.ps_id 
+	AND ps.organization_id = 2
+LEFT JOIN operations AS o ON
+	o.id = psi.operation
+LEFT JOIN 
 	(
 	SELECT operation, COUNT(doc_number) AS doc_count FROM arrival_doc AS doc
 	WHERE operation <> ''
 	GROUP BY operation
-	) a ON
-	a.operation = ptd.operation	
-WHERE
-    pte.type = 1 AND
-    executor_id = %(user_id)s
-ORDER BY
-    operation
+	)a ON
+	 a.operation = o.id
+WHERE 
+	done = 0
     """
     operations = []
     async with conn.cursor() as cur:

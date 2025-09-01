@@ -8,6 +8,7 @@
             :sm="10">
             <el-table
                 :data="store.operations"
+                :row-style="{cursor: 'pointer'}"
                 :border="true"
                 style="width: 100%"
                 table-layout="auto"
@@ -36,13 +37,10 @@ const props = defineProps({
 const router = useRouter();
 const store = useApplicationStore();
 /** Обработчик нажатия строки таблицы - переход на операцию */
-//const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${row.id}`);
-const handleRowClick = (row: frontend.IOperation) => router.push(`/operation/${row.operation_task_id}`);
+const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${props.stockID}/operation/${row.operation_task_id}`);
 /** Получение данных от API со списком операций */
 onMounted(async () => {
-    //await store.fetchStocks();
     await store.fetchOperations(props.stockID);
-    //if (store.stocks.length === 1) await handleRowClick(store.stocks[0] as frontend.IStock);
 });
 
 /** Список столбцов для таблицы */
@@ -50,10 +48,6 @@ const columns = [
     {
         label: "Операция",
         prop: "operation"
-    },
-    {
-        label: "Продукт",
-        prop: "product"
     },
     {
         label: "Кол-во операций",

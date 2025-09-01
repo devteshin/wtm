@@ -35,7 +35,7 @@ const routes: Array<RouteRecordRaw> = [
         })
     },
     {
-        path: "/operation/:operationTaskID",
+        path: "/stock/:stockID/operation/:operationTaskID",
         component: () => import("@/Pages/OperationPage/index.vue"),
         props: route => ({
             stockID: (typeof route.params.operationTaskID === "string") ? parseInt(route.params.operationTaskID) : null

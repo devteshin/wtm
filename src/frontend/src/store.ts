@@ -55,6 +55,13 @@ export default defineStore("app_store", () => {
             if (with_load) loading.value = false;
         });
     };
+    /** запрос к API для получения данных операции */
+    const fetchOperation = (stockID: number, operationTaskID: number, with_load=true) => {
+        if (with_load) loading.value = true;
+        return api.fetchOperation(stockID, operationTaskID).then(body => operation.value = body).finally(() => {
+            if (with_load) loading.value = false;
+        });
+    };
     /** запрос к API на изменение пароля */
     const changePassword = (payload: frontend.IChangePassword) => {
         loading.value = true;
