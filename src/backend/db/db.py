@@ -300,15 +300,14 @@ SELECT
 	, a.doc_count 
 FROM
 	production_sequence_items AS psi
-INNER JOIN production_sequences AS ps ON 
+LEFT JOIN production_sequences AS ps ON 
 	ps.id = psi.ps_id 
-	AND ps.organization_id = 2
 LEFT JOIN operations AS o ON
 	o.id = psi.operation
-LEFT JOIN 
+INNER JOIN 
 	(
 	SELECT operation, COUNT(doc_number) AS doc_count FROM arrival_doc AS doc
-	WHERE operation <> ''
+	WHERE operation <> '' AND stock = %(stock_id)s
 	GROUP BY operation
 	)a ON
 	 a.operation = o.id
@@ -318,6 +317,34 @@ WHERE
     operations = []
     async with conn.cursor() as cur:
         await cur.execute(q, {"user_id": user_id, "stock_id":stock_id})
+        operations = await cur.fetchall()
+    return operations
+
+async def select_operation(conn: Connection, user_id: int, stock_id: int, operation_id: int):
+    q = """
+SELECT 
+	doc_number
+	, doc_date
+	, SUM(net_weight) AS net_weight
+	, SUM(tare_amount) AS tare_amount 
+FROM
+	arrival_doc AS doc
+LEFT JOIN  
+	arrival AS a ON
+	a.doc_id = doc.id
+WHERE 
+	doc.stock = %(stock_id)s 
+	AND doc.operation = %(operation_id)s
+GROUP BY 
+	doc_number
+	, doc_date
+ORDER BY 
+	doc_date DESC
+	, doc_number DESC 
+    """
+    operation = []
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"user_id": user_id, "stock_id":stock_id, "operation_id":operation_id})
         operations = await cur.fetchall()
     return operations
 

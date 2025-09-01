@@ -12,63 +12,61 @@ const props = defineProps({
     /** ID склада */
     stockID: { type: Number, required: true },
     /** ID задачи */
-    operationTaskID: { type: Number, required: true },
+    operationID: { type: Number, required: true },
 });
 
+//const handleRowClick = (row: frontend.IOperations) => router.push(`/stock/${props.stockID}/operation/${row.id}`);
+const handleRowClick = () => router.push(`/stock/${props.stockID}/operations`);
 
 onMounted(async () => {
-    //await store.fetchOperation(props.stockID, props.operationTaskID);
+    await store.fetchOperation(props.stockID, props.operationID);
 });
+
+/** Список столбцов для таблицы */
+const columns = [
+    {
+        label: "Операция",
+        prop: "doc_number"
+    },
+    {
+        label: "Дата",
+        prop: "doc_date"
+    },
+    {
+        label: "Нетто",
+        prop: "net_weight"
+    },
+    {
+        label: "Кол-во",
+        prop: "tare_amount"
+    }
+];
 
 
 </script>
 
 <template>
-    <div class="operation">
-        <div class="left_pane">
-            <div class="left_pane_item">
-                <div>Операция</div>
-                <div>ntcn</div> 
-            </div>
-            <div class="left_pane_item">
-                <div>Материал</div>
-                <div>ntcn</div> 
-            </div>
-            <div class="left_pane_item">
-                <div>Смена</div>
-                <div>ntcn</div> 
-            </div>
-        </div>
-        <div class="right_pane">
-            Правая панель
-        </div>
-    </div>
-
+    <el-row
+        v-if="store.isAuth"
+        justify="center">
+        <el-col
+            v-loading="store.loading"
+            :span="24"
+            :sm="10">
+            <el-table
+                :data="store.operations"
+                :row-style="{cursor: 'pointer'}"
+                :border="true"
+                style="width: 100%"
+                table-layout="auto"
+                @row-click="handleRowClick">
+                <el-table-column
+                    v-for="col in columns"
+                    :key="col.prop"
+                    :prop="col.prop"
+                    :label="col.label" />
+            </el-table>
+        </el-col>
+    </el-row>
 </template>
-
-<style scoped>
-.operation {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-}
-.left_pane {
-    width: 50%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 50px;
-}
-.left_pane_item {
-    width: 80%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-.right_pane {
-    width: 50%;
-}
-</style>
 

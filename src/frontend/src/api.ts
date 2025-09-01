@@ -6,6 +6,7 @@ const TASK_POSITIONS = "task";
 const LOGIN = "login";
 const CHANGE_PASSWORD = "change_password";
 const STOCK = "stock";
+const OPERATION = "operation";
 const MATERIAL = "material";
 const JOB = "job";
 const RGW = "rest_gross_weight";
@@ -55,6 +56,17 @@ class ClientAPI {
     async fetchOperations(stockID: number) {
         this.checkToken();
         const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/operations`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
+    async fetchOperation(stockID: number, operationID: number) {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/${OPERATION}/${operationID}`, { headers: this.requestHeaders() });
         if (response.status === 403) {
             window.localStorage.removeItem("token");
             location.href = "/login";

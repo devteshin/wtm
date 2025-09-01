@@ -16,7 +16,9 @@ export default defineStore("app_store", () => {
     const checkToken = () => api.checkToken();
 
     /** список операций */
-    const operations = shallowRef<Array<frontend.IOperation>>([]);
+    const operations = shallowRef<Array<frontend.IOperations>>([]);
+    /** список документов операции */
+    const operation = shallowRef<Array<frontend.IOperation>>([]);
     /** список складов */
     const stocks = shallowRef<Array<frontend.IStock>>([]);
     /** список заданий */
@@ -56,9 +58,9 @@ export default defineStore("app_store", () => {
         });
     };
     /** запрос к API для получения данных операции */
-    const fetchOperation = (stockID: number, operationTaskID: number, with_load=true) => {
+    const fetchOperation = (stockID: number, operationID: number, with_load=true) => {
         if (with_load) loading.value = true;
-        return api.fetchOperation(stockID, operationTaskID).then(body => operation.value = body).finally(() => {
+        return api.fetchOperation(stockID, operationID).then(body => operation.value = body).finally(() => {
             if (with_load) loading.value = false;
         });
     };
@@ -127,6 +129,7 @@ export default defineStore("app_store", () => {
         doLogin,
         fetchStocks,
         fetchOperations,
+        fetchOperation,
         fetchTasksList,
         fetchTask,
         checkMaterialItem,

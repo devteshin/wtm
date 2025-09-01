@@ -37,7 +37,7 @@ const props = defineProps({
 const router = useRouter();
 const store = useApplicationStore();
 /** Обработчик нажатия строки таблицы - переход на операцию */
-const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${props.stockID}/operation/${row.operation_task_id}`);
+const handleRowClick = (row: frontend.IOperations) => router.push(`/stock/${props.stockID}/operation/${row.id}`);
 /** Получение данных от API со списком операций */
 onMounted(async () => {
     await store.fetchOperations(props.stockID);
