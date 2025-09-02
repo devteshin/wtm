@@ -54,7 +54,7 @@ const columns = [
             :span="24"
             :sm="10">
             <el-table
-                :data="store.operations"
+                :data="store.operation"
                 :row-style="{cursor: 'pointer'}"
                 :border="true"
                 style="width: 100%"

@@ -138,6 +138,7 @@ export default defineStore("app_store", () => {
         updateRestGrossWeight,
         stocks,
         operations,
+        operation,
         tasks,
         tasks_progress,
         task,
