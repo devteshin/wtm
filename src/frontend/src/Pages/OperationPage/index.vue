@@ -20,7 +20,6 @@ const handleRowClick = () => router.push(`/stock/${props.stockID}/operations`);
 
 onMounted(async () => {
     await store.fetchOperation(props.stockID, props.operationID);
-    console.log(store.operation);
 });
 
 /** Список столбцов для таблицы */
