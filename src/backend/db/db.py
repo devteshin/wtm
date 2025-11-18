@@ -301,25 +301,23 @@ async def check_can_login(conn: Connection, user_id: int):
 
 async def select_operations(conn: Connection, user_id: int, stock_id: int):
     q = """
-SELECT 
-	o.id
-	, o.name AS operation 
-	, a.doc_count 
-FROM
-	production_sequence_items AS psi
-LEFT JOIN production_sequences AS ps ON 
-	ps.id = psi.ps_id 
-LEFT JOIN operations AS o ON
-	o.id = psi.operation
-INNER JOIN 
-	(
-	SELECT operation, COUNT(doc_number) AS doc_count FROM arrival_doc AS doc
-	WHERE operation <> '' AND stock = %(stock_id)s
-	GROUP BY operation
-	)a ON
-	 a.operation = o.id
-WHERE 
-	done = 0
+        SELECT 
+            o.id
+            , o.name AS operation 
+            , IFNULL(a.doc_count, 0) AS doc_count 
+        FROM operations AS o
+        LEFT JOIN operation_executors AS oe ON oe.operation_id = o.id
+        LEFT JOIN production_sequence_items AS psi ON psi.operation = o.id 
+        LEFT JOIN 
+            (
+            SELECT operation, COUNT(doc_number) AS doc_count FROM arrival_doc AS doc
+            WHERE operation <> '' AND stock = %(stock_id)s
+            GROUP BY operation
+            )a ON
+            a.operation = o.id
+        WHERE 
+            executor_id = %(user_id)s 
+            AND IFNULL(psi.done, 0) = 0   
     """
     operations = []
     async with conn.cursor() as cur:
