@@ -327,8 +327,9 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int):
 
 async def select_operation(conn: Connection, user_id: int, stock_id: int, operation_id: int):
     q = """
-SELECT 
-	doc_number
+SELECT
+    , id
+	, doc_number
 	, doc_date
 	, SUM(net_weight) AS net_weight
 	, SUM(tare_amount) AS tare_amount 
