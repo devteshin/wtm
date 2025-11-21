@@ -371,7 +371,7 @@ SELECT
 FROM
 	arrival
 WHERE 
-	doc_id =  = %(doc_id)s 
+	doc_id = %(doc_id)s 
 	AND material = %(material_id)s
     """
     arrival = []
