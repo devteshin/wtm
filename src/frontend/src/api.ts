@@ -89,7 +89,7 @@ class ClientAPI {
             location.href = "/";
         }
         if (response.status !== 200) {
-            location.href = "/";
+            location.href = "/stock/" + stockID + "/operations";
         }
         const body = await response.json();
         return body;
