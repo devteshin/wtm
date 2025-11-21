@@ -345,7 +345,7 @@ WHERE
 	doc.stock = %(stock_id)s 
 	AND doc.operation = %(operation_id)s
 GROUP BY 
-	id
+	doc.id
     , doc_number
 	, doc_date
     , material_id
