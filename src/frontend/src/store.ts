@@ -19,6 +19,8 @@ export default defineStore("app_store", () => {
     const operations = shallowRef<Array<frontend.IOperations>>([]);
     /** список документов операции */
     const operation = shallowRef<Array<frontend.IOperation>>([]);
+    /** документ приема из производства */
+    const arrival = ref<Array<frontend.IArrivalP>>([]);
     /** список складов */
     const stocks = shallowRef<Array<frontend.IStock>>([]);
     /** список заданий */
@@ -64,6 +66,15 @@ export default defineStore("app_store", () => {
             if (with_load) loading.value = false;
         });
     };
+
+    /** запрос к API для получения позиций документа приема из производства */
+    const fetchArrival = (stockID: number, operationID: number, docID: number, materialID: number, with_load=true) => {
+        if (with_load) loading.value = true;
+        return api.fetchArrival(stockID, operationID, docID, materialID).then(body => arrival.value = body).finally(() => {
+            if (with_load) loading.value = false;
+        });
+    };
+
     /** запрос к API на изменение пароля */
     const changePassword = (payload: frontend.IChangePassword) => {
         loading.value = true;
@@ -130,6 +141,7 @@ export default defineStore("app_store", () => {
         fetchStocks,
         fetchOperations,
         fetchOperation,
+        fetchArrival,
         fetchTasksList,
         fetchTask,
         checkMaterialItem,

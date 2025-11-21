@@ -36,10 +36,20 @@ const routes: Array<RouteRecordRaw> = [
     },
     {
         path: "/stock/:stockID/operation/:operationID",
-        component: () => import("@/Pages/OperationPage/index.vue"),
+        component: () => import("@/Pages/OperationPage/OperationDocsTable.vue"),
         props: route => ({
             stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null,
             operationID: (typeof route.params.operationID === "string") ? parseInt(route.params.operationID) : null
+        })
+    },
+    {
+        path: "/stock/:stockID/operation/:operationID/doc/:docID/material/:materialID",
+        component: () => import("@/Pages/OperationPage/DocItems.vue"),
+        props: route => ({
+            stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null,
+            operationID: (typeof route.params.operationID === "string") ? parseInt(route.params.operationID) : null,
+            docID: (typeof route.params.docID === "string") ? parseInt(route.params.docID) : null,
+            materialID: (typeof route.params.materialID === "string") ? parseInt(route.params.materialID) : null
         })
     },
 

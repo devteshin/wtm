@@ -15,8 +15,7 @@ const props = defineProps({
     operationID: { type: Number, required: true },
 });
 
-//const handleRowClick = (row: frontend.IOperations) => router.push(`/stock/${props.stockID}/operation/${row.id}`);
-const handleRowClick = () => router.push(`/stock/${props.stockID}/operations`);
+const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${row.doc_id}/material/${row.material_id}`);
 
  onMounted(async () => {
      await store.fetchOperation(props.stockID, props.operationID);

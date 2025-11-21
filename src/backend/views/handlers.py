@@ -1,6 +1,7 @@
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, Request
 from db import (check_user, select_task, select_tasks, change_password,
-                select_stocks, select_operations, select_operation, update_job_status, select_tasks_progress, update_rest_gross_weight,
+                select_stocks, select_operations, select_operation, select_arrival,
+                update_job_status, select_tasks_progress, update_rest_gross_weight,
                 check_material_item
                 )
 from utils import jsonify
@@ -56,6 +57,16 @@ async def get_operation(request: Request):
         operation = await select_operation(conn, request.user_id, stock_id, operation_id)
     return await jsonify(operation, request)
 
+async def get_arrival(request: Request):
+    """ получени позиций документа прихода """
+    doc_id = request.match_info.get("docID", None)
+    material_id = request.match_info.get("materialID", None)
+    if doc_id is None or material_id is None:
+        raise HTTPBadRequest()
+    arrival = []
+    async with request.app["db"].acquire() as conn:
+        arrival = await select_arrival(conn, doc_id, material_id)
+    return await jsonify(arrival, request)
 
 async def get_stocks(request: Request):
     """ получени списка складов """

@@ -361,6 +361,25 @@ ORDER BY
         operation = await cur.fetchall()
     return operation
 
+async def select_arrival(conn: Connection, doc_id: int, material_id: int):
+    q = """
+SELECT
+	key_material
+	, tare_id
+	, gross_weight
+	, tare_type 
+FROM
+	arrival
+WHERE 
+	doc_id =  = %(doc_id)s 
+	AND material = %(material_id)s
+    """
+    arrival = []
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"doc_id": doc_id, "material_id":material_id})
+        arrival = await cur.fetchall()
+    return arrival
+
 
 async def select_stocks(conn: Connection, user_id: int):
     q = """

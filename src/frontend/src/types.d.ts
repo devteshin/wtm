@@ -111,6 +111,13 @@ declare namespace frontend {
         catmat: ICatMat
     }
 
+    export type IArrivalP = {
+        key_materail: string
+        tare_id: number
+        gross_weight: number
+        tare_type: string
+    }
+
     export type ILoginPayload = {
         login: string;
         password: string;

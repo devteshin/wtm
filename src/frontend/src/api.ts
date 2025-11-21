@@ -8,6 +8,7 @@ const CHANGE_PASSWORD = "change_password";
 const STOCK = "stock";
 const OPERATION = "operation";
 const MATERIAL = "material";
+const DOC = "doc";
 const JOB = "job";
 const RGW = "rest_gross_weight";
 const TASKS_PROGRESS = "tasks_progress";
@@ -70,6 +71,25 @@ class ClientAPI {
         if (response.status === 403) {
             window.localStorage.removeItem("token");
             location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
+    async fetchArrival(stockID: number, operationID: number, docID: number, materialID: number) {
+        /** получение списка позиций в документе приема из производства */
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/${OPERATION}/${operationID}/${DOC}/${docID}/${MATERIAL}/${materialID}`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        if (response.status === 404) {
+            alert("Документ не найден");
+            location.href = "/";
+        }
+        if (response.status !== 200) {
+            location.href = "/";
         }
         const body = await response.json();
         return body;
