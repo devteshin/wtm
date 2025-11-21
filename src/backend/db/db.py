@@ -375,8 +375,6 @@ WHERE
 	AND material = %(material_id)s
     """
 
-    arrival = []
-
     arrival = await select_arrival_meta(conn, doc_id)
     if arrival is None:
         return arrival
@@ -385,7 +383,16 @@ WHERE
         await cur.execute(q, {"doc_id": doc_id, "material_id": material_id})
         arrival_items = await cur.fetchall()
 
+    print("arrival_items")
+    print(arrival_items)
+    print("arrival")
+    print(arrival)
+
+
     arrival["items"] = arrival_items
+
+    print("arrival")
+    print(arrival)
 
     return arrival
 
