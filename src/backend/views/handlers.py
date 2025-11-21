@@ -61,10 +61,6 @@ async def get_arrival(request: Request):
     """ получени позиций документа прихода """
     doc_id = request.match_info.get("docID", None)
     material_id = request.match_info.get("materialID", None)
-    print("doc_id")
-    print(doc_id)
-    print("material_id")
-    print(material_id)
     if doc_id is None or material_id is None:
         raise HTTPBadRequest()
     arrival = []

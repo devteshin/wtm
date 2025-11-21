@@ -42,14 +42,6 @@ const columns = [
     {
         label: "Кол-во",
         prop: "tare_amount"
-    },
-    {
-        label: "doc_id",
-        prop: "doc_id"
-    },
-    {
-        label: "material_id",
-        prop: "material_id"
     }
 ];
 

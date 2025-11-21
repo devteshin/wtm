@@ -20,7 +20,7 @@ export default defineStore("app_store", () => {
     /** список документов операции */
     const operation = shallowRef<Array<frontend.IOperation>>([]);
     /** документ приема из производства */
-    const arrival = ref<Array<frontend.IArrivalP>>([]);
+    const arrival = ref<frontend.IArrival | null>(null);
     /** список складов */
     const stocks = shallowRef<Array<frontend.IStock>>([]);
     /** список заданий */
@@ -154,6 +154,7 @@ export default defineStore("app_store", () => {
         tasks,
         tasks_progress,
         task,
+        arrival,
         isAuth,
         currentUser,
         checkToken,

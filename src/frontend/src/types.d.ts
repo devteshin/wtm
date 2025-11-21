@@ -111,11 +111,17 @@ declare namespace frontend {
         catmat: ICatMat
     }
 
-    export type IArrivalP = {
+    export type IArrivalItems = {
         key_materail: string
         tare_id: number
         gross_weight: number
         tare_type: string
+    }
+
+    export type IArrival = {
+        doc_number: string
+        doc_date: string
+        items: Array<IArrivalItems>
     }
 
     export type ILoginPayload = {

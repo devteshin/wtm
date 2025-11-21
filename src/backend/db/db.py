@@ -374,13 +374,36 @@ WHERE
 	doc_id = %(doc_id)s 
 	AND material = %(material_id)s
     """
+
     arrival = []
+
+    arrival = await select_task_meta(conn, doc_id)
+    if arrival is None:
+        return arrival
+
     async with conn.cursor() as cur:
         await cur.execute(q, {"doc_id": doc_id, "material_id": material_id})
-        arrival = await cur.fetchall()
-        print("arrival")
-        print(arrival)
+        arrival_items = await cur.fetchall()
+
+    arrival["items"] = arrival_items
+
     return arrival
+
+async def select_arrival_meta(conn: Connection, doc_id: int):
+    q = """
+SELECT
+	doc_number
+	, doc_date
+FROM
+	arrival_doc
+WHERE 
+	id = %(doc_id)s 
+    """
+    arrival_meta = []
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"doc_id": doc_id})
+        arrival_meta = await cur.fetchall()
+    return arrival_meta
 
 
 async def select_stocks(conn: Connection, user_id: int):

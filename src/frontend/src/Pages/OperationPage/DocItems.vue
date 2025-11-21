@@ -19,6 +19,7 @@ const props = defineProps({
 
  onMounted(async () => {
      await store.fetchArrival(props.stockID, props.operationID, props.docID, props.materialID);
+     console.log(store.arrival);
 });
 
 
