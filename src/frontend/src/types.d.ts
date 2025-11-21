@@ -9,9 +9,11 @@ declare namespace frontend {
     /** Документы операции */
     export type IOperation = {
         doc_id: number
-        doc_number: number
+        doc_number: string
         doc_date: string
         operation: string
+        material_id: number
+        material: string
         net_weight: number
         tare_mount: number
     }

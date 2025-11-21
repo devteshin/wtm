@@ -328,9 +328,11 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int):
 async def select_operation(conn: Connection, user_id: int, stock_id: int, operation_id: int):
     q = """
 SELECT
-    id
+	doc.id
 	, doc_number
 	, doc_date
+	, a.material AS material_id
+	, m.material AS material
 	, SUM(net_weight) AS net_weight
 	, SUM(tare_amount) AS tare_amount 
 FROM
@@ -338,6 +340,7 @@ FROM
 LEFT JOIN  
 	arrival AS a ON
 	a.doc_id = doc.id
+LEFT JOIN material as m ON m.id = a.material    
 WHERE 
 	doc.stock = %(stock_id)s 
 	AND doc.operation = %(operation_id)s
@@ -345,15 +348,18 @@ GROUP BY
 	id
     , doc_number
 	, doc_date
+    , material_id
+    , material
 ORDER BY 
 	doc_date DESC
-	, doc_number DESC 
+	, doc_number
+    , material 
     """
     operation = []
     async with conn.cursor() as cur:
         await cur.execute(q, {"user_id": user_id, "stock_id":stock_id, "operation_id":operation_id})
-        operations = await cur.fetchall()
-    return operations
+        operation = await cur.fetchall()
+    return operation
 
 
 async def select_stocks(conn: Connection, user_id: int):

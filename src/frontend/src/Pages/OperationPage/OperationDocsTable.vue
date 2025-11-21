@@ -25,12 +25,16 @@ const handleRowClick = () => router.push(`/stock/${props.stockID}/operations`);
 /** Список столбцов для таблицы */
 const columns = [
     {
-        label: "Операция",
+        label: "Номер документа",
         prop: "doc_number"
     },
     {
         label: "Дата",
         prop: "doc_date"
+    },
+    {
+        label: "Материал",
+        prop: "material"
     },
     {
         label: "Нетто",
