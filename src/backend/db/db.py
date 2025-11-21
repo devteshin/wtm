@@ -377,7 +377,7 @@ WHERE
 
     arrival = []
 
-    arrival = await select_task_meta(conn, doc_id)
+    arrival = await select_arrival_meta(conn, doc_id)
     if arrival is None:
         return arrival
 
