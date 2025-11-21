@@ -379,6 +379,7 @@ WHERE
     if arrival is None:
         return arrival
 
+    arrival_items = []
     async with conn.cursor() as cur:
         await cur.execute(q, {"doc_id": doc_id, "material_id": material_id})
         arrival_items = await cur.fetchall()
