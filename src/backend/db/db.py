@@ -376,8 +376,9 @@ WHERE
     """
     arrival = []
     async with conn.cursor() as cur:
-        await cur.execute(q, {"doc_id": doc_id, "material_id":material_id})
+        await cur.execute(q, {"doc_id": doc_id, "material_id": material_id})
         arrival = await cur.fetchall()
+        print(arrival)
     return arrival
 
 
