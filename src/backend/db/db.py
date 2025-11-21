@@ -399,7 +399,7 @@ FROM
 WHERE 
 	id = %(doc_id)s 
     """
-    arrival_meta = []
+    arrival_meta = None
     async with conn.cursor() as cur:
         await cur.execute(q, {"doc_id": doc_id})
         arrival_meta = await cur.fetchall()
