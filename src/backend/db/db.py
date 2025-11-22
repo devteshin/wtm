@@ -396,10 +396,12 @@ SELECT
 	doc_number
 	, doc_date
     , (SELECT material FROM material WHERE id = %(material_id)s) as material
+    , o.name as operation
 FROM
-	arrival_doc
+	arrival_doc AS a
+LEFT JOIN operations AS o ON o.id = a.operation
 WHERE 
-	id = %(doc_id)s 
+	a.id = %(doc_id)s 
     """
     arrival_meta = {}
     async with conn.cursor() as cur:
