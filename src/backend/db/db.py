@@ -386,6 +386,8 @@ WHERE
 	AND material = %(material_id)s
     """
 
+    arrival = {}
+
     arrival = await select_arrival_meta(conn, doc_id)
     if arrival is None:
         return arrival
