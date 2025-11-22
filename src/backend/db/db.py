@@ -423,7 +423,7 @@ WHERE
     arrival_meta = {}
     async with conn.cursor() as cur:
         await cur.execute(q, {"doc_id": doc_id})
-        arrival_meta = await cur.fetchall()
+        arrival_meta = await cur.fetchone()
         print("arrival_meta")
         print(arrival_meta)
     return arrival_meta
