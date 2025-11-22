@@ -121,6 +121,7 @@ declare namespace frontend {
     export type IArrival = {
         doc_number: string
         doc_date: string
+        material: string
         items: Array<IArrivalItems>
     }
 

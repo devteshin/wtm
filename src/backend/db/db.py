@@ -169,15 +169,8 @@ async def select_task(conn: Connection, stock_id: int, doc_id: int, material_id:
     if task is None:
         return task
 
-    print("task")
-    print(task )
-
     task["task_weights"] = await get_task_weights(conn, doc_id, material_id, user_id)
     task["processing_types"] = await select_processing_types(conn)
-
-    print("task")
-    print(task )
-
 
     q = """
 SELECT 
@@ -205,10 +198,6 @@ SELECT
         await cur.execute(q)
         jobs = await cur.fetchall()
     task["jobs"] = jobs
-
-    print("task")
-    print(task )
-
 
     return task
 
@@ -388,7 +377,7 @@ WHERE
 
     arrival = {}
 
-    arrival = await select_arrival_meta(conn, doc_id)
+    arrival = await select_arrival_meta(conn, doc_id, material_id)
     if arrival is None:
         return arrival
 
@@ -397,24 +386,16 @@ WHERE
         await cur.execute(q, {"doc_id": doc_id, "material_id": material_id})
         arrival_items = await cur.fetchall()
 
-    print("arrival_items")
-    print(arrival_items)
-    print("arrival")
-    print(arrival)
-
-
     arrival["items"] = arrival_items
-
-    print("arrival")
-    print(arrival)
 
     return arrival
 
-async def select_arrival_meta(conn: Connection, doc_id: int):
+async def select_arrival_meta(conn: Connection, doc_id: int, material_id: int):
     q = """
 SELECT
 	doc_number
 	, doc_date
+    , (SELECT material FROM material WHERE id = %(material_id)s) as material
 FROM
 	arrival_doc
 WHERE 
@@ -424,8 +405,6 @@ WHERE
     async with conn.cursor() as cur:
         await cur.execute(q, {"doc_id": doc_id})
         arrival_meta = await cur.fetchone()
-        print("arrival_meta")
-        print(arrival_meta)
     return arrival_meta
 
 

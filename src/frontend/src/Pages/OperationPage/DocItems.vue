@@ -16,10 +16,18 @@ const props = defineProps({
     materialID: { type: Number, required: true },
 });
 
+const doc_number = ref('');
+const doc_date = ref('');
+const doc_material = ref('');
 
  onMounted(async () => {
      await store.fetchArrival(props.stockID, props.operationID, props.docID, props.materialID);
-     console.log(store.arrival);
+     if (store.arrival) {
+        doc_number.value = store.arrival.doc_number;
+        doc_date.value = store.arrival.doc_date;
+        doc_material.value = store.arrival.material;
+     }
+     
 });
 
 
@@ -28,6 +36,20 @@ const props = defineProps({
 <template v-if="store.isAuth">
     <el-row :gutter="20">
       <el-col :span="8"><div class="grid-content ep-bg-purple" />
+        <div>
+          <el-input clearable
+            v-model="doc_number"
+            style="max-width: 300px"
+            placeholder="Номер документа"
+          >
+          </el-input>
+          <el-input clearable
+            type="date"
+            v-model="doc_date"
+            style="max-width: 150px"
+          >
+          </el-input>
+        </div>  
       </el-col>
       <el-col :span="6"><div class="grid-content ep-bg-purple" />
       </el-col>
