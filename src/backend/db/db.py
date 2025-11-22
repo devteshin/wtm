@@ -403,7 +403,7 @@ WHERE
     """
     arrival_meta = {}
     async with conn.cursor() as cur:
-        await cur.execute(q, {"doc_id": doc_id})
+        await cur.execute(q, {"doc_id": doc_id, "material_id": material_id})
         arrival_meta = await cur.fetchone()
     return arrival_meta
 
