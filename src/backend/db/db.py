@@ -169,8 +169,15 @@ async def select_task(conn: Connection, stock_id: int, doc_id: int, material_id:
     if task is None:
         return task
 
+    print("task")
+    print(task )
+
     task["task_weights"] = await get_task_weights(conn, doc_id, material_id, user_id)
     task["processing_types"] = await select_processing_types(conn)
+
+    print("task")
+    print(task )
+
 
     q = """
 SELECT 
@@ -198,6 +205,10 @@ SELECT
         await cur.execute(q)
         jobs = await cur.fetchall()
     task["jobs"] = jobs
+
+    print("task")
+    print(task )
+
 
     return task
 
