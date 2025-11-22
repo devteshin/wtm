@@ -50,6 +50,14 @@ const doc_material = ref('');
           >
           </el-input>
         </div>  
+        <div>
+          <el-input clearable
+            v-model="doc_material"
+            style="max-width: 300px"
+            placeholder="Материал"
+          >
+          </el-input>
+        </div>  
       </el-col>
       <el-col :span="6"><div class="grid-content ep-bg-purple" />
       </el-col>
