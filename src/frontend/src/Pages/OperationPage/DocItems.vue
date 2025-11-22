@@ -52,7 +52,6 @@ const doc_items = ref([<docItemsData>{}]);
         doc_material.value = store.arrival.material;
         doc_operation.value = store.arrival.operation;
         doc_items.value = store.arrival.items;
-        console.log(doc_items)
      }
      
 });
@@ -62,6 +61,13 @@ function getFixedLengthNumber(value: number): string {
     return value.toString().padStart(4, '_');
   }
   return '';
+};
+
+const saveDoc = async () =>  {
+  if (doc_number.value == '' ||  doc_date.value == '' ||  doc_material.value == '') {
+    return
+  };
+  
 };
 
 </script>
@@ -76,7 +82,7 @@ function getFixedLengthNumber(value: number): string {
             placeholder="Номер документа"
           >
           </el-input>
-          <el-input clearable
+          <el-input
             type="date"
             v-model="doc_date"
             style="max-width: 150px"
@@ -92,13 +98,16 @@ function getFixedLengthNumber(value: number): string {
           </el-input>
         </div>  
         <div>
-          <el-input clearable
+          <el-input 
             v-model="doc_operation"
             style="max-width: 300px"
             placeholder="Операция"
           >
           </el-input>
         </div>  
+        <div class="button-row">
+          <el-button type="success" plain @click="saveDoc()">Сохранить</el-button>
+        </div>
       </el-col>
       <el-col :span="6"><div class="grid-content ep-bg-purple" />
         <div v-for="item in doc_items" :key="item.key_material">
@@ -106,7 +115,7 @@ function getFixedLengthNumber(value: number): string {
             v-model="item.gross_weight"
             style="max-width: 200px"
             type="number"
-          >
+            >
             <template #prepend>Номер {{ getFixedLengthNumber(item.tare_id)}}</template>
           </el-input>          
           <el-select v-model="item.tare_type" placeholder="Тара" style="width: 100px">
@@ -124,6 +133,7 @@ function getFixedLengthNumber(value: number): string {
 
 </template>
 
+<style scoped>
 .el-row {
   margin-bottom: 20px;
 }
@@ -138,3 +148,12 @@ function getFixedLengthNumber(value: number): string {
   border-radius: 4px;
   min-height: 36px;
 }
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+</style>
