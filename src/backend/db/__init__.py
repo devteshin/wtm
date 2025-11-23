@@ -5,7 +5,7 @@ from aiomysql import DictCursor, Pool, create_pool
 
 from .db import (
     check_user, select_task, select_tasks, change_password, select_stocks, select_operations, select_operation, select_arrival, 
-    update_job_status, check_can_login, select_tasks_progress, update_rest_gross_weight,
+    update_job_status, check_can_login, select_tasks_progress, update_rest_gross_weight, update_arrival,
     check_material_item
 )
 
@@ -34,6 +34,7 @@ __all__ = (
     "select_operation",
     "select_arrival",
     "update_job_status",
+    "update_arrival",
     "check_can_login",
     "select_tasks_progress",
     "update_rest_gross_weight",
