@@ -437,6 +437,15 @@ ORDER BY
     return stocks
 
 
+async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
+
+    print(doc_id, doc_number, doc_date, material_id, arrival_items)
+
+    try:
+        pass
+    except Exception as e:
+        print(f"ERROR \"update_arrival\": {e}")
+
 async def update_job_status(conn: Connection, doc_id: int, user_id: int, material_id: int, tara_id: int, net_weight_fact: float, rest_gross_weight: float, add_processing_id: int, status: bool):
 
     async with conn.cursor() as cur:

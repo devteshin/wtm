@@ -1,7 +1,7 @@
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, Request
 from db import (check_user, select_task, select_tasks, change_password,
                 select_stocks, select_operations, select_operation, select_arrival,
-                update_job_status, select_tasks_progress, update_rest_gross_weight,
+                update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival,
                 check_material_item
                 )
 from utils import jsonify
@@ -183,6 +183,23 @@ async def update_jobs_status_handler(request: Request):
                     request.user_id,
                     material_id,
                     **j)
+        except Exception as exc:
+            raise HTTPBadRequest(
+                body=str(exc))  # pylint: disable=raise-missing-from
+    return HTTPCreated()
+
+async def update_arrival_handler(request: Request):
+    payload: dict = await request.json()
+    doc_id = payload.get("docID", None)
+    doc_number = payload.get("docNumber", None)
+    doc_date = payload.get("docDate", None)
+    material_id = payload.get("materialID", None)
+    items: list[dict] = payload.get("items", [])
+    if doc_id is None or material_id is None or doc_number is None or doc_date is None:
+        raise HTTPBadRequest()
+    async with request.app["db"].acquire() as conn:
+        try:
+            await update_arrival(doc_id, doc_number, doc_date, material_id, items)
         except Exception as exc:
             raise HTTPBadRequest(
                 body=str(exc))  # pylint: disable=raise-missing-from

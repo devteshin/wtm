@@ -10,6 +10,7 @@ const OPERATION = "operation";
 const MATERIAL = "material";
 const DOC = "doc";
 const JOB = "job";
+const ARRIVAL = "arrival";
 const RGW = "rest_gross_weight";
 const TASKS_PROGRESS = "tasks_progress";
 const CHECK_ITEM = "check_item";
@@ -174,6 +175,19 @@ class ClientAPI {
 
     async updateJobsStatus(payload: any) {
         const url = `${BASE_URL}/${JOB}`;
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+        const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+        if (response.status !== 201) {
+            throw new Error(await response.text());
+        }
+        return;
+    }
+
+    async updateArrival(payload: any) {
+        const url = `${BASE_URL}/${ARRIVAL}`;
         const headers = {
             "Content-Type": "application/json",
             ...this.requestHeaders()

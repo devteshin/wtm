@@ -68,6 +68,17 @@ const saveDoc = async () =>  {
     return
   };
   
+  const docParams = {
+      docID: props.docID,
+      docNumber: doc_number,
+      docDate: doc_date,
+      materialID: props.materialID,
+      items: doc_items.value
+  };
+
+  console.log(docParams);
+  await store.updateArrival(docParams);
+
 };
 
 </script>

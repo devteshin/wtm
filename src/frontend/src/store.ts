@@ -96,6 +96,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const updateArrival = (payload: any) => {
+        loading.value = true;
+        return api.updateArrival(payload).finally(() => {
+            loading.value = false;
+        });
+    };
+
     const updateRestGrossWeight = (taskID: number, job :frontend.IJob) => {
         return api.updateRestGrossWeight(taskID, job);
     };
@@ -148,6 +155,7 @@ export default defineStore("app_store", () => {
         updateJobStatus,
         updateJobsStatus,
         updateRestGrossWeight,
+        updateArrival,
         stocks,
         operations,
         operation,
