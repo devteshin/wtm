@@ -70,10 +70,10 @@ const saveDoc = async () =>  {
   
   const docParams = {
       docID: props.docID,
-      docNumber: doc_number,
-      docDate: doc_date,
+      docNumber: doc_number.value,
+      docDate: doc_date.value,
       materialID: props.materialID,
-      items: doc_items.value
+      arrival_items: doc_items.value
   };
 
   console.log(docParams);

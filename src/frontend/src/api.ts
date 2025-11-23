@@ -192,6 +192,7 @@ class ClientAPI {
             "Content-Type": "application/json",
             ...this.requestHeaders()
         };
+        console.log(JSON.stringify(payload));
         const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
         if (response.status !== 201) {
             throw new Error(await response.text());
