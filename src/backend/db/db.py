@@ -438,6 +438,8 @@ ORDER BY
 
 def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list[dict]):
 
+    res_string = ""
+
     for index, item in enumerate(arrival_items):
         if index > 0: 
             delemiter = ","
@@ -447,6 +449,8 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
         item_string = delemiter + f"({material_id},{item["tare_id"]},'{item["tare_type"]}',1"
         f",{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]}"
         f",'{item["key_material"]}',{doc_id})"
+
+        print(item_string)
 
         res_string = res_string + item_string
 
