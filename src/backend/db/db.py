@@ -436,13 +436,25 @@ ORDER BY
         stocks = await cur.fetchall()
     return stocks
 
+def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list[dict]):
+
+    for index, items in enumerate(arrival_items):
+        if index > 0: 
+            delemiter = ","
+        else:
+            delemiter = ""
+        res_string = delemiter + "(" + material_id + "," + items["tare_id"] + "," + items["tare_type"] + ", 1, " + items["tare_type"] 
+        res_string = res_string + "," + items["gross_weight"] + "," + items["gross_weight"] + "," + items["gross_weight"] + "," + items["gross_weight"]
+        res_string = res_string + "," + items["key_material"] + "," + doc_id + ")"
+
+    return res_string
 
 async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
 
-    print(doc_id, doc_number, doc_date, material_id, arrival_items)
+
 
     try:
-        pass
+        print(make_arrival_items_string(doc_id, material_id, arrival_items))
     except Exception as e:
         print(f"ERROR \"update_arrival\": {e}")
 
