@@ -443,11 +443,11 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
             delemiter = ","
         else:
             delemiter = ""
-        res_string = delemiter + f"({material_id},{item["tare_id"]},'{item["tare_type"]}',1" 
-        res_string = res_string + f",{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]}"
-        res_string = res_string + f",'{item["key_material"]}',{doc_id})"
-        print(index)
-        print(res_string)
+        item_string = delemiter + f"({material_id},{item["tare_id"]},'{item["tare_type"]}',1" 
+        item_string = item_string + f",{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]}"
+        item_string = item_string + f",'{item["key_material"]}',{doc_id})"
+        res_string = res_string + item_string
+
 
     return res_string
 
