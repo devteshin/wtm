@@ -468,7 +468,7 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
     q_update_doc = """
 		UPDATE arrival_doc
 		SET
-		stock = %(stoc_id)s
+		stock = %(stock_id)s
 		WHERE
 		id = %(doc_id)s
     """
