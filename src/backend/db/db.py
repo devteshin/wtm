@@ -443,9 +443,9 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
             delemiter = ","
         else:
             delemiter = ""
-        res_string = delemiter + "(" + material_id + "," + items["tare_id"] + "," + items["tare_type"] + ", 1, " + items["tare_type"] 
-        res_string = res_string + "," + items["gross_weight"] + "," + items["gross_weight"] + "," + items["gross_weight"] + "," + items["gross_weight"]
-        res_string = res_string + "," + items["key_material"] + "," + doc_id + ")"
+        res_string = delemiter + f"({material_id},{items["tare_id"]},{items["tare_type"]},1,{items["tare_type"]}" 
+        res_string = res_string + f",{items["gross_weight"]},{items["gross_weight"]},{items["gross_weight"]},{items["gross_weight"]}"
+        res_string = res_string + f",{items["key_material"]},{doc_id})"
 
     return res_string
 
