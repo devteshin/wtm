@@ -450,22 +450,30 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
         f",{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]}"
         f",'{item["key_material"]}',{doc_id})")
 
-        print(item_string)
-
         res_string = res_string + item_string
 
     return res_string
 
 async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
 
+    #q_update_doc = """
+	#	UPDATE arrival_doc
+	#	SET
+	#	doc_number = %(doc_number)s
+	#	, doc_date = %(doc_date)s
+	#	WHERE
+	#	id = %(doc_id)s
+    #"""
+
     q_update_doc = """
 		UPDATE arrival_doc
 		SET
-		doc_number = %(doc_number)s
-		, doc_date = %(doc_date)s
+		stock = %(stoc_id)s
 		WHERE
 		id = %(doc_id)s
     """
+
+
     q_delete_arrival = """
 		DELETE FROM arrival
 		WHERE
@@ -473,19 +481,19 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
     """
 
     values_string = make_arrival_items_string(doc_id, material_id, arrival_items)
-    print(values_string)
     q_insert_arrival = """
 		INSERT INTO arrival (material, tare_id, tare_type, tare_amount, gross_weight_arrival, net_weight_arrival, gross_weight, net_weight, key_material, doc_id)
 		VALUES
 		%(values_string)s
     """
-    print(q_insert_arrival)
-
     #await conn.execute('START TRANSACTION;')
+
+    stock_id = 1
 
     try:
         async with conn.cursor() as cur:
-            await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
+            #await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
+            await cur.execute(q_update_doc, {"doc_id": doc_id, "stock_id": stock_id})
 
         #async with conn.cursor() as cur:
         #    await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
