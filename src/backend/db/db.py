@@ -438,14 +438,16 @@ ORDER BY
 
 def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list[dict]):
 
-    for index, items in enumerate(arrival_items):
+    for index, item in enumerate(arrival_items):
         if index > 0: 
             delemiter = ","
         else:
             delemiter = ""
-        res_string = delemiter + f"({material_id},{items["tare_id"]},{items["tare_type"]},1,{items["tare_type"]}" 
-        res_string = res_string + f",{items["gross_weight"]},{items["gross_weight"]},{items["gross_weight"]},{items["gross_weight"]}"
-        res_string = res_string + f",{items["key_material"]},{doc_id})"
+        res_string = delemiter + f"({material_id},{item["tare_id"]},'{item["tare_type"]}',1" 
+        res_string = res_string + f",{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]}"
+        res_string = res_string + f",'{item["key_material"]}',{doc_id})"
+        print(index)
+        print(res_string)
 
     return res_string
 
@@ -454,6 +456,7 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
 
 
     try:
+        print("make_arrival_items_string")
         print(make_arrival_items_string(doc_id, material_id, arrival_items))
     except Exception as e:
         print(f"ERROR \"update_arrival\": {e}")
