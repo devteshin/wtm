@@ -461,15 +461,15 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
     q_update_doc = """
 		UPDATE arrival_doc
 		SET
-		doc_number = '%(doc_number)s'
-		, doc_date = '%(doc_date)s'
+		doc_number = %(doc_number)s
+		, doc_date = %(doc_date)s
 		WHERE
-		id = %(doc_id)s;
+		id = %(doc_id)s
     """
     q_delete_arrival = """
 		DELETE FROM arrival
 		WHERE
-		doc_id = %(doc_id)s AND material = %(material_id)s;
+		doc_id = %(doc_id)s AND material = %(material_id)s
     """
 
     values_string = make_arrival_items_string(doc_id, material_id, arrival_items)
@@ -477,7 +477,7 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
     q_insert_arrival = """
 		INSERT INTO arrival (material, tare_id, tare_type, tare_amount, gross_weight_arrival, net_weight_arrival, gross_weight, net_weight, key_material, doc_id)
 		VALUES
-		%(values_string)s;
+		%(values_string)s
     """
     print(q_insert_arrival)
 
