@@ -456,19 +456,11 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
 
 async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
 
-    #q_update_doc = """
-	#	UPDATE arrival_doc
-	#	SET
-	#	doc_number = %(doc_number)s
-	#	, doc_date = %(doc_date)s
-	#	WHERE
-	#	id = %(doc_id)s
-    #"""
-
     q_update_doc = """
 		UPDATE arrival_doc
 		SET
-		stock = %(stock_id)s
+		doc_number = %(doc_number)s
+		, doc_date = %(doc_date)s
 		WHERE
 		id = %(doc_id)s
     """
@@ -492,8 +484,7 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
 
     try:
         async with conn.cursor() as cur:
-            #await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
-            await cur.execute(q_update_doc, {"doc_id": doc_id, "stock_id": stock_id})
+            await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
 
         #async with conn.cursor() as cur:
         #    await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
