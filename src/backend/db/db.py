@@ -450,9 +450,13 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
 
         item_net_weight = item["gross_weight"] - item["tare_weight"]
 
+        print(item_net_weight)
+
         item_string = delemiter + (f"({material_id},{item["tare_id"]},'{item["tare_type"]}',1"
         f",{item["gross_weight"]},{item_net_weight},{item["gross_weight"]},{item_net_weight}"
         f",'{item["key_material"]}',{doc_id})")
+
+        print(item_string)
 
         res_string = res_string + item_string
 
