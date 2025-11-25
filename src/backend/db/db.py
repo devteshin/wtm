@@ -367,9 +367,11 @@ SELECT
 	key_material
 	, tare_id
 	, gross_weight
-	, tare_type 
+	, tare_type
+    , tare.weight AS tare_weight 
 FROM
 	arrival
+LEFT JOIN tare ON tare.id = arrival.tare_type    
 WHERE 
 	doc_id = %(doc_id)s 
 	AND material = %(material_id)s
@@ -446,8 +448,10 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
         else:
             delemiter = ""
 
+        item_net_weight = item["gross_weight"] - item["tare_weight"]
+
         item_string = delemiter + (f"({material_id},{item["tare_id"]},'{item["tare_type"]}',1"
-        f",{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]},{item["gross_weight"]}"
+        f",{item["gross_weight"]},{item_net_weight},{item["gross_weight"]},{item_net_weight}"
         f",'{item["key_material"]}',{doc_id})")
 
         res_string = res_string + item_string
@@ -478,8 +482,6 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
         VALUES
     """ + values_string
     
-    print(q_insert_arrival)
-
     async with conn.cursor() as cur:
         await cur.execute("START TRANSACTION;")
 

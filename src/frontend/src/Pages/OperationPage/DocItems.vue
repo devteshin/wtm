@@ -19,7 +19,8 @@ interface docItemsData {
   key_material: string,
   tare_id: number,
   gross_weight: number,
-  tare_type: string
+  tare_type: string,
+  tare_weight: number
 };
 
 const tare_type_options = [
@@ -76,9 +77,7 @@ const saveDoc = async () =>  {
       arrival_items: doc_items.value
   };
 
-  console.log(docParams);
   await store.updateArrival(docParams);
-
 };
 
 </script>

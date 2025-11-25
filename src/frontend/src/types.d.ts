@@ -116,6 +116,7 @@ declare namespace frontend {
         tare_id: number
         gross_weight: number
         tare_type: string
+        tare_weight: number
     }
 
     export type IArrival = {
