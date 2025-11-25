@@ -478,9 +478,7 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
 		VALUES
 		%(values_string)s
     """
-    #await conn.execute('START TRANSACTION;')
-
-    stock_id = 1
+    await conn.execute('START TRANSACTION;')
 
     try:
         async with conn.cursor() as cur:
@@ -490,11 +488,11 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
         #    await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
         #async with conn.cursor() as cur:
         #    await cur.execute(q_insert_arrival, {"values_string": values_string})
-        #await conn.execute('COMMIT')
+        await conn.execute('COMMIT')
 
     except Exception as e:
+        await conn.execute('ROLLBACK')
         print(f"ERROR \"update_arrival\": {e}")
-        #await conn.execute('ROLLBACK')
 
 async def update_job_status(conn: Connection, doc_id: int, user_id: int, material_id: int, tara_id: int, net_weight_fact: float, rest_gross_weight: float, add_processing_id: int, status: bool):
 
