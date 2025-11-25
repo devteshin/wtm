@@ -196,6 +196,8 @@ async def update_arrival_handler(request: Request):
     material_id = payload.get("materialID", None)
     arrival_items: list[dict] = payload.get("arrival_items", [])
 
+    print(arrival_items)
+
     if doc_id is None or material_id is None or doc_number is None or doc_date is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
