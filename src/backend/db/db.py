@@ -475,9 +475,11 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
     values_string = make_arrival_items_string(doc_id, material_id, arrival_items)
     q_insert_arrival = """
 		INSERT INTO arrival (material, tare_id, tare_type, tare_amount, gross_weight_arrival, net_weight_arrival, gross_weight, net_weight, key_material, doc_id)
-		VALUES
-		%(values_string)s
-    """
+        VALUES
+    """ + values_string
+    
+    print(q_insert_arrival)
+
     async with conn.cursor() as cur:
         await cur.execute("START TRANSACTION;")
 
@@ -489,7 +491,7 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
             await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
 
         async with conn.cursor() as cur:
-            await cur.execute(q_insert_arrival, {"values_string": values_string})
+            await cur.execute(q_insert_arrival)
 
         async with conn.cursor() as cur:
             await cur.execute("COMMIT;")
