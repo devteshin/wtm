@@ -122,7 +122,7 @@ const saveDoc = async () =>  {
       <el-col :span="6"><div class="grid-content ep-bg-purple" />
         <div v-for="item in doc_items" :key="item.key_material">
           <el-input
-            v-model="item.gross_weight"
+            v-model.number="item.gross_weight" :min="item.tare_weight" @change="(value: number) => {if (value < item.tare_weight) {item.gross_weight = item.tare_weight}}"
             style="max-width: 200px"
             type="number"
             >
