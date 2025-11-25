@@ -485,6 +485,8 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
         async with conn.cursor() as cur:
             await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
 
+        a = 1/0
+
         #async with conn.cursor() as cur:
         #    await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
         #async with conn.cursor() as cur:
