@@ -26,7 +26,9 @@ interface docItemsData {
 interface tareOptions {
   tare_type: string,
   tare_weight: number,
-  tare_type_id: number
+  tare_type_id: number,
+  value: string,
+  label: string
 };
 
 
@@ -65,10 +67,7 @@ let min_start_items_num = 0;
         doc_material.value = store.arrival.material;
         doc_operation.value = store.arrival.operation;
         doc_items.value = store.arrival.items;
-        tare_options = store.arrival.tare_options;
-
-        console.log(tare_options);
-
+ 
         start_items_num.value = getStartItemsNum();
         min_start_items_num = start_items_num.value
 
@@ -130,6 +129,22 @@ function addItems(position_num: number) {
   min_start_items_num = start_items_num.value;
 };
 
+function onTareChange(value: string, item: docItemsData) {
+  let weight = store.arrival?.tare_options.find(t => t.tare_type == value)?.tare_weight;
+  if (!weight) {
+    weight = 0
+  }
+  item.tare_weight = weight;
+  onWeightChange(item.gross_weight, item);
+  
+};
+
+function onWeightChange(value: number, item: docItemsData) {
+  if (value < item.tare_weight && value != 0) {
+    item.gross_weight = item.tare_weight
+  };
+};  
+
 </script>
 
 <template v-if="store.isAuth">
@@ -186,24 +201,24 @@ function addItems(position_num: number) {
             >
             <template #prepend>Кол-во</template>
           </el-input>          
-        <!-- <div class="button-row"> -->
           <el-button type="success" plain @click="addItems(add_items_num)">Добавить</el-button>
-        <!-- </div> -->
         <div v-for="item in doc_items" :key="item.key_material">
           <el-input
             v-model.number="item.gross_weight" :min="item.tare_weight" 
-            @change="(value: number) => {if (value < item.tare_weight && value != 0) {item.gross_weight = item.tare_weight}}"
+            @change="onWeightChange(item.gross_weight, item)"
             style="max-width: 200px"
             type="number"
             >
             <template #prepend>Номер {{ getFixedLengthNumber(item.tare_id)}}</template>
           </el-input>          
-          <el-select v-model="item.tare_type" placeholder="Тара" style="width: 100px">
+          <el-select v-model="item.tare_type" placeholder="Тара" style="width: 100px" 
+          @change="onTareChange(item.tare_type, item)"
+          >
             <el-option
-              v-for="item in tare_type_options"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              v-for="item in store.arrival?.tare_options"
+              :key="item.tare_type_id"
+              :label="item.tare_type"
+              :value="item.tare_type"
             />
           </el-select>
         </div>
