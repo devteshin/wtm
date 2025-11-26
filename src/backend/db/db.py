@@ -390,7 +390,25 @@ WHERE
 
     arrival["items"] = arrival_items
 
+    arrival["tare_options"] = await select_tare_options(conn)
+
     return arrival
+
+async def select_tare_options(conn: Connection):
+    q = """
+SELECT
+	id as tare_type
+	, weight as tare_weight
+	, type_id as tare_type_id
+FROM
+	tare
+    """
+    tare_options = []
+    async with conn.cursor() as cur:
+        await cur.execute(q)
+        tare_options = await cur.fetchall()
+
+    return tare_options
 
 async def select_arrival_meta(conn: Connection, doc_id: int, material_id: int):
     q = """

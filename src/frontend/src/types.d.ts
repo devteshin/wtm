@@ -119,12 +119,19 @@ declare namespace frontend {
         tare_weight: number
     }
 
+    export type ITareOptions = {
+        tare_type: string
+        tare_weight: number
+        tare_type_id: number
+    }
+
     export type IArrival = {
         doc_number: string
         doc_date: string
         material: string
         operation: string
         items: Array<IArrivalItems>
+        tare_options: Array<ITareOptions>
     }
 
     export type ILoginPayload = {

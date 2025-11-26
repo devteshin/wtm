@@ -23,6 +23,13 @@ interface docItemsData {
   tare_weight: number
 };
 
+interface tareOptions {
+  tare_type: string,
+  tare_weight: number,
+  tare_type_id: number
+};
+
+
 const tare_type_options = [
   {
     value: 'б/м 15',
@@ -44,6 +51,11 @@ const doc_date = ref('');
 const doc_material = ref('');
 const doc_operation = ref('');
 const doc_items = ref([<docItemsData>{}]);
+let tare_options = [<tareOptions>{}]; 
+
+const add_items_num = ref(1);
+const start_items_num = ref(0);
+let min_start_items_num = 0;
 
  onMounted(async () => {
      await store.fetchArrival(props.stockID, props.operationID, props.docID, props.materialID);
@@ -53,8 +65,17 @@ const doc_items = ref([<docItemsData>{}]);
         doc_material.value = store.arrival.material;
         doc_operation.value = store.arrival.operation;
         doc_items.value = store.arrival.items;
+        tare_options = store.arrival.tare_options;
+
+        console.log(tare_options);
+
+        start_items_num.value = getStartItemsNum();
+        min_start_items_num = start_items_num.value
+
      }
+    
      
+
 });
 
 function getFixedLengthNumber(value: number): string {
@@ -74,10 +95,39 @@ const saveDoc = async () =>  {
       docNumber: doc_number.value,
       docDate: doc_date.value,
       materialID: props.materialID,
-      arrival_items: doc_items.value
+      arrival_items: doc_items.value.filter(item => item.gross_weight > 0)
   };
 
   await store.updateArrival(docParams);
+};
+
+function getStartItemsNum() {
+  if (!doc_items) {
+    return 0;
+  }
+  return (doc_items.value.map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
+};
+
+function addItems(position_num: number) {
+
+  if (position_num == 0) {
+    return;
+  }
+
+  const next_tare_id = start_items_num.value;
+
+  for (let i = 0; i < position_num; i++) {
+    const item = <docItemsData>{};
+    item.tare_id = next_tare_id + i;
+    item.key_material =  props.materialID.toString() + '_' + item.tare_id.toString() ;
+    item.gross_weight = 0;
+    item.tare_type = 'б/м 16';
+    item.tare_weight = 16;
+    doc_items.value.push(item)
+  }
+
+  start_items_num.value = getStartItemsNum();
+  min_start_items_num = start_items_num.value;
 };
 
 </script>
@@ -120,9 +170,29 @@ const saveDoc = async () =>  {
         </div>
       </el-col>
       <el-col :span="6"><div class="grid-content ep-bg-purple" />
+          <el-input
+            v-model.number="start_items_num" :min="min_start_items_num" :max="10000"
+            @change="(value: number) => {if (value < min_start_items_num) {start_items_num = min_start_items_num} else {if (value > 10000) {start_items_num = 10000}}}"
+            style="max-width: 220px"
+            type="number"
+            >
+            <template #prepend>Начальный номер</template>
+          </el-input>          
+          <el-input
+            v-model.number="add_items_num" :min="1" :max="100"
+            @change="(value: number) => {if (value < 1) {add_items_num = 1} else {if (value > 100) {add_items_num = 100}}}"
+            style="max-width: 180px"
+            type="number"
+            >
+            <template #prepend>Кол-во</template>
+          </el-input>          
+        <!-- <div class="button-row"> -->
+          <el-button type="success" plain @click="addItems(add_items_num)">Добавить</el-button>
+        <!-- </div> -->
         <div v-for="item in doc_items" :key="item.key_material">
           <el-input
-            v-model.number="item.gross_weight" :min="item.tare_weight" @change="(value: number) => {if (value < item.tare_weight) {item.gross_weight = item.tare_weight}}"
+            v-model.number="item.gross_weight" :min="item.tare_weight" 
+            @change="(value: number) => {if (value < item.tare_weight && value != 0) {item.gross_weight = item.tare_weight}}"
             style="max-width: 200px"
             type="number"
             >
