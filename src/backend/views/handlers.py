@@ -1,7 +1,7 @@
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, Request
 from db import (check_user, select_task, select_tasks, change_password,
                 select_stocks, select_operations, select_operation, select_arrival,
-                update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival,
+                update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival,
                 check_material_item
                 )
 from utils import jsonify
