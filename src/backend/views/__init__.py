@@ -6,7 +6,7 @@ from .handlers import (
     change_password_handler, get_stocks, get_task,
     get_tasks, get_operations, get_operation, get_arrival, login_handler, rest_gross_weight,
     tasks_progress, update_job_status_handler,
-    update_jobs_status_handler, update_arrival_handler, check_material_item_handler)
+    update_jobs_status_handler, update_arrival_handler, delete_arrival_handler, check_material_item_handler)
 
 
 def index_spa(path: str, filename: str):
@@ -35,6 +35,7 @@ def setup_handlers(app: Application):
         ("PUT", "/api/job", update_job_status_handler, "update_job_status"),
         ("POST", "/api/job", update_jobs_status_handler, "update_jobs_status_handler"),
         ("POST", "/api/arrival", update_arrival_handler, "update_arrival_handler"),
+        ("POST", "/api/arrival", delete_arrival_handler, "delete_arrival_handler"),
         ("GET", "/api/stocks", get_stocks, "get_stocks"),
         ("GET", "/api/stock/{stockID}/operations", get_operations, "get_operations"),
         ("GET", "/api/stock/{stockID}/operation/{operationID}", get_operation, "get_operation"),

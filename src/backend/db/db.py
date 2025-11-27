@@ -523,6 +523,19 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
             await cur.execute("ROLLBACK;")
         print(f"ERROR \"update_arrival\": {e}")
 
+async def delete_arrival(conn: Connection, doc_id: int):
+
+    q = """
+		DELETE FROM arrival_doc
+		id = %(doc_id)s
+    """
+    try:
+        async with conn.cursor() as cur:
+            await cur.execute(q, {"doc_id": doc_id})
+
+    except Exception as e:
+        print(f"ERROR \"delete_arrival\": {e}")
+
 async def update_job_status(conn: Connection, doc_id: int, user_id: int, material_id: int, tara_id: int, net_weight_fact: float, rest_gross_weight: float, add_processing_id: int, status: bool):
 
     async with conn.cursor() as cur:

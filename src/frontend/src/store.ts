@@ -103,6 +103,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const deleteArrival = (payload: any) => {
+        loading.value = true;
+        return api.deleteArrival(payload).finally(() => {
+            loading.value = false;
+        });
+    };
+
     const updateRestGrossWeight = (taskID: number, job :frontend.IJob) => {
         return api.updateRestGrossWeight(taskID, job);
     };
@@ -156,6 +163,7 @@ export default defineStore("app_store", () => {
         updateJobsStatus,
         updateRestGrossWeight,
         updateArrival,
+        deleteArrival,
         stocks,
         operations,
         operation,

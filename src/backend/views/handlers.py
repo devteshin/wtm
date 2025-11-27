@@ -196,8 +196,6 @@ async def update_arrival_handler(request: Request):
     material_id = payload.get("materialID", None)
     arrival_items: list[dict] = payload.get("arrival_items", [])
 
-    print(arrival_items)
-
     if doc_id is None or material_id is None or doc_number is None or doc_date is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
@@ -208,6 +206,19 @@ async def update_arrival_handler(request: Request):
                 body=str(exc))  # pylint: disable=raise-missing-from
     return HTTPCreated()
 
+async def delete_arrival_handler(request: Request):
+    payload: dict = await request.json()
+    doc_id = payload.get("docID", None)
+
+    if doc_id is None:
+        raise HTTPBadRequest()
+    async with request.app["db"].acquire() as conn:
+        try:
+            await delete_arrival(conn, doc_id)
+        except Exception as exc:
+            raise HTTPBadRequest(
+                body=str(exc))  # pylint: disable=raise-missing-from
+    return HTTPCreated()
 
 async def rest_gross_weight(request: Request):
     job = await request.json()

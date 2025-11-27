@@ -192,13 +192,29 @@ class ClientAPI {
             "Content-Type": "application/json",
             ...this.requestHeaders()
         };
-        console.log(JSON.stringify(payload));
         const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
         if (response.status !== 201) {
             throw new Error(await response.text());
         }
         return;
     }
+
+    async deleteArrival(docID: number) {
+        const url = `${BASE_URL}/${ARRIVAL}`;
+        const payload = {
+            docID
+        };
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+        const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+        if (response.status !== 201) {
+            throw new Error(await response.text());
+        }
+        return;
+    }
+
 
     async checkMaterialItem(materialID: number, taraID: number, taskID: number) {
         const url = `${BASE_URL}/${CHECK_ITEM}`;
