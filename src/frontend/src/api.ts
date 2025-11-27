@@ -11,6 +11,7 @@ const MATERIAL = "material";
 const DOC = "doc";
 const JOB = "job";
 const ARRIVAL = "arrival";
+const ARRIVAL_DELETE = "arrival/delete";
 const RGW = "rest_gross_weight";
 const TASKS_PROGRESS = "tasks_progress";
 const CHECK_ITEM = "check_item";
@@ -200,7 +201,7 @@ class ClientAPI {
     }
 
     async deleteArrival(docID: number) {
-        const url = `${BASE_URL}/${ARRIVAL}`;
+        const url = `${BASE_URL}/${ARRIVAL_DELETE}`;
         const payload = {
             docID: docID,
         };
