@@ -530,6 +530,9 @@ async def delete_arrival(conn: Connection, doc_id: int):
         WHERE
 		id = %(doc_id)s
     """
+
+    print(q)
+
     try:
         async with conn.cursor() as cur:
             await cur.execute(q, {"doc_id": doc_id})
