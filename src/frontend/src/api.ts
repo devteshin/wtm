@@ -202,16 +202,18 @@ class ClientAPI {
     async deleteArrival(docID: number) {
         const url = `${BASE_URL}/${ARRIVAL}`;
         const payload = {
-            docID
+            docID: docID,
         };
+        console.log(payload)
         const headers = {
             "Content-Type": "application/json",
             ...this.requestHeaders()
         };
-        const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-        if (response.status !== 201) {
-            throw new Error(await response.text());
-        }
+        const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });  
+        console.log(response.status)
+//        if (response.status !== 201) {
+//           throw new Error(await response.text());
+//        }
         return;
     }
 

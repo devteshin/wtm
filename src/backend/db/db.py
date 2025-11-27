@@ -527,6 +527,7 @@ async def delete_arrival(conn: Connection, doc_id: int):
 
     q = """
 		DELETE FROM arrival_doc
+        WHERE
 		id = %(doc_id)s
     """
     try:
