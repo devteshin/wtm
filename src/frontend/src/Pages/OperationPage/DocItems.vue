@@ -31,29 +31,13 @@ interface tareOptions {
   label: string
 };
 
-
-const tare_type_options = [
-  {
-    value: 'б/м 15',
-    label: 'б/м 15',
-  },
-  {
-    value: 'б/м 16',
-    label: 'б/м 16',
-  },
-  {
-    value: 'мкр',
-    label: 'мкр',
-  },
-];
-
-
 const doc_number = ref('');
 const doc_date = ref('');
 const doc_material = ref('');
 const doc_operation = ref('');
 const doc_items = ref([<docItemsData>{}]);
-let tare_options = [<tareOptions>{}]; 
+let tare_options = [<tareOptions>{}];
+const tare_default = ref('');   
 
 const add_items_num = ref(1);
 const start_items_num = ref(0);
@@ -109,7 +93,7 @@ function getStartItemsNum() {
 
 function addItems(position_num: number) {
 
-  if (position_num == 0) {
+  if (position_num == 0 || tare_default.value == '') {
     return;
   }
 
@@ -117,11 +101,12 @@ function addItems(position_num: number) {
 
   for (let i = 0; i < position_num; i++) {
     const item = <docItemsData>{};
+
     item.tare_id = next_tare_id + i;
     item.key_material =  props.materialID.toString() + '_' + item.tare_id.toString() ;
     item.gross_weight = 0;
-    item.tare_type = 'б/м 16';
-    item.tare_weight = 16;
+    item.tare_type = tare_default.value;
+    item.tare_weight = getTareWeight(tare_default.value);
     doc_items.value.push(item)
   }
 
@@ -129,12 +114,16 @@ function addItems(position_num: number) {
   min_start_items_num = start_items_num.value;
 };
 
-function onTareChange(value: string, item: docItemsData) {
+function getTareWeight(value: string) {
   let weight = store.arrival?.tare_options.find(t => t.tare_type == value)?.tare_weight;
   if (!weight) {
     weight = 0
   }
-  item.tare_weight = weight;
+  return weight;
+};
+
+function onTareChange(value: string, item: docItemsData) {
+  item.tare_weight = getTareWeight(value);
   onWeightChange(item.gross_weight, item);
   
 };
@@ -200,7 +189,16 @@ function onWeightChange(value: number, item: docItemsData) {
             type="number"
             >
             <template #prepend>Кол-во</template>
-          </el-input>          
+          </el-input>
+          <el-select v-model="tare_default" placeholder="Тара" style="width: 100px">
+            <el-option
+              v-for="item in store.arrival?.tare_options"
+              :key="item.tare_type_id"
+              :label="item.tare_type"
+              :value="item.tare_type"
+            />
+          </el-select>
+
           <el-button type="success" plain @click="addItems(add_items_num)">Добавить</el-button>
         <div v-for="item in doc_items" :key="item.key_material">
           <el-input

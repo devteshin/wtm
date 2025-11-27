@@ -402,6 +402,8 @@ SELECT
 	, type_id as tare_type_id
 FROM
 	tare
+WHERE app = 1    
+ORDER BY id    
     """
     tare_options = []
     async with conn.cursor() as cur:
