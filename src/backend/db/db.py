@@ -480,7 +480,7 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
 
 async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
 
-    doc_number_exists = check_doc_number(doc_id, doc_number)
+    doc_number_exists = check_doc_number(conn, doc_id, doc_number)
 
     print("doc_number_exists - " + doc_number_exists)
 
