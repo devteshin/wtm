@@ -480,6 +480,13 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
 
 async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
 
+    doc_number_exists = check_doc_number(doc_id, doc_number)
+
+    print("doc_number_exists - " + doc_number_exists)
+
+    if doc_number_exists:
+        return 1
+
     q_update_doc = """
 		UPDATE arrival_doc
 		SET
@@ -488,7 +495,6 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
 		WHERE
 		id = %(doc_id)s
     """
-
 
     q_delete_arrival = """
 		DELETE FROM arrival
@@ -522,6 +528,20 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
         async with conn.cursor() as cur:
             await cur.execute("ROLLBACK;")
         print(f"ERROR \"update_arrival\": {e}")
+
+    return 0    
+
+
+async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
+    q = """ SELECT EXISTS (SELECT TRUE FROM arrival_doc WHERE doc_number = %(doc_number)s AND id <> %(doc_id)s) AS doc_number_exists """
+    doc_number_exists = False
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"doc_id": doc_id, "doc_number": doc_number})
+        result = await cur.fetchone()
+        if result.get("doc_number_exists", 0) == 1:
+            doc_number_exists = True
+    return doc_number_exists
+
 
 async def delete_arrival(conn: Connection, doc_id: int):
 

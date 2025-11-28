@@ -1,4 +1,4 @@
-from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, Request
+from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, Request
 from db import (check_user, select_task, select_tasks, change_password,
                 select_stocks, select_operations, select_operation, select_arrival,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival,
@@ -200,7 +200,10 @@ async def update_arrival_handler(request: Request):
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            await update_arrival(conn, doc_id, doc_number, doc_date, material_id, arrival_items)
+            update_arrival_res = await update_arrival(conn, doc_id, doc_number, doc_date, material_id, arrival_items)
+            if update_arrival_res == 1:
+                print("HTTPConflict")
+                raise HTTPConflict(text="Документ с таким номером уже существует")
         except Exception as exc:
             raise HTTPBadRequest(
                 body=str(exc))  # pylint: disable=raise-missing-from
