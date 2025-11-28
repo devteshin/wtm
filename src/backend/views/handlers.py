@@ -1,11 +1,11 @@
-from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, Request
+from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, HTTPException, Request
 from db import (check_user, select_task, select_tasks, change_password,
                 select_stocks, select_operations, select_operation, select_arrival,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival,
                 check_material_item
                 )
 from utils import jsonify
-
+from db import DocumentExistsError
 
 async def login_handler(request: Request):
     """ хэндлен авторизация """
@@ -200,13 +200,11 @@ async def update_arrival_handler(request: Request):
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            update_arrival_res = await update_arrival(conn, doc_id, doc_number, doc_date, material_id, arrival_items)
-            if update_arrival_res == 1:
-                print("HTTPConflict")
-                raise HTTPConflict(text="Документ с таким номером уже существует")
+            await update_arrival(conn, doc_id, doc_number, doc_date, material_id, arrival_items)
+        except DocumentExistsError as exc:
+            raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
         except Exception as exc:
-            raise HTTPBadRequest(
-                body=str(exc))  # pylint: disable=raise-missing-from
+            raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
     return HTTPCreated()
 
 async def delete_arrival_handler(request: Request):

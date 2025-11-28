@@ -2,6 +2,9 @@
 
 from aiomysql import Connection
 
+class DocumentExistsError(Exception):
+    pass
+
 async def select_tasks(conn: Connection, user_id: int, stock_id: int) -> list:
     """ получение списка заданий """
 
@@ -482,10 +485,11 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
 
     doc_number_exists = await check_doc_number(conn, doc_id, doc_number)
 
-    print("doc_number_exists - " + str(doc_number_exists))
+    #if doc_number_exists:
+    #    return 1
 
     if doc_number_exists:
-        return 1
+        raise DocumentExistsError(f"Документ {doc_number} уже существует.")
 
     q_update_doc = """
 		UPDATE arrival_doc
