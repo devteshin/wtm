@@ -101,6 +101,7 @@ export default defineStore("app_store", () => {
         return api.updateArrival(payload).finally(() => {
             loading.value = false;
         });
+
     };
 
     const deleteArrival = (payload: any) => {

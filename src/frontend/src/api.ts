@@ -180,9 +180,20 @@ class ClientAPI {
             "Content-Type": "application/json",
             ...this.requestHeaders()
         };
+        
         const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
         if (response.status !== 201) {
             throw new Error(await response.text());
+        }
+
+        return;
+    }
+
+    handleError(error) {
+        if (error instanceof Error) {
+            alert(error);
+        } else {
+            alert("Произошла неопознанная ошибка");
         }
         return;
     }
@@ -193,11 +204,42 @@ class ClientAPI {
             "Content-Type": "application/json",
             ...this.requestHeaders()
         };
-        const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-        if (response.status !== 201) {
-            throw new Error(await response.text());
-        }
-        return;
+
+        try {
+            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+
+            //if (!response.ok) {
+                //try {
+                //    const errorData = await response.json();
+                //    throw new Error(errorData.message || "Неизвестная ошибка");
+                //} catch (jsonError) {
+                //    const errorText = await response.text();
+                //    throw new Error(errorText || "Неизвестная ошибка");
+                //}
+
+                //const errorText = await response.text();
+                //throw new Error(errorText || "Неизвестная ошибка");
+
+
+            const responseBody = await response.text(); // Считываем тело ответа как текст
+
+            if (!response.ok) {
+                let errorMessage;
+                try {
+                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
+                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
+                } catch {
+                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
+                }
+                throw new Error(errorMessage);
+
+            }
+        } catch (error) {
+            this.handleError(error);
+            return false
+        }                
+
+        return true;
     }
 
     async deleteArrival(docID: number) {

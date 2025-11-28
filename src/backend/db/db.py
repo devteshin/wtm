@@ -485,9 +485,6 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
 
     doc_number_exists = await check_doc_number(conn, doc_id, doc_number)
 
-    #if doc_number_exists:
-    #    return 1
-
     if doc_number_exists:
         raise DocumentExistsError(f"Документ {doc_number} уже существует.")
 

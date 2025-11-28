@@ -126,14 +126,18 @@ const saveDoc = async () =>  {
   
   const docParams = {
       docID: props.docID,
-      docNumber: doc_number.value,
+      docNumber: doc_number.value.trim(),
       docDate: doc_date.value,
       materialID: props.materialID,
       arrival_items: doc_items.value.filter(item => item.gross_weight > 0 && item.tare_type != '')
   };
 
-  await store.updateArrival(docParams);
-  location.reload()
+  let success = await store.updateArrival(docParams);
+  if (success) {
+    location.reload()
+  };
+
+  
 };
 
 function getStartItemsNum() {
