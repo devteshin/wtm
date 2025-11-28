@@ -482,7 +482,7 @@ async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_dat
 
     doc_number_exists = check_doc_number(conn, doc_id, doc_number)
 
-    print("doc_number_exists - " + doc_number_exists)
+    print("doc_number_exists - " + str(doc_number_exists))
 
     if doc_number_exists:
         return 1
