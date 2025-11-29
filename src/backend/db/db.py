@@ -1,9 +1,14 @@
 # pylint: disable=too-many-lines
 
 from aiomysql import Connection
+from functools import reduce
 
 class DocumentExistsError(Exception):
     pass
+
+class ItemsExistsError(Exception):
+    pass
+
 
 async def select_tasks(conn: Connection, user_id: int, stock_id: int) -> list:
     """ получение списка заданий """
@@ -461,32 +466,44 @@ ORDER BY
         stocks = await cur.fetchall()
     return stocks
 
+def make_key_material_string(arrival_items: list[dict]):
+    res_string = ""
+
+    if arrival_items:
+        res_string = reduce(lambda acc, item: acc  + ",'" +  str(item["key_material"]) + "'", arrival_items, "")
+        res_string = res_string[1:]
+
+    return res_string
+
 def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list[dict]):
 
     res_string = ""
 
-    for index, item in enumerate(arrival_items):
-        if index > 0: 
-            delemiter = ","
-        else:
-            delemiter = ""
-
+    for item in arrival_items:
         item_net_weight = item["gross_weight"] - item["tare_weight"]
 
-        item_string = delemiter + (f"({material_id},{item["tare_id"]},'{item["tare_type"]}',1"
+        item_string = (f",({material_id},{item["tare_id"]},'{item["tare_type"]}',1"
         f",{item["gross_weight"]},{item_net_weight},{item["gross_weight"]},{item_net_weight}"
         f",'{item["key_material"]}',{doc_id})")
 
         res_string = res_string + item_string
 
+    if res_string:
+        res_string = res_string[1:]
+
     return res_string
 
-async def update_arrival(conn: Connection, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
+async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
 
     doc_number_exists = await check_doc_number(conn, doc_id, doc_number)
 
     if doc_number_exists:
-        raise DocumentExistsError(f"Документ {doc_number} уже существует.")
+        raise DocumentExistsError(f"Документ '{doc_number}' уже существует.")
+
+    items_list = await check_items(conn, stock_id, doc_id, arrival_items)
+
+    if items_list:
+        raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
 
     q_update_doc = """
 		UPDATE arrival_doc
@@ -542,6 +559,42 @@ async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
         if result.get("doc_number_exists", 0) == 1:
             doc_number_exists = True
     return doc_number_exists
+
+async def check_items(conn: Connection, stock_id: int, doc_id: int, arrival_items: list):
+
+    key_material_string = make_key_material_string(arrival_items)
+
+    if not key_material_string:
+        return ""
+    
+    q = """
+        SELECT CONCAT('(', tare_id_list, ')', ' - ', doc_number) AS materia_exists FROM
+        (
+        SELECT doc.doc_number, GROUP_CONCAT(tare_id) AS tare_id_list FROM stock_data AS sd
+        INNER JOIN arrival_doc AS doc ON doc.id = sd.doc_id AND doc.operation <> 0
+        WHERE key_material IN (""" + key_material_string + """)
+        AND sd.stock = %(stock_id)s
+        AND doc_type = 0
+        AND doc_id <> %(doc_id)s
+        GROUP BY doc_number
+        ) sd
+    """
+
+    print(q)
+
+    items_list = []
+
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"stock_id": stock_id, "doc_id": doc_id})
+        items_list = await cur.fetchall()
+        if isinstance(items_list, tuple):
+            items_string = ""
+        else:
+            items_string = reduce(lambda acc, item: acc  + " " + item, items_list, "")
+
+    print(items_string)
+
+    return items_string
 
 
 async def delete_arrival(conn: Connection, doc_id: int):

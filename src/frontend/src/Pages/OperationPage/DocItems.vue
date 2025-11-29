@@ -125,6 +125,7 @@ const saveDoc = async () =>  {
   };
   
   const docParams = {
+      stockID: props.stockID,
       docID: props.docID,
       docNumber: doc_number.value.trim(),
       docDate: doc_date.value,
