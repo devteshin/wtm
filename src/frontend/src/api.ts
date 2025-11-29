@@ -249,11 +249,11 @@ class ClientAPI {
                 }
                 throw new Error(errorMessage);
             }
-            else {
-                const data = JSON.parse(responseBody);
-                console.log(responseBody)
-                return data.new_doc_id;
-            }
+            //else {
+            //    const data = JSON.parse(responseBody);
+            //    console.log(responseBody)
+            //    return data.new_doc_id;
+            //}
         } catch (error) {
             this.handleError(error);
             return 0;
