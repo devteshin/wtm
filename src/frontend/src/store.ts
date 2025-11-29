@@ -96,17 +96,22 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const createArrival = (payload: any) => {
+        loading.value = true;
+        return api.createArrival(payload).finally(() => {
+            loading.value = false;
+        });
+    };
+
     const updateArrival = (payload: any) => {
         loading.value = true;
         return api.updateArrival(payload).finally(() => {
             loading.value = false;
         });
-
     };
 
     const deleteArrival = (payload: any) => {
         loading.value = true;
-        console.log(payload)
         return api.deleteArrival(payload).finally(() => {
             loading.value = false;
         });
@@ -164,6 +169,7 @@ export default defineStore("app_store", () => {
         updateJobStatus,
         updateJobsStatus,
         updateRestGrossWeight,
+        createArrival,
         updateArrival,
         deleteArrival,
         stocks,

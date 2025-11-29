@@ -50,7 +50,7 @@ const columns = [
         prop: "operation"
     },
     {
-        label: "Кол-во операций",
+        label: "Кол-во документов",
         prop: "doc_count"
     }
 ];

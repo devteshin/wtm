@@ -17,7 +17,11 @@ const props = defineProps({
 
 const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${row.doc_id}/material/${row.material_id}`);
 
- onMounted(async () => {
+function createDoc() {
+    router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${0}/material/${0}`);
+};
+
+onMounted(async () => {
      await store.fetchOperation(props.stockID, props.operationID);
 });
 
@@ -56,6 +60,9 @@ const columns = [
             v-loading="store.loading"
             :span="24"
             :sm="10">
+            <div class="button-row" style="margin-bottom: 20px;">
+                <el-button type="success" plain @click="createDoc()">Нвый документ</el-button>
+            </div>    
             <el-table
                 :data="store.operation"
                 :row-style="{cursor: 'pointer'}"

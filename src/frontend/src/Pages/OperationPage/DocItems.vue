@@ -45,19 +45,37 @@ let min_start_items_num = 0;
 let doc_changed: boolean;
 
  onMounted(async () => {
-     await store.fetchArrival(props.stockID, props.operationID, props.docID, props.materialID);
 
-     if (store.arrival) {
+    if (!props.docID) {
+      const docParams = {
+        stockID: props.stockID,
+        operationID: props.operationID,
+        userID: Number(store.currentUser?.id)
+      };
+
+      let newDocID = await store.createArrival(docParams);
+      if (!newDocID) {
+        return;
+      };
+      await store.fetchArrival(props.stockID, props.operationID, newDocID, 0);  
+    }  
+    else {
+      await store.fetchArrival(props.stockID, props.operationID, props.docID, props.materialID);
+    };
+
+
+    if (store.arrival) {
         doc_number.value = store.arrival.doc_number;
         doc_date.value = store.arrival.doc_date;
         doc_material.value = store.arrival.material;
         doc_operation.value = store.arrival.operation;
         doc_items.value = store.arrival.items;
- 
+
         start_items_num.value = getStartItemsNum();
         min_start_items_num = start_items_num.value
-        doc_changed = false
-     }
+    }
+
+    doc_changed = false
 
      watch(doc_number, () => {doc_changed = true});
      watch(doc_date, () => {doc_changed = true});

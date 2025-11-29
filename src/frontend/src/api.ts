@@ -12,6 +12,7 @@ const DOC = "doc";
 const JOB = "job";
 const ARRIVAL = "arrival";
 const ARRIVAL_DELETE = "arrival/delete";
+const ARRIVAL_CREATE = "arrival/create";
 const RGW = "rest_gross_weight";
 const TASKS_PROGRESS = "tasks_progress";
 const CHECK_ITEM = "check_item";
@@ -207,20 +208,6 @@ class ClientAPI {
 
         try {
             const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-
-            //if (!response.ok) {
-                //try {
-                //    const errorData = await response.json();
-                //    throw new Error(errorData.message || "Неизвестная ошибка");
-                //} catch (jsonError) {
-                //    const errorText = await response.text();
-                //    throw new Error(errorText || "Неизвестная ошибка");
-                //}
-
-                //const errorText = await response.text();
-                //throw new Error(errorText || "Неизвестная ошибка");
-
-
             const responseBody = await response.text(); // Считываем тело ответа как текст
 
             if (!response.ok) {
@@ -232,14 +219,47 @@ class ClientAPI {
                     errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
                 }
                 throw new Error(errorMessage);
-
             }
         } catch (error) {
             this.handleError(error);
             return false
         }                
-
         return true;
+    }
+
+    async createArrival(payload: any) {
+        const url = `${BASE_URL}/${ARRIVAL_CREATE}`;
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+
+        try {
+            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+            const responseBody = await response.text(); // Считываем тело ответа как текст
+
+            if (!response.ok) {
+                let errorMessage = "";
+                try {
+                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
+                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
+                } catch {
+                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
+                }
+                throw new Error(errorMessage);
+            }
+            else {
+                const data = JSON.parse(responseBody);
+                console.log(responseBody)
+                return data.new_doc_id;
+            }
+        } catch (error) {
+            this.handleError(error);
+            return 0;
+        }
+        
+        
+        return 0;
     }
 
     async deleteArrival(docID: number) {
