@@ -616,6 +616,8 @@ async def create_arrival(conn: Connection, stock_id: int, operation_id: int, use
         VALUES (%(doc_number)s, CURDATE(), %(operation_id)s, %(stock_id)s, %(user_id)s)
     """
 
+    new_doc_id = 0
+    
     try:
         async with conn.cursor() as cur:
             await cur.execute(q_create, {"stock_id": stock_id, "operation_id": operation_id, "user_id": user_id, "doc_number": doc_number})
@@ -625,6 +627,8 @@ async def create_arrival(conn: Connection, stock_id: int, operation_id: int, use
             await cur.execute(q_get_id)
             result = await cur.fetchone()
             new_doc_id = result.get("id", 0)
+
+        print(new_doc_id)
 
     except Exception as e:
         print(f"ERROR \"create_arrival\": {e}")

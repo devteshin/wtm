@@ -236,6 +236,7 @@ class ClientAPI {
 
         try {
             const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+            console.log(response);
             const responseBody = await response.text(); // Считываем тело ответа как текст
 
             if (!response.ok) {
