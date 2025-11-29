@@ -591,7 +591,7 @@ async def check_items(conn: Connection, stock_id: int, doc_id: int, arrival_item
             items_string = ""
         else:
             print(items_list)
-            items_string = reduce(lambda acc, item: acc  + " " + item["material_exists"], items_list)
+            items_string = reduce(lambda acc, item: acc  + " " + item["material_exists"], items_list, "")
 
     print(items_string)
 
