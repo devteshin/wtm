@@ -568,7 +568,7 @@ async def check_items(conn: Connection, stock_id: int, doc_id: int, arrival_item
         return ""
     
     q = """
-        SELECT CONCAT('(', tare_id_list, ')', ' - ', doc_number) AS materia_exists FROM
+        SELECT CONCAT('(', tare_id_list, ')', ' - ', doc_number) AS material_exists FROM
         (
         SELECT doc.doc_number, GROUP_CONCAT(tare_id) AS tare_id_list FROM stock_data AS sd
         INNER JOIN arrival_doc AS doc ON doc.id = sd.doc_id AND doc.operation <> 0
@@ -591,7 +591,7 @@ async def check_items(conn: Connection, stock_id: int, doc_id: int, arrival_item
             items_string = ""
         else:
             print(items_list)
-            items_string = reduce(lambda acc, item: acc  + " " + item, items_list)
+            items_string = reduce(lambda acc, item: acc  + " " + item["material_exists"], items_list)
 
     print(items_string)
 
