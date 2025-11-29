@@ -607,18 +607,18 @@ async def delete_arrival(conn: Connection, doc_id: int):
     except Exception as e:
         print(f"ERROR \"delete_arrival\": {e}")
 
-async def create_arrival(conn: Connection, stock_id: int, operation_id: int, user_id):
+async def create_arrival(conn: Connection, stock_id: int, operation_id: int, user_id: int, doc_number: str):
     if operation_id == 0:
         return 0
 
     q_create = """
         INSERT INTO arrival_doc (doc_number, doc_date, operation, stock, executor)
-        VALUES ('', NOW(), %(operation_id)s, %(stock_id)s, %(user_id)s)
+        VALUES (%(doc_number)s, CURDATE(), %(operation_id)s, %(stock_id)s, %(user_id)s)
     """
 
     try:
         async with conn.cursor() as cur:
-            await cur.execute(q_create, {"stock_id": stock_id, "operation_id": operation_id, "user_id": user_id})
+            await cur.execute(q_create, {"stock_id": stock_id, "operation_id": operation_id, "user_id": user_id, "doc_number": doc_number})
 
         q_get_id = """ SELECT LAST_INSERT_ID() AS id """
         async with conn.cursor() as cur:

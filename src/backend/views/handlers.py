@@ -193,12 +193,13 @@ async def create_arrival_handler(request: Request):
     stock_id = payload.get("stockID", None)
     user_id = payload.get("userID", None)
     operation_id = payload.get("operationID", None)
+    doc_number = payload.get("docNumber", None)
 
-    if stock_id is None or operation_id is None:
+    if stock_id is None or operation_id is None or user_id is None or doc_number is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            new_doc_id = await create_arrival(conn, stock_id, operation_id, user_id)
+            new_doc_id = await create_arrival(conn, stock_id, operation_id, user_id, doc_number)
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
     return HTTPCreated(), new_doc_id

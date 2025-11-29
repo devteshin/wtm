@@ -50,7 +50,8 @@ let doc_changed: boolean;
       const docParams = {
         stockID: props.stockID,
         operationID: props.operationID,
-        userID: Number(store.currentUser?.id)
+        userID: Number(store.currentUser?.id),
+        docNumber: "New doc"
       };
 
       let newDocID = await store.createArrival(docParams);
