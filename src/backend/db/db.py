@@ -609,31 +609,26 @@ async def delete_arrival(conn: Connection, doc_id: int):
 
 async def create_arrival(conn: Connection, stock_id: int, operation_id: int, user_id: int, doc_number: str):
     if operation_id == 0:
-        return 0
+        return None
 
     q_create = """
         INSERT INTO arrival_doc (doc_number, doc_date, operation, stock, executor)
         VALUES (%(doc_number)s, CURDATE(), %(operation_id)s, %(stock_id)s, %(user_id)s)
     """
 
-    new_doc_id = 0
-    
     try:
         async with conn.cursor() as cur:
             await cur.execute(q_create, {"stock_id": stock_id, "operation_id": operation_id, "user_id": user_id, "doc_number": doc_number})
 
-        q_get_id = """ SELECT LAST_INSERT_ID() AS id """
-        async with conn.cursor() as cur:
-            await cur.execute(q_get_id)
+            await cur.execute("SELECT LAST_INSERT_ID() AS id")
             result = await cur.fetchone()
-            new_doc_id = result.get("id", 0)
-
-        print(new_doc_id)
+            new_doc_id = result.get("id", None)
+            print(new_doc_id)
 
     except Exception as e:
         print(f"ERROR \"create_arrival\": {e}")
 
-    return new_doc_id
+    return None
 
 
 async def update_job_status(conn: Connection, doc_id: int, user_id: int, material_id: int, tara_id: int, net_weight_fact: float, rest_gross_weight: float, add_processing_id: int, status: bool):
