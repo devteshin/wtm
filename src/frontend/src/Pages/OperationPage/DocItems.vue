@@ -56,12 +56,11 @@ let doc_changed: boolean;
 
       let newDocID = await store.createArrival(docParams);
       console.log(newDocID);
-      return;
 
-      //if (!newDocID) {
-      //  return;
-      //};
-      //await store.fetchArrival(props.stockID, props.operationID, newDocID, 0);  
+      if (!newDocID) {
+        return;
+      };
+      await store.fetchArrival(props.stockID, props.operationID, newDocID, 0);  
     }  
     else {
       await store.fetchArrival(props.stockID, props.operationID, props.docID, props.materialID);

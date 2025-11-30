@@ -312,7 +312,9 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int):
         SELECT 
             o.id
             , o.name AS operation 
-            , IFNULL(a.doc_count, 0) AS doc_count 
+            , IFNULL(a.doc_count, 0) AS doc_count
+            , product_id
+            , dnm_id 
         FROM operations AS o
         LEFT JOIN operation_executors AS oe ON oe.operation_id = o.id
         LEFT JOIN production_sequence_items AS psi ON psi.operation = o.id 
@@ -526,27 +528,6 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         VALUES
     """ + values_string
     
-    #async with conn.cursor() as cur:
-    #    await cur.execute("START TRANSACTION;")
-
-    #try:
-    #    async with conn.cursor() as cur:
-    #        await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})#
-
-    #    async with conn.cursor() as cur:
-    #        await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
-
-    #    async with conn.cursor() as cur:
-    #        await cur.execute(q_insert_arrival)
-
-    #    async with conn.cursor() as cur:
-    #        await cur.execute("COMMIT;")
-
-    #except Exception as e:
-    #    async with conn.cursor() as cur:
-    #        await cur.execute("ROLLBACK;")
-    #    print(f"ERROR \"update_arrival\": {e}")
-
     async with conn.cursor() as cur:
         await cur.execute("START TRANSACTION;")
         try:
@@ -635,7 +616,6 @@ async def create_arrival(conn: Connection, stock_id: int, operation_id: int, use
             await cur.execute("SELECT LAST_INSERT_ID() AS id")
             result = await cur.fetchone()
             new_doc_id = result.get("id", None)
-            print(new_doc_id)
             return new_doc_id
 
     except Exception as e:

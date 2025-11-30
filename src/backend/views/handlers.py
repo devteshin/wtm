@@ -202,13 +202,10 @@ async def create_arrival_handler(request: Request):
     async with request.app["db"].acquire() as conn:
         try:
             new_doc_id = await create_arrival(conn, stock_id, operation_id, user_id, doc_number)
-            print("create_arrival_handler")
-            print(new_doc_id)
+            if new_doc_id is None:
+                return Response(status=409, text=json.dumps({"new_doc_id": 0}), content_type='application/json')            
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
-    #return HTTPCreated()
-    #return Response(status=201, body={"new_doc_id": new_doc_id})
-    #return Response(status=201)
     return Response(status=201, text=json.dumps({"new_doc_id": new_doc_id}), content_type='application/json')
 
 async def update_arrival_handler(request: Request):

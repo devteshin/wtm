@@ -4,6 +4,8 @@ declare namespace frontend {
         id: number
         operation: string
         doc_count: number
+        product_id: number
+        dnm_id: number
     }
 
     /** Документы операции */

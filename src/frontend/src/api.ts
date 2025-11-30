@@ -236,21 +236,26 @@ class ClientAPI {
 
         try {
             const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-            console.log(response);
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+                const responseBody = await response.text(); // Считываем тело ответа как текст
+                let errorMessage = "";
+                try {
+                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
+                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
+                } catch {
+                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
+                }
+                throw new Error(errorMessage);
             }
-
-            //const data = await response.json();
-            //console.log(data.new_doc_id);            
+            else {
+                const data = await response.json();
+                const newDocId = data.new_doc_id;
+                return newDocId;
+            };
         } catch (error) {
             this.handleError(error);
             return 0;
         }
-        
-        
-        return 0;
     }
 
 
@@ -263,10 +268,9 @@ class ClientAPI {
 
         try {
             const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-            console.log(response);
-            const responseBody = await response.text(); // Считываем тело ответа как текст
 
             if (!response.ok) {
+                const responseBody = await response.text(); // Считываем тело ответа как текст
                 let errorMessage = "";
                 try {
                     const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
@@ -276,18 +280,13 @@ class ClientAPI {
                 }
                 throw new Error(errorMessage);
             }
-            //else {
-            //    const data = JSON.parse(responseBody);
-            //    console.log(responseBody)
-            //    return data.new_doc_id;
-            //}
+            else {
+                return
+            };
         } catch (error) {
             this.handleError(error);
-            return 0;
+            return;
         }
-        
-        
-        return 0;
     }
 
     async deleteArrival(docID: number) {
