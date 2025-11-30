@@ -56,6 +56,8 @@ let doc_changed: boolean;
 
       let newDocID = await store.createArrival(docParams);
       console.log(newDocID);
+      return;
+
       //if (!newDocID) {
       //  return;
       //};

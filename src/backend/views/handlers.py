@@ -199,9 +199,10 @@ async def create_arrival_handler(request: Request):
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            #new_doc_id = await create_arrival(conn, stock_id, operation_id, user_id, doc_number)
-            #print(new_doc_id)
-            await create_arrival(conn, stock_id, operation_id, user_id, doc_number)
+            new_doc_id = await create_arrival(conn, stock_id, operation_id, user_id, doc_number)
+            print("create_arrival_handler")
+            print(new_doc_id)
+            #await create_arrival(conn, stock_id, operation_id, user_id, doc_number)
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
     #return HTTPCreated(), new_doc_id
