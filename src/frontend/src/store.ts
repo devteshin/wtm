@@ -96,6 +96,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const fetchDNMDocNumber = (operationID: number) => {
+        loading.value = true;
+        return api.fetchDNMDocNumber(operationID).finally(() => {
+            loading.value = false;
+        });
+    };
+
     const createArrival = (payload: any) => {
         loading.value = true;
         return api.createArrival(payload).finally(() => {
@@ -162,6 +169,7 @@ export default defineStore("app_store", () => {
         fetchStocks,
         fetchOperations,
         fetchOperation,
+        fetchDNMDocNumber,
         fetchArrival,
         fetchTasksList,
         fetchTask,

@@ -37,7 +37,9 @@ const doc_material = ref('');
 const doc_operation = ref('');
 const doc_items = ref([<docItemsData>{}]);
 let tare_options = [<tareOptions>{}];
-const tare_default = ref('');   
+const tare_default = ref('');
+let doc_id = 0;
+let product_id = 0;   
 
 const add_items_num = ref(1);
 const start_items_num = ref(0);
@@ -47,25 +49,38 @@ let doc_changed: boolean;
  onMounted(async () => {
 
     if (!props.docID) {
+
+      let dnm_id = 0;
+      let dnm_doc_number = "";
+
+      if (store.operations) {
+        console.log(store.operations);
+        console.log(props.operationID);
+        product_id = store.operations.find(o => o.id === props.operationID)?.product_id || 0;
+        dnm_id = store.operations.find(o => o.id === props.operationID)?.dnm_id || 0;
+        dnm_doc_number = await store.fetchDNMDocNumber(props.operationID);
+        };
+      
+
       const docParams = {
         stockID: props.stockID,
         operationID: props.operationID,
         userID: Number(store.currentUser?.id),
-        docNumber: "New doc"
+        docNumber: dnm_doc_number
       };
 
-      let newDocID = await store.createArrival(docParams);
-      console.log(newDocID);
-
-      if (!newDocID) {
+      doc_id = await store.createArrival(docParams);
+      if (!doc_id) {
         return;
       };
-      await store.fetchArrival(props.stockID, props.operationID, newDocID, 0);  
     }  
     else {
-      await store.fetchArrival(props.stockID, props.operationID, props.docID, props.materialID);
+      doc_id = props.docID;
+      product_id = props.materialID;
     };
 
+    console.log(product_id);  
+    await store.fetchArrival(props.stockID, props.operationID, doc_id, product_id);  
 
     if (store.arrival) {
         doc_number.value = store.arrival.doc_number;
@@ -109,7 +124,7 @@ const deleteDoc = async () =>  {
         return;
     }
 
-    await store.deleteArrival(props.docID);
+    await store.deleteArrival(doc_id);
     router.push(`/stock/${props.stockID}/operation/${props.operationID}`);
 };
 
@@ -147,7 +162,7 @@ const saveDoc = async () =>  {
   
   const docParams = {
       stockID: props.stockID,
-      docID: props.docID,
+      docID: doc_id,
       docNumber: doc_number.value.trim(),
       docDate: doc_date.value,
       materialID: props.materialID,

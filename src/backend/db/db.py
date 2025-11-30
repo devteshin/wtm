@@ -307,6 +307,27 @@ async def check_can_login(conn: Connection, user_id: int):
     return can_login
 
 
+async def select_dnm_doc_number(conn: Connection, operation_id: int):
+    if operation_id == 0:
+        return ""
+
+    async with conn.cursor() as cur:
+        try:
+            await cur.callproc("get_dnm_doc_number", [operation_id])
+        except Exception as e:
+            print(f"ERROR callproc \"get_dnm_doc_number\": {e}")
+            return ""   
+        try:
+            await cur.execute("SELECT @dnm_doc_number AS dnm_doc_number")
+            result = await cur.fetchone()
+            dnm_doc_number = result.get("dnm_doc_number", None)
+            return dnm_doc_number
+        except Exception as e:
+            print(f"ERROR \"select_dnm_doc_number\": {e}")
+
+    return ""
+
+
 async def select_operations(conn: Connection, user_id: int, stock_id: int):
     q = """
         SELECT 

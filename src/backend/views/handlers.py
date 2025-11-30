@@ -1,7 +1,7 @@
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, HTTPException, Request, Response
 
 from db import (check_user, select_task, select_tasks, change_password,
-                select_stocks, select_operations, select_operation, select_arrival,
+                select_stocks, select_operations, select_dnm_doc_number, select_operation, select_arrival,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival,
                 check_material_item
                 )
@@ -37,6 +37,14 @@ async def change_password_handler(request: Request):
         await change_password(conn, request.user_id, password_hash)
     return HTTPCreated()
 
+
+async def get_dnm_doc_number(request: Request):
+    operation_id = request.match_info.get("operationID", None)
+    if operation_id is None:
+        raise HTTPBadRequest()
+    async with request.app["db"].acquire() as conn:
+        dnm_doc_number = await select_dnm_doc_number(conn, operation_id)
+    return await jsonify(dnm_doc_number, request)
 
 async def get_operations(request: Request):
     """ получени списка операций """

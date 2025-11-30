@@ -10,6 +10,7 @@ const OPERATION = "operation";
 const MATERIAL = "material";
 const DOC = "doc";
 const JOB = "job";
+const DNM = "dnm";
 const ARRIVAL = "arrival";
 const ARRIVAL_DELETE = "arrival/delete";
 const ARRIVAL_CREATE = "arrival/create";
@@ -55,6 +56,17 @@ class ClientAPI {
 
     requestHeaders(): HeadersInit {
         return this.token ? { token: this.token } : {};
+    }
+
+    async fetchDNMDocNumber(operationID: number) {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/${DNM}/${operationID}`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
     }
 
     async fetchOperations(stockID: number) {
