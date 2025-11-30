@@ -632,10 +632,11 @@ async def create_arrival(conn: Connection, stock_id: int, operation_id: int, use
         async with conn.cursor() as cur:
             await cur.execute(q_create, {"stock_id": stock_id, "operation_id": operation_id, "user_id": user_id, "doc_number": doc_number})
 
-            #await cur.execute("SELECT LAST_INSERT_ID() AS id")
-            #result = await cur.fetchone()
-            #new_doc_id = result.get("id", None)
-            #print(new_doc_id)
+            await cur.execute("SELECT LAST_INSERT_ID() AS id")
+            result = await cur.fetchone()
+            new_doc_id = result.get("id", None)
+            print(new_doc_id)
+            return new_doc_id
 
     except Exception as e:
         print(f"ERROR \"create_arrival\": {e}")
