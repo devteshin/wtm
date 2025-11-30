@@ -526,28 +526,40 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         VALUES
     """ + values_string
     
+    #async with conn.cursor() as cur:
+    #    await cur.execute("START TRANSACTION;")
+
+    #try:
+    #    async with conn.cursor() as cur:
+    #        await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})#
+
+    #    async with conn.cursor() as cur:
+    #        await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
+
+    #    async with conn.cursor() as cur:
+    #        await cur.execute(q_insert_arrival)
+
+    #    async with conn.cursor() as cur:
+    #        await cur.execute("COMMIT;")
+
+    #except Exception as e:
+    #    async with conn.cursor() as cur:
+    #        await cur.execute("ROLLBACK;")
+    #    print(f"ERROR \"update_arrival\": {e}")
+
     async with conn.cursor() as cur:
         await cur.execute("START TRANSACTION;")
-
-    try:
-        async with conn.cursor() as cur:
+        try:
             await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
-
-        async with conn.cursor() as cur:
             await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
-
-        async with conn.cursor() as cur:
             await cur.execute(q_insert_arrival)
-
-        async with conn.cursor() as cur:
             await cur.execute("COMMIT;")
 
-    except Exception as e:
-        async with conn.cursor() as cur:
+        except Exception as e:
             await cur.execute("ROLLBACK;")
-        print(f"ERROR \"update_arrival\": {e}")
+            print(f"ERROR \"update_arrival\": {e}")
 
-    return 0    
+    return    
 
 
 async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
