@@ -206,7 +206,8 @@ async def create_arrival_handler(request: Request):
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
     #return HTTPCreated()
-    return Response(status=201, body={"new_doc_id": new_doc_id})
+    #return Response(status=201, body={"new_doc_id": new_doc_id})
+    return Response(status=201)
 
 async def update_arrival_handler(request: Request):
     payload: dict = await request.json()

@@ -237,6 +237,33 @@ class ClientAPI {
         try {
             const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
             console.log(response);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+            }
+
+            //const data = await response.json();
+            //console.log(data.new_doc_id);            
+        } catch (error) {
+            this.handleError(error);
+            return 0;
+        }
+        
+        
+        return 0;
+    }
+
+
+    async createArrival_origin(payload: any) {
+        const url = `${BASE_URL}/${ARRIVAL_CREATE}`;
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+
+        try {
+            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+            console.log(response);
             const responseBody = await response.text(); // Считываем тело ответа как текст
 
             if (!response.ok) {
