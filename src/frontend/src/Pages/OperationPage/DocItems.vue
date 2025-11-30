@@ -54,8 +54,6 @@ let doc_changed: boolean;
       let dnm_doc_number = "";
 
       if (store.operations) {
-        console.log(store.operations);
-        console.log(props.operationID);
         product_id = store.operations.find(o => o.id === props.operationID)?.product_id || 0;
         dnm_id = store.operations.find(o => o.id === props.operationID)?.dnm_id || 0;
         dnm_doc_number = await store.fetchDNMDocNumber(props.operationID);
@@ -79,7 +77,6 @@ let doc_changed: boolean;
       product_id = props.materialID;
     };
 
-    console.log(product_id);  
     await store.fetchArrival(props.stockID, props.operationID, doc_id, product_id);  
 
     if (store.arrival) {
@@ -93,6 +90,7 @@ let doc_changed: boolean;
         min_start_items_num = start_items_num.value
     }
 
+    console.log(store.arrival);
     doc_changed = false
 
      watch(doc_number, () => {doc_changed = true});
@@ -165,13 +163,19 @@ const saveDoc = async () =>  {
       docID: doc_id,
       docNumber: doc_number.value.trim(),
       docDate: doc_date.value,
-      materialID: props.materialID,
+      materialID: product_id,
       arrival_items: doc_items.value.filter(item => item.gross_weight > 0 && item.tare_type != '')
   };
 
   let success = await store.updateArrival(docParams);
   if (success) {
-    location.reload()
+    //location.reload()
+    if (!props.docID) {
+      router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${doc_id}/material/${product_id}`);  
+    }
+    else {
+      location.reload();
+    };
   };
 
   
@@ -196,7 +200,7 @@ function addItems(position_num: number) {
     const item = <docItemsData>{};
 
     item.tare_id = next_tare_id + i;
-    item.key_material =  props.materialID.toString() + '_' + item.tare_id.toString() ;
+    item.key_material =  product_id.toString() + '_' + item.tare_id.toString() ;
     item.gross_weight = 0;
     item.tare_type = tare_default.value;
     item.tare_weight = getTareWeight(tare_default.value);
