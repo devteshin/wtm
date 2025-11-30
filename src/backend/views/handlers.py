@@ -1,4 +1,5 @@
-from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, HTTPException, Request
+from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, HTTPException, Request, Response
+
 from db import (check_user, select_task, select_tasks, change_password,
                 select_stocks, select_operations, select_operation, select_arrival,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival,
@@ -202,12 +203,10 @@ async def create_arrival_handler(request: Request):
             new_doc_id = await create_arrival(conn, stock_id, operation_id, user_id, doc_number)
             print("create_arrival_handler")
             print(new_doc_id)
-            #await create_arrival(conn, stock_id, operation_id, user_id, doc_number)
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
-    #return HTTPCreated(), new_doc_id
-    return HTTPCreated()
-
+    #return HTTPCreated()
+    return Response(status=201, body={"new_doc_id": new_doc_id})
 
 async def update_arrival_handler(request: Request):
     payload: dict = await request.json()
