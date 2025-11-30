@@ -7,6 +7,7 @@ from db import (check_user, select_task, select_tasks, change_password,
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError
+import json
 
 async def login_handler(request: Request):
     """ хэндлен авторизация """
@@ -207,7 +208,8 @@ async def create_arrival_handler(request: Request):
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
     #return HTTPCreated()
     #return Response(status=201, body={"new_doc_id": new_doc_id})
-    return Response(status=201)
+    #return Response(status=201)
+    return Response(status=201, text=json.dumps({"new_doc_id": new_doc_id}), content_type='application/json')
 
 async def update_arrival_handler(request: Request):
     payload: dict = await request.json()
