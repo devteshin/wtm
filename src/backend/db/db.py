@@ -12,6 +12,8 @@ class MaterialError(Exception):
 class ItemsExistsError(Exception):
     pass
 
+MATERIAL_KIND_MATERIAL = 0
+MATERIAL_KIND_PROBE = 1
 
 async def select_tasks(conn: Connection, user_id: int, stock_id: int) -> list:
     """ получение списка заданий """
@@ -575,13 +577,13 @@ async def get_material_id(conn: Connection, material: str):
         await cur.execute(q, {"material": material})
         result = await cur.fetchone()
         if result is None:
-            q = "insert into material (material, kind) values (%(material)s, 'материал')"
-            await cur.execute(q, {"material": material})
+            q = "insert into material (material, kind) values (%(material)s, %(kind)s)"
+            await cur.execute(q, {"material": material, "kind": MATERIAL_KIND_MATERIAL})
             await cur.execute("SELECT LAST_INSERT_ID() AS id")
             result = await cur.fetchone()
             return result.get("id", None)
         else:
-            if result.get("kind", None) == "проба":
+            if result.get("kind", None) == MATERIAL_KIND_PROBE:
                 return None
             else:
                 return result.get("id", None)
