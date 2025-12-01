@@ -6,6 +6,9 @@ from functools import reduce
 class DocumentExistsError(Exception):
     pass
 
+class MaterialError(Exception):
+    pass
+
 class ItemsExistsError(Exception):
     pass
 
@@ -395,8 +398,7 @@ ORDER BY
 async def select_arrival(conn: Connection, doc_id: int, material_id: int):
     q = """
 SELECT
-	key_material
-	, tare_id
+	tare_id
 	, gross_weight
 	, tare_type
     , tare.weight AS tare_weight 
@@ -489,11 +491,11 @@ ORDER BY
         stocks = await cur.fetchall()
     return stocks
 
-def make_key_material_string(arrival_items: list[dict]):
+def make_key_material_string(material_id: int, arrival_items: list[dict]):
     res_string = ""
 
     if arrival_items:
-        res_string = reduce(lambda acc, item: acc  + ",'" +  str(item["key_material"]) + "'", arrival_items, "")
+        res_string = reduce(lambda acc, item: acc  + ",'" + str(material_id) + "_" + str(item["tare_id"]) + "'", arrival_items, "")
         res_string = res_string[1:]
 
     return res_string
@@ -507,7 +509,7 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
 
         item_string = (f",({material_id},{item["tare_id"]},'{item["tare_type"]}',1"
         f",{item["gross_weight"]},{item_net_weight},{item["gross_weight"]},{item_net_weight}"
-        f",'{item["key_material"]}',{doc_id})")
+        f",'{material_id}_{item["tare_id"]}',{doc_id})")
 
         res_string = res_string + item_string
 
@@ -516,14 +518,18 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
 
     return res_string
 
-async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_number: str, doc_date: str, material_id: int, arrival_items: list[dict]):
+async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_number: str, doc_date: str, material_id: int, material:str, arrival_items: list[dict]):
 
     doc_number_exists = await check_doc_number(conn, doc_id, doc_number)
 
     if doc_number_exists:
         raise DocumentExistsError(f"Документ '{doc_number}' уже существует.")
+    
+    new_material_id = await get_material_id(conn, material)
+    if new_material_id is None:
+        raise MaterialError(f"Ошибка при обработке материала'{material}'.")
 
-    items_list = await check_items(conn, stock_id, doc_id, arrival_items)
+    items_list = await check_items(conn, stock_id, doc_id, new_material_id, arrival_items)
 
     if items_list:
         raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
@@ -543,7 +549,7 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 		doc_id = %(doc_id)s AND material = %(material_id)s
     """
 
-    values_string = make_arrival_items_string(doc_id, material_id, arrival_items)
+    values_string = make_arrival_items_string(doc_id, new_material_id, arrival_items)
     q_insert_arrival = """
 		INSERT INTO arrival (material, tare_id, tare_type, tare_amount, gross_weight_arrival, net_weight_arrival, gross_weight, net_weight, key_material, doc_id)
         VALUES
@@ -563,6 +569,23 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     return    
 
+async def get_material_id(conn: Connection, material: str):
+    q = "select id, kind from material where material = %(material)s"
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"material": material})
+        result = await cur.fetchone()
+        if result is None:
+            q = "insert into material (material, kind) values (%(material)s, 'материал')"
+            await cur.execute(q, {"material": material})
+            await cur.execute("SELECT LAST_INSERT_ID() AS id")
+            result = await cur.fetchone()
+            return result.get("id", None)
+        else:
+            if result.get("kind", None) == "проба":
+                return None
+            else:
+                return result.get("id", None)
+
 
 async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
     q = """ SELECT EXISTS (SELECT TRUE FROM arrival_doc WHERE doc_number = %(doc_number)s AND id <> %(doc_id)s) AS doc_number_exists """
@@ -574,9 +597,9 @@ async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
             doc_number_exists = True
     return doc_number_exists
 
-async def check_items(conn: Connection, stock_id: int, doc_id: int, arrival_items: list):
+async def check_items(conn: Connection, stock_id: int, doc_id: int, material_id: int, arrival_items: list):
 
-    key_material_string = make_key_material_string(arrival_items)
+    key_material_string = make_key_material_string(material_id, arrival_items)
 
     if not key_material_string:
         return ""

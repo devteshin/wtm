@@ -114,7 +114,6 @@ declare namespace frontend {
     }
 
     export type IArrivalItems = {
-        key_material: string
         tare_id: number
         gross_weight: number
         tare_type: string

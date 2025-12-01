@@ -16,7 +16,6 @@ const props = defineProps({
 });
 
 interface docItemsData {
-  key_material: string,
   tare_id: number,
   gross_weight: number,
   tare_type: string,
@@ -36,10 +35,10 @@ const doc_date = ref('');
 const doc_material = ref('');
 const doc_operation = ref('');
 const doc_items = ref([<docItemsData>{}]);
-let tare_options = [<tareOptions>{}];
 const tare_default = ref('');
 let doc_id = 0;
-let product_id = 0;   
+let product_id = 0;
+let operation_id = 0;   
 
 const add_items_num = ref(1);
 const start_items_num = ref(0);
@@ -54,6 +53,7 @@ let doc_changed: boolean;
       let dnm_doc_number = "";
 
       if (store.operations) {
+        console.log(store.operations);
         product_id = store.operations.find(o => o.id === props.operationID)?.product_id || 0;
         dnm_id = store.operations.find(o => o.id === props.operationID)?.dnm_id || 0;
         dnm_doc_number = await store.fetchDNMDocNumber(props.operationID);
@@ -75,11 +75,22 @@ let doc_changed: boolean;
     else {
       doc_id = props.docID;
       product_id = props.materialID;
+      if (!product_id) {
+        console.log(product_id);
+        console.log(props.operationID);
+        console.log(store.operations);
+        product_id = store.operations.find(o => o.id === props.operationID)?.product_id || 0;
+        console.log(product_id);
+      }; 
     };
 
-    await store.fetchArrival(props.stockID, props.operationID, doc_id, product_id);  
+
+    operation_id = props.operationID;
+
+    await store.fetchArrival(props.stockID, operation_id, doc_id, product_id);  
 
     if (store.arrival) {
+        console.log(store.arrival);
         doc_number.value = store.arrival.doc_number;
         doc_date.value = store.arrival.doc_date;
         doc_material.value = store.arrival.material;
@@ -123,34 +134,33 @@ const deleteDoc = async () =>  {
     }
 
     await store.deleteArrival(doc_id);
-    router.push(`/stock/${props.stockID}/operation/${props.operationID}`);
+    router.push(`/stock/${props.stockID}/operation/${operation_id}`);
 };
 
 const closeDoc = async () =>  {
   if (doc_changed) {
-    try {
-        await ElMessageBox.confirm(
-            "Документ был изменен",
-            {
-                message: "Сохранить изменения?",
-                confirmButtonText: "Да",
-                cancelButtonText: "Нет",
-                type: "warning"
-            }
-        );
-    } catch (error) {
-        router.push(`/stock/${props.stockID}/operation/${props.operationID}`);
-        return;
-    }
-
-  saveDoc();
+    ElMessageBox.confirm('Сохранить изменения?', 'Документ был изменен', {
+      confirmButtonText: 'Да',
+      cancelButtonText: 'Нет',
+      type: 'warning',
+      distinguishCancelAndClose: true,
+      callback: (action) => {
+        if (action === 'confirm') {
+          saveDoc();
+          router.push(`/stock/${props.stockID}/operation/${operation_id}`);
+        } 
+        else if (action === 'cancel') {
+          router.push(`/stock/${props.stockID}/operation/${operation_id}`);
+        } 
+        else if (action === 'close') {
+          return;
+        }
+      },
+    })
   }
   else {
-    router.push(`/stock/${props.stockID}/operation/${props.operationID}`);
-  };
-
-  
-
+    router.push(`/stock/${props.stockID}/operation/${operation_id}`);
+  }
 };
 
 const saveDoc = async () =>  {
@@ -164,18 +174,13 @@ const saveDoc = async () =>  {
       docNumber: doc_number.value.trim(),
       docDate: doc_date.value,
       materialID: product_id,
+      material: doc_material.value,
       arrival_items: doc_items.value.filter(item => item.gross_weight > 0 && item.tare_type != '')
   };
 
   let success = await store.updateArrival(docParams);
   if (success) {
-    //location.reload()
-    if (!props.docID) {
-      router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${doc_id}/material/${product_id}`);  
-    }
-    else {
-      location.reload();
-    };
+    doc_changed = false
   };
 
   
@@ -200,7 +205,6 @@ function addItems(position_num: number) {
     const item = <docItemsData>{};
 
     item.tare_id = next_tare_id + i;
-    item.key_material =  product_id.toString() + '_' + item.tare_id.toString() ;
     item.gross_weight = 0;
     item.tare_type = tare_default.value;
     item.tare_weight = getTareWeight(tare_default.value);
@@ -314,7 +318,7 @@ function onWeightChange(value: number, item: docItemsData) {
                 <el-button type="success" plain @click="addItems(add_items_num)">Добавить</el-button>
               </el-header>
               <el-main>
-                <div v-for="item in doc_items" :key="item.key_material">
+                <div v-for="item in doc_items" :key="item.tare_id">
                   <el-input
                     v-model.number="item.gross_weight" :min="item.tare_weight" 
                     @change="onWeightChange(item.gross_weight, item)"

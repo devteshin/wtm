@@ -6,7 +6,7 @@ from db import (check_user, select_task, select_tasks, change_password,
                 check_material_item
                 )
 from utils import jsonify
-from db import DocumentExistsError, ItemsExistsError
+from db import DocumentExistsError, ItemsExistsError, MaterialError
 import json
 
 async def login_handler(request: Request):
@@ -223,16 +223,19 @@ async def update_arrival_handler(request: Request):
     doc_number = payload.get("docNumber", None)
     doc_date = payload.get("docDate", None)
     material_id = payload.get("materialID", None)
+    material = payload.get("material", None)
     arrival_items: list[dict] = payload.get("arrival_items", [])
 
-    if stock_id is None or doc_id is None or material_id is None or doc_number is None or doc_date is None:
+    if stock_id is None or doc_id is None or material_id is None or doc_number is None or doc_date is None or material is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            await update_arrival(conn, stock_id, doc_id, doc_number, doc_date, material_id, arrival_items)
+            await update_arrival(conn, stock_id, doc_id, doc_number, doc_date, material_id, material, arrival_items)
         except DocumentExistsError as exc:
             raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
         except ItemsExistsError as exc:
+            raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
+        except MaterialError as exc:
             raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
