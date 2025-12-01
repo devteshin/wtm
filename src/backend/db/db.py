@@ -610,7 +610,7 @@ async def check_items(conn: Connection, stock_id: int, doc_id: int, material_id:
         SELECT CONCAT('(', tare_id_list, ')', ' - ', doc_number) AS material_exists FROM
         (
         SELECT doc.doc_number, GROUP_CONCAT(tare_id) AS tare_id_list FROM stock_data AS sd
-        INNER JOIN arrival_doc AS doc ON doc.id = sd.doc_id AND doc.operation <> 0
+        INNER JOIN arrival_doc AS doc ON doc.id = sd.doc_id
         WHERE key_material IN (""" + key_material_string + """)
         AND sd.stock = %(stock_id)s
         AND doc_type = 0
@@ -619,6 +619,8 @@ async def check_items(conn: Connection, stock_id: int, doc_id: int, material_id:
         ) sd
     """
     items_list = []
+
+    print(q)
 
     async with conn.cursor() as cur:
         await cur.execute(q, {"stock_id": stock_id, "doc_id": doc_id})
