@@ -563,6 +563,8 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         VALUES
     """ + values_string
     
+    print(q_insert_arrival)
+
     async with conn.cursor() as cur:
         await cur.execute("START TRANSACTION;")
         try:
