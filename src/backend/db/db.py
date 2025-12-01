@@ -537,7 +537,7 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     items_list = await check_items(conn, stock_id, doc_id, new_material_id, arrival_items)
 
-    
+
 
     if items_list:
         raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
@@ -567,8 +567,11 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         await cur.execute("START TRANSACTION;")
         try:
             await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
+            print(q_update_doc)
             await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
+            print(q_delete_arrival)
             await cur.execute(q_insert_arrival)
+            print(q_insert_arrival)
             await cur.execute("COMMIT;")
 
         except Exception as e:
