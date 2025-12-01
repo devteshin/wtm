@@ -524,6 +524,8 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     doc_number_exists = await check_doc_number(conn, doc_id, doc_number)
 
+    print(doc_number_exists)
+
     if doc_number_exists:
         raise DocumentExistsError(f"Документ '{doc_number}' уже существует.")
     
@@ -531,7 +533,11 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     if new_material_id is None:
         raise MaterialError(f"Ошибка при обработке материала'{material}'.")
 
+    print(new_material_id)
+
     items_list = await check_items(conn, stock_id, doc_id, new_material_id, arrival_items)
+
+    
 
     if items_list:
         raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
