@@ -572,7 +572,8 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
             print(q_update_doc)
             await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
             print(q_delete_arrival)
-            await cur.execute(q_insert_arrival)
+            if values_string:
+                await cur.execute(q_insert_arrival)
             print(q_insert_arrival)
             await cur.execute("COMMIT;")
 
