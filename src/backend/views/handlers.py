@@ -70,12 +70,11 @@ async def get_operation(request: Request):
 async def get_arrival(request: Request):
     """ получени позиций документа прихода """
     doc_id = request.match_info.get("docID", None)
-    material_id = request.match_info.get("materialID", None)
-    if doc_id is None or material_id is None:
+    if doc_id is None:
         raise HTTPBadRequest()
     arrival = []
     async with request.app["db"].acquire() as conn:
-        arrival = await select_arrival(conn, doc_id, material_id)
+        arrival = await select_arrival(conn, doc_id)
     return await jsonify(arrival, request)
 
 async def get_stocks(request: Request):

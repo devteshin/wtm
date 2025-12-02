@@ -339,11 +339,11 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int):
             o.id
             , o.name AS operation 
             , IFNULL(a.doc_count, 0) AS doc_count
-            , product_id
-            , dnm_id 
+            , m.material AS material
         FROM operations AS o
         LEFT JOIN operation_executors AS oe ON oe.operation_id = o.id
         LEFT JOIN production_sequence_items AS psi ON psi.operation = o.id 
+        LEFT JOIN material AS m ON m.id = o.product_id
         LEFT JOIN 
             (
             SELECT operation, COUNT(doc_number) AS doc_count FROM arrival_doc AS doc
@@ -397,30 +397,49 @@ ORDER BY
         operation = await cur.fetchall()
     return operation
 
-async def select_arrival(conn: Connection, doc_id: int, material_id: int):
-    q = """
+async def select_arrival(conn: Connection, doc_id: int):
+    q_items = """
 SELECT
-	tare_id
+	m.material AS material
+	, tare_id
 	, gross_weight
 	, tare_type
-    , tare.weight AS tare_weight 
+	, tare.weight AS tare_weight 
 FROM
 	arrival
 LEFT JOIN tare ON tare.id = arrival.tare_type    
+LEFT JOIN material AS m ON m.id = arrival.material
 WHERE 
 	doc_id = %(doc_id)s 
-	AND material = %(material_id)s
+    """
+
+    q_materials = """
+SELECT
+	DISTINCT m.material AS material
+FROM
+	arrival
+LEFT JOIN material AS m ON m.id = arrival.material
+WHERE 
+	doc_id = %(doc_id)s 
     """
 
     arrival = {}
 
-    arrival = await select_arrival_meta(conn, doc_id, material_id)
+    arrival = await select_arrival_meta(conn, doc_id)
     if arrival is None:
-        return arrival
+        return None
+
+    arrival_materials = []
+
+    async with conn.cursor() as cur:
+        await cur.execute(q_materials, {"doc_id": doc_id})
+        arrival_items = await cur.fetchall()
+
+    arrival["materials"] = arrival_materials
 
     arrival_items = []
     async with conn.cursor() as cur:
-        await cur.execute(q, {"doc_id": doc_id, "material_id": material_id})
+        await cur.execute(q_items, {"doc_id": doc_id})
         arrival_items = await cur.fetchall()
 
     arrival["items"] = arrival_items
@@ -447,12 +466,11 @@ ORDER BY id
 
     return tare_options
 
-async def select_arrival_meta(conn: Connection, doc_id: int, material_id: int):
+async def select_arrival_meta(conn: Connection, doc_id: int):
     q = """
 SELECT
 	doc_number
 	, doc_date
-    , (SELECT material FROM material WHERE id = %(material_id)s) as material
     , o.name as operation
 FROM
 	arrival_doc AS a
@@ -462,7 +480,7 @@ WHERE
     """
     arrival_meta = {}
     async with conn.cursor() as cur:
-        await cur.execute(q, {"doc_id": doc_id, "material_id": material_id})
+        await cur.execute(q, {"doc_id": doc_id})
         arrival_meta = await cur.fetchone()
     return arrival_meta
 
@@ -524,8 +542,6 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     doc_number_exists = await check_doc_number(conn, doc_id, doc_number)
 
-    print(doc_number_exists)
-
     if doc_number_exists:
         raise DocumentExistsError(f"Документ '{doc_number}' уже существует.")
     
@@ -533,11 +549,7 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     if new_material_id is None:
         raise MaterialError(f"Ошибка при обработке материала'{material}'.")
 
-    print(new_material_id)
-
     items_list = await check_items(conn, stock_id, doc_id, new_material_id, arrival_items)
-
-
 
     if items_list:
         raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
@@ -563,18 +575,13 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         VALUES
     """ + values_string
     
-    print(q_insert_arrival)
-
     async with conn.cursor() as cur:
         await cur.execute("START TRANSACTION;")
         try:
             await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
-            print(q_update_doc)
             await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
-            print(q_delete_arrival)
             if values_string:
                 await cur.execute(q_insert_arrival)
-            print(q_insert_arrival)
             await cur.execute("COMMIT;")
 
         except Exception as e:

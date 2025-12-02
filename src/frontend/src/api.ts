@@ -91,10 +91,10 @@ class ClientAPI {
         return body;
     }
 
-    async fetchArrival(stockID: number, operationID: number, docID: number, materialID: number) {
+    async fetchArrival(stockID: number, operationID: number, docID: number) {
         /** получение списка позиций в документе приема из производства */
         this.checkToken();
-        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/${OPERATION}/${operationID}/${DOC}/${docID}/${MATERIAL}/${materialID}`, { headers: this.requestHeaders() });
+        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/${OPERATION}/${operationID}/${DOC}/${docID}`, { headers: this.requestHeaders() });
         if (response.status === 403) {
             window.localStorage.removeItem("token");
             location.href = "/login";

@@ -4,8 +4,7 @@ declare namespace frontend {
         id: number
         operation: string
         doc_count: number
-        product_id: number
-        dnm_id: number
+        material: number
     }
 
     /** Документы операции */
@@ -114,6 +113,7 @@ declare namespace frontend {
     }
 
     export type IArrivalItems = {
+        material: string
         tare_id: number
         gross_weight: number
         tare_type: string
@@ -129,7 +129,7 @@ declare namespace frontend {
     export type IArrival = {
         doc_number: string
         doc_date: string
-        material: string
+        materials: Array<string>
         operation: string
         items: Array<IArrivalItems>
         tare_options: Array<ITareOptions>

@@ -42,7 +42,7 @@ def setup_handlers(app: Application):
         ("GET", "/api/stock/{stockID}/operations", get_operations, "get_operations"),
         ("GET", "/api/stock/{stockID}/operation/{operationID}", get_operation, "get_operation"),
         ("GET", "/api/dnm/{operationID}", get_dnm_doc_number, "get_dnm_doc_number"),
-        ("GET", "/api/stock/{stockID}/operation/{operationID}/doc/{docID}/material/{materialID}", get_arrival, "get_arrival"),
+        ("GET", "/api/stock/{stockID}/operation/{operationID}/doc/{docID}", get_arrival, "get_arrival"),
         ("GET", "/api/stock/{stockID}/tasks", get_tasks, "get_tasks"),
         ("GET", "/api/stock/{stockID}/tasks_progress", tasks_progress, "tasks_progress"),
         ("GET", "/api/stock/{stockID}/task/{taskID}/material/{materialID}", get_task, "get_task"),

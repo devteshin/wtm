@@ -11,33 +11,25 @@ const store = useApplicationStore();
 const props = defineProps({
     stockID: { type: Number, required: true },
     operationID: { type: Number, required: true },
-    docID: { type: Number, required: true },
-    materialID: { type: Number, required: true },
+    docID: { type: Number, required: true }
 });
 
 interface docItemsData {
+  material: string,
   tare_id: number,
   gross_weight: number,
   tare_type: string,
   tare_weight: number
 };
 
-interface tareOptions {
-  tare_type: string,
-  tare_weight: number,
-  tare_type_id: number,
-  value: string,
-  label: string
-};
 
 const doc_number = ref('');
 const doc_date = ref('');
-const doc_material = ref('');
+const doc_materials = ref(['']);
 const doc_operation = ref('');
 const doc_items = ref([<docItemsData>{}]);
 const tare_default = ref('');
 let doc_id = 0;
-let product_id = 0;
 let operation_id = 0;   
 
 const add_items_num = ref(1);
@@ -49,13 +41,9 @@ let doc_changed: boolean;
 
     if (!props.docID) {
 
-      let dnm_id = 0;
       let dnm_doc_number = "";
 
       if (store.operations) {
-        console.log(store.operations);
-        product_id = store.operations.find(o => o.id === props.operationID)?.product_id || 0;
-        dnm_id = store.operations.find(o => o.id === props.operationID)?.dnm_id || 0;
         dnm_doc_number = await store.fetchDNMDocNumber(props.operationID);
         };
       
@@ -74,26 +62,18 @@ let doc_changed: boolean;
     }  
     else {
       doc_id = props.docID;
-      product_id = props.materialID;
-      if (!product_id) {
-        console.log(product_id);
-        console.log(props.operationID);
-        console.log(store.operations);
-        product_id = store.operations.find(o => o.id === props.operationID)?.product_id || 0;
-        console.log(product_id);
-      }; 
     };
 
 
     operation_id = props.operationID;
 
-    await store.fetchArrival(props.stockID, operation_id, doc_id, product_id);  
+    await store.fetchArrival(props.stockID, operation_id, doc_id);  
 
     if (store.arrival) {
         console.log(store.arrival);
         doc_number.value = store.arrival.doc_number;
         doc_date.value = store.arrival.doc_date;
-        doc_material.value = store.arrival.material;
+        doc_materials.value = store.arrival.materials;
         doc_operation.value = store.arrival.operation;
         doc_items.value = store.arrival.items;
 
@@ -106,8 +86,6 @@ let doc_changed: boolean;
 
      watch(doc_number, () => {doc_changed = true});
      watch(doc_date, () => {doc_changed = true});
-     watch(doc_material, () => {doc_changed = true});
-     watch(doc_operation, () => {doc_changed = true});
      watch(doc_items, () => {doc_changed = true}, {deep: true});
 });
 
@@ -164,17 +142,16 @@ const closeDoc = async () =>  {
 };
 
 const saveDoc = async () =>  {
-  if (doc_number.value == '' ||  doc_date.value == '' ||  doc_material.value == '') {
+  if (doc_number.value == '' ||  doc_date.value == '') {
     return
   };
   
+
   const docParams = {
       stockID: props.stockID,
       docID: doc_id,
       docNumber: doc_number.value.trim(),
       docDate: doc_date.value,
-      materialID: product_id,
-      material: doc_material.value,
       arrival_items: doc_items.value.filter(item => item.gross_weight > 0 && item.tare_type != '')
   };
 
@@ -259,12 +236,6 @@ function onWeightChange(value: number, item: docItemsData) {
                 </el-input>
               </div>  
               <div>
-                <el-input clearable
-                  v-model="doc_material"
-                  style="max-width: 300px"
-                  placeholder="Материал"
-                >
-                </el-input>
               </div>  
               <div>
                 <el-input 

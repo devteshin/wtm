@@ -68,9 +68,9 @@ export default defineStore("app_store", () => {
     };
 
     /** запрос к API для получения позиций документа приема из производства */
-    const fetchArrival = (stockID: number, operationID: number, docID: number, materialID: number, with_load=true) => {
+    const fetchArrival = (stockID: number, operationID: number, docID: number, with_load=true) => {
         if (with_load) loading.value = true;
-        return api.fetchArrival(stockID, operationID, docID, materialID).then(body => arrival.value = body).finally(() => {
+        return api.fetchArrival(stockID, operationID, docID).then(body => arrival.value = body).finally(() => {
             if (with_load) loading.value = false;
         });
     };
