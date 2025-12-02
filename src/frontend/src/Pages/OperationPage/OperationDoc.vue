@@ -9,7 +9,7 @@ const router = useRouter();
 const store = useApplicationStore();
 
 const props = defineProps({
-    stockID: { type:  Number, required: true },
+    stockID: { type: Number, required: true },
     operationID: { type: Number, required: true },
     docID: { type: Number, required: true }
 });
