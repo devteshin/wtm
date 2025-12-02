@@ -9,11 +9,13 @@ COPY src/frontend/vite.config.ts \
     src/frontend/index.html \
     src/frontend/tsconfig.json \
     src/frontend/eslint.config.js ./
-#RUN pnpm install
+RUN pnpm install
 COPY src/frontend/src src
 COPY src/frontend/public public
 #ENV NODE_OPTIONS='--max-old-space-size=512'
-RUN NODE_ENV=production pnpm build
+ENV NODE_ENV=production
+RUN pnpm build
+#RUN NODE_ENV=production pnpm build
 
 FROM python:3.12-slim-bookworm as aiohttp-backend
 WORKDIR /app
