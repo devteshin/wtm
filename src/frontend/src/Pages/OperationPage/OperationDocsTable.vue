@@ -15,10 +15,10 @@ const props = defineProps({
     operationID: { type: Number, required: true },
 });
 
-const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${row.doc_id}/material/${row.material_id}`);
+const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${row.doc_id}`);
 
 function createDoc() {
-    router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${0}/material/${0}`);
+    router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${0}`);
 };
 
 onMounted(async () => {
