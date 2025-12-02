@@ -429,13 +429,14 @@ WHERE
     if arrival is None:
         return None
 
-    arrival_materials = []
-
     async with conn.cursor() as cur:
         await cur.execute(q_materials, {"doc_id": doc_id})
-        arrival_items = await cur.fetchall()
+        result = await cur.fetchall()
 
-    print(arrival_items)
+    if isinstance(result, tuple):
+        arrival_materials = []
+    else:
+        arrival_materials = list(map(lambda x: x["material"], result))
 
     arrival["materials"] = arrival_materials
 
