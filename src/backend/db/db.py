@@ -435,6 +435,8 @@ WHERE
         await cur.execute(q_materials, {"doc_id": doc_id})
         arrival_items = await cur.fetchall()
 
+    print(arrival_items)
+
     arrival["materials"] = arrival_materials
 
     arrival_items = []

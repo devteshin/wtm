@@ -9,7 +9,7 @@ const router = useRouter();
 const store = useApplicationStore();
 
 const props = defineProps({
-    product: { type: String, required: true }
+    material: { type: String, required: true }
 });
 
 interface docItemsData {
@@ -27,11 +27,12 @@ const start_items_num = ref(0);
 let min_start_items_num = 0;
 
  onMounted(async () => {
-
+        start_items_num.value = getStartItemsNum();
+        min_start_items_num = start_items_num.value
 });
 
 const checkMaterial = () => {
-  return store.operation.map(item => item.material).includes(props.product);
+  return store.operation.map(item => item.material).includes(props.material);
 };
 
 

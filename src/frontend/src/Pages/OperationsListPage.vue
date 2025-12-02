@@ -41,6 +41,7 @@ const handleRowClick = (row: frontend.IOperations) => router.push(`/stock/${prop
 /** Получение данных от API со списком операций */
 onMounted(async () => {
     await store.fetchOperations(props.stockID);
+    console.log(store.operations);
 });
 
 /** Список столбцов для таблицы */
