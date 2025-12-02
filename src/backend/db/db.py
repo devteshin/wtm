@@ -400,7 +400,8 @@ ORDER BY
 async def select_arrival(conn: Connection, doc_id: int):
     q_items = """
 SELECT
-	m.material AS material
+    key_material
+	, m.material AS material
 	, tare_id
 	, gross_weight
 	, tare_type
@@ -413,32 +414,11 @@ WHERE
 	doc_id = %(doc_id)s 
     """
 
-    q_materials = """
-SELECT
-	DISTINCT m.material AS material
-FROM
-	arrival
-LEFT JOIN material AS m ON m.id = arrival.material
-WHERE 
-	doc_id = %(doc_id)s 
-    """
-
     arrival = {}
 
     arrival = await select_arrival_meta(conn, doc_id)
     if arrival is None:
         return None
-
-    async with conn.cursor() as cur:
-        await cur.execute(q_materials, {"doc_id": doc_id})
-        result = await cur.fetchall()
-
-    if isinstance(result, tuple):
-        arrival_materials = []
-    else:
-        arrival_materials = list(map(lambda x: x["material"], result))
-
-    arrival["materials"] = arrival_materials
 
     arrival_items = []
     async with conn.cursor() as cur:

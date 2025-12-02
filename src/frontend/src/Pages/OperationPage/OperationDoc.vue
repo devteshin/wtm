@@ -15,27 +15,14 @@ const props = defineProps({
     docID: { type: Number, required: true }
 });
 
-interface docItemsData {
-  material: string,
-  tare_id: number,
-  gross_weight: number,
-  tare_type: string,
-  tare_weight: number
-};
-
 
 const doc_number = ref('');
 const doc_date = ref('');
-const doc_materials = ref(['']);
 const doc_operation = ref('');
-const doc_items = ref([<docItemsData>{}]);
-const tare_default = ref('');
+const doc_items = ref([<frontend.IArrivalItems>{}]);
 let doc_id = 0;
 let operation_id = 0;   
 
-const add_items_num = ref(1);
-const start_items_num = ref(0);
-let min_start_items_num = 0;
 let doc_changed: boolean;
 
  onMounted(async () => {
@@ -63,6 +50,8 @@ let doc_changed: boolean;
     }  
     else {
       doc_id = props.docID;
+    
+    
     };
 
 
@@ -71,14 +60,13 @@ let doc_changed: boolean;
     await store.fetchArrival(props.stockID, operation_id, doc_id);  
 
     if (store.arrival) {
-        console.log(store.arrival);
+        console.log(store.arrival.doc_number);
         doc_number.value = store.arrival.doc_number;
         doc_date.value = store.arrival.doc_date;
-        doc_materials.value = store.arrival.materials;
         doc_operation.value = store.arrival.operation;
         doc_items.value = store.arrival.items;
 
-    }
+    };
 
     doc_changed = false
 
@@ -86,13 +74,6 @@ let doc_changed: boolean;
      watch(doc_date, () => {doc_changed = true});
      watch(doc_items, () => {doc_changed = true}, {deep: true});
 });
-
-function getFixedLengthNumber(value: number): string {
-  if (value) {
-    return value.toString().padStart(4, '_');
-  }
-  return '';
-};
 
 const deleteDoc = async () =>  {
     try {
@@ -206,11 +187,9 @@ const saveDoc = async () =>  {
           </el-container>
         </div>
       </el-col>
-      <el-col :span="8"><div class="grid-content ep-bg-purple" />
-        {{ doc_materials }}
-        <div v-for="material in doc_materials" :key="material" >
-          {{ material }}
-          <!-- <OperationDocItems :material="material"></OperationDocItems> -->
+      <el-col :span="12"><div class="grid-content ep-bg-purple" />
+        <div v-for="material in doc_items.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})" :key="material" >
+          <OperationDocItems :material="material" v-model:items="doc_items" ></OperationDocItems>
         </div>
       </el-col>
 
