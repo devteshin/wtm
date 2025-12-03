@@ -124,7 +124,6 @@ const saveDoc = async () =>  {
   if (doc_number.value == '' ||  doc_date.value == '') {
     return
   };
-  
 
   const docParams = {
       stockID: props.stockID,

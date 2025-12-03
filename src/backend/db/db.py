@@ -494,14 +494,14 @@ ORDER BY
         stocks = await cur.fetchall()
     return stocks
 
-def make_key_material_string(material_id: int, arrival_items: list[dict]):
-    res_string = ""
+def make_key_material_string(material_id_dict: dict, arrival_items: list[dict]):
+    key_material_string = ""
 
     if arrival_items:
-        res_string = reduce(lambda acc, item: acc  + ",'" + str(material_id) + "_" + str(item["tare_id"]) + "'", arrival_items, "")
-        res_string = res_string[1:]
+        key_material_string = reduce(lambda acc, item: acc  + ",'" + str(material_id_dict[item["material"]]) + "_" + str(item["tare_id"]) + "'", arrival_items, "")
+        key_material_string = key_material_string[1:]
 
-    return res_string
+    return key_material_string
 
 def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list[dict]):
 
@@ -521,18 +521,18 @@ def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list
 
     return res_string
 
-async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_number: str, doc_date: str, material_id: int, material:str, arrival_items: list[dict]):
+async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_number: str, doc_date: str, arrival_items: list[dict]):
 
     doc_number_exists = await check_doc_number(conn, doc_id, doc_number)
 
     if doc_number_exists:
         raise DocumentExistsError(f"Документ '{doc_number}' уже существует.")
     
-    new_material_id = await get_material_id(conn, material)
-    if new_material_id is None:
-        raise MaterialError(f"Ошибка при обработке материала'{material}'.")
+    material_id_dict = await get_material_id_dict(conn, arrival_items)
+    if material_id_dict is None:
+        raise MaterialError(f"Ошибка при формировании кода материала.")
 
-    items_list = await check_items(conn, stock_id, doc_id, new_material_id, arrival_items)
+    items_list = await check_items(conn, stock_id, doc_id, material_id_dict, arrival_items)
 
     if items_list:
         raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
@@ -573,6 +573,16 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     return    
 
+async def get_material_id_dict(conn: Connection, arrival_items: list[dict]):
+    material_id_dict = {}
+
+    for item in {item["material"] for item in arrival_items}:
+        material_id_dict[item] = get_material_id(conn, item)
+        if material_id_dict[item] == 0:
+            return None
+    print(material_id_dict)
+    return material_id_dict
+
 async def get_material_id(conn: Connection, material: str):
     q = "select id, kind from material where material = %(material)s"
     async with conn.cursor() as cur:
@@ -583,12 +593,12 @@ async def get_material_id(conn: Connection, material: str):
             await cur.execute(q, {"material": material, "kind": MATERIAL_KIND_MATERIAL})
             await cur.execute("SELECT LAST_INSERT_ID() AS id")
             result = await cur.fetchone()
-            return result.get("id", None)
+            return result.get("id", 0)
         else:
             if result.get("kind", None) == MATERIAL_KIND_PROBE:
-                return None
+                return 0
             else:
-                return result.get("id", None)
+                return result.get("id", 0)
 
 
 async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
@@ -601,9 +611,9 @@ async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
             doc_number_exists = True
     return doc_number_exists
 
-async def check_items(conn: Connection, stock_id: int, doc_id: int, material_id: int, arrival_items: list):
+async def check_items(conn: Connection, stock_id: int, doc_id: int, material_id_dict: dict, arrival_items: list):
 
-    key_material_string = make_key_material_string(material_id, arrival_items)
+    key_material_string = make_key_material_string(material_id_dict, arrival_items)
 
     if not key_material_string:
         return ""
@@ -620,6 +630,7 @@ async def check_items(conn: Connection, stock_id: int, doc_id: int, material_id:
         GROUP BY doc_number
         ) sd
     """
+
     items_list = []
 
     print(q)
