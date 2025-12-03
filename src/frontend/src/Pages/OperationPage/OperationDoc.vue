@@ -19,6 +19,7 @@ const props = defineProps({
 const doc_number = ref('');
 const doc_date = ref('');
 const doc_operation = ref('');
+const doc_operation_material = ref('');
 const doc_items = ref([<frontend.IArrivalItems>{}]);
 let doc_id = 0;
 let operation_id = 0;   
@@ -64,6 +65,7 @@ let doc_changed: boolean;
         doc_number.value = store.arrival.doc_number;
         doc_date.value = store.arrival.doc_date;
         doc_operation.value = store.arrival.operation;
+        doc_operation_material.value = store.arrival.operation_material;
         doc_items.value = store.arrival.items;
 
     };
@@ -188,7 +190,7 @@ const saveDoc = async () =>  {
       </el-col>
       <el-col :span="12"><div class="grid-content ep-bg-purple" />
         <div v-for="material in doc_items.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})" :key="material" >
-          <OperationDocItems :material="material" v-model:items="doc_items" ></OperationDocItems>
+          <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material" v-model:items="doc_items" ></OperationDocItems>
         </div>
       </el-col>
 

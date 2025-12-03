@@ -10,6 +10,8 @@ const router = useRouter();
 const store = useApplicationStore();
 
 const props = defineProps({
+    operation: { type: String, required: true },
+    operation_material: { type: String, required: true },
     material: { type: String, required: true },
     items: { type: Array as PropType<frontend.IArrivalItems[]>, required: true }
 });
@@ -113,8 +115,11 @@ const handleSubmit = (value) => {
               >
             </el-input>
             <el-button type="success" plain @click="dialogVisible = true">Изменить материал</el-button>
-             <TextInputDialog 
+             <TextInputDialog
+              width="500"
+              title="Введите название материала"
               v-model:dialogVisible="dialogVisible"
+              :initial-value="props.operation_material"
               @update:dialogVisible="dialogVisible = $event"
               @submit="handleSubmit"
             />            

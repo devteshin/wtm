@@ -1,12 +1,10 @@
 <template>
-  <el-dialog
-    title="Введите значение"
+  <el-dialog draggable
     v-model="visible"
     @close="handleClose"
   >
     <el-input
       v-model="inputValue"
-      placeholder="Введите текст"
     ></el-input>
     
     <span slot="footer" class="dialog-footer">
@@ -20,10 +18,8 @@
 import { ref, computed } from 'vue';
 
 const props = defineProps({
-    dialogVisible: {
-        type: Boolean,
-        required: true
-    }
+  dialogVisible: { type: Boolean, required: true },
+  initialValue: { type: String, required: true }
 });
 
 const emit = defineEmits<{
@@ -38,20 +34,20 @@ const visible = computed({
     }
 });
 
-const inputValue = ref('');
+const inputValue = ref(props.initialValue);
 
 const handleClose = () => {
-    inputValue.value = ''; // Очистка поля ввода при закрытии
-    emit('update:dialogVisible', false); // Закрытие диалога
+    inputValue.value = ''; 
+    emit('update:dialogVisible', false);
 };
 
 const closeDialog = () => {
-    emit('update:dialogVisible', false); // Закрытие диалога
+    emit('update:dialogVisible', false);
 };
 
 const submitValue = () => {
-    emit('submit', inputValue.value); // Передача значения в родительский компонент
-    handleClose(); // Закрытие диалога
+    emit('submit', inputValue.value);
+    handleClose();
 };
 
 </script>
@@ -60,5 +56,6 @@ const submitValue = () => {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
+
 }
 </style>

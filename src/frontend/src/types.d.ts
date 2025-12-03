@@ -4,7 +4,6 @@ declare namespace frontend {
         id: number
         operation: string
         doc_count: number
-        material: number
     }
 
     /** Документы операции */
@@ -131,6 +130,7 @@ declare namespace frontend {
         doc_number: string
         doc_date: string
         operation: string
+        operation_material: string
         items: Array<IArrivalItems>
         tare_options: Array<ITareOptions>
     }

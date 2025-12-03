@@ -339,11 +339,9 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int):
             o.id
             , o.name AS operation 
             , IFNULL(a.doc_count, 0) AS doc_count
-            , m.material AS material
         FROM operations AS o
         LEFT JOIN operation_executors AS oe ON oe.operation_id = o.id
         LEFT JOIN production_sequence_items AS psi ON psi.operation = o.id 
-        LEFT JOIN material AS m ON m.id = o.product_id
         LEFT JOIN 
             (
             SELECT operation, COUNT(doc_number) AS doc_count FROM arrival_doc AS doc
@@ -455,9 +453,11 @@ SELECT
 	doc_number
 	, doc_date
     , o.name as operation
+    , m.material as operation_material
 FROM
 	arrival_doc AS a
 LEFT JOIN operations AS o ON o.id = a.operation
+LEFT JOIN material AS m ON m.id = o.product_id
 WHERE 
 	a.id = %(doc_id)s 
     """
