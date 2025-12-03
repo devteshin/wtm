@@ -503,16 +503,16 @@ def make_key_material_string(material_id_dict: dict, arrival_items: list[dict]):
 
     return key_material_string
 
-def make_arrival_items_string(doc_id: int, material_id: int, arrival_items: list[dict]):
+def make_arrival_items_string(doc_id: int, material_id_dict: dict, arrival_items: list[dict]):
 
     res_string = ""
 
     for item in arrival_items:
         item_net_weight = item["gross_weight"] - item["tare_weight"]
 
-        item_string = (f",({material_id},{item["tare_id"]},'{item["tare_type"]}',1"
+        item_string = (f",({material_id_dict[item["material"]]},{item["tare_id"]},'{item["tare_type"]}',1"
         f",{item["gross_weight"]},{item_net_weight},{item["gross_weight"]},{item_net_weight}"
-        f",'{material_id}_{item["tare_id"]}',{doc_id})")
+        f",'{material_id_dict[item["material"]]}_{item["tare_id"]}',{doc_id})")
 
         res_string = res_string + item_string
 
@@ -549,10 +549,10 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     q_delete_arrival = """
 		DELETE FROM arrival
 		WHERE
-		doc_id = %(doc_id)s AND material = %(material_id)s
+		doc_id = %(doc_id)s
     """
 
-    values_string = make_arrival_items_string(doc_id, new_material_id, arrival_items)
+    values_string = make_arrival_items_string(doc_id, material_id_dict, arrival_items)
     q_insert_arrival = """
 		INSERT INTO arrival (material, tare_id, tare_type, tare_amount, gross_weight_arrival, net_weight_arrival, gross_weight, net_weight, key_material, doc_id)
         VALUES
