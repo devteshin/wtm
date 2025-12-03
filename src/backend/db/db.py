@@ -498,7 +498,7 @@ def make_key_material_string(material_id_dict: dict, arrival_items: list[dict]):
     key_material_string = ""
 
     print(material_id_dict)
-    
+
 
     if arrival_items:
         key_material_string = reduce(lambda acc, item: acc  + ",'" + str(material_id_dict[item["material"]]) + "_" + str(item["tare_id"]) + "'", arrival_items, "")
@@ -561,11 +561,13 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         VALUES
     """ + values_string
     
+    raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
+
     async with conn.cursor() as cur:
         await cur.execute("START TRANSACTION;")
         try:
             await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
-            await cur.execute(q_delete_arrival, {"doc_id": doc_id, "material_id": material_id})
+            await cur.execute(q_delete_arrival, {"doc_id": doc_id})
             if values_string:
                 await cur.execute(q_insert_arrival)
             await cur.execute("COMMIT;")
@@ -591,6 +593,8 @@ async def get_material_id(conn: Connection, material: str):
     async with conn.cursor() as cur:
         await cur.execute(q, {"material": material})
         result = await cur.fetchone()
+        print("result")
+        print(result)
         if result is None:
             q = "insert into material (material, kind) values (%(material)s, %(kind)s)"
             await cur.execute(q, {"material": material, "kind": MATERIAL_KIND_MATERIAL})
