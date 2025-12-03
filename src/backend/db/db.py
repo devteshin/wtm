@@ -400,7 +400,7 @@ ORDER BY
 async def select_arrival(conn: Connection, doc_id: int):
     q_items = """
 SELECT
-    key_material
+    CONCAT(m.material, '_', tare_id) AS key_material
 	, m.material AS material
 	, tare_id
 	, gross_weight
