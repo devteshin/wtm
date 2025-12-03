@@ -582,7 +582,7 @@ async def get_material_id_dict(conn: Connection, arrival_items: list[dict]):
     material_id_dict = {}
 
     for item in {item["material"] for item in arrival_items}:
-        material_id_dict[item] = get_material_id(conn, item)
+        material_id_dict[item] = await get_material_id(conn, item)
         if material_id_dict[item] == 0:
             return None
     print(material_id_dict)
