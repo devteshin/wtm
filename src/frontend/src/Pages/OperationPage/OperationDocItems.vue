@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import useApplicationStore from "@/store";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
+import TextInputDialog from "@/components/TextInputDialog.vue";
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -19,7 +20,7 @@ const add_items_num = ref(1);
 const start_items_num = ref(0);
 let min_start_items_num = 0;
 
- onMounted(async () => {
+onMounted(() => {
   console.log(props.material);
   console.log(props.items);
   start_items_num.value = getStartItemsNum();
@@ -56,13 +57,15 @@ function addItems(position_num: number) {
   const next_tare_id = start_items_num.value;
 
   for (let i = 0; i < position_num; i++) {
-    //const item = <docItemsData>{};
+    const item = <frontend.IArrivalItems>{};
 
-    //item.tare_id = next_tare_id + i;
-    //item.gross_weight = 0;
-    //item.tare_type = tare_default.value;
-    //item.tare_weight = getTareWeight(tare_default.value);
-    //doc_items.value.push(item)
+    item.tare_id = next_tare_id + i;
+    item.gross_weight = 0;
+    item.tare_type = tare_default.value;
+    item.tare_weight = getTareWeight(tare_default.value);
+    item.material = props.material
+    item.key_material = item.material + '_' + item.tare_id
+    props.items.push(item);
   }
 
   start_items_num.value = getStartItemsNum();
@@ -90,12 +93,32 @@ function onWeightChange(value: number, item: frontend.IArrivalItems) {
   console.log(store.arrival);
 };  
 
+const dialogVisible = ref(false); // Управление видимостью диалога
+
+const handleSubmit = (value) => {
+  console.log("Введенное значение:", value);
+  // Дополнительная логика обработки значения
+};
+
 </script>
 
 <template v-if="store.isAuth">
      <div class="common-layout">
       <el-container>
         <el-header>
+          <div>
+            <el-input disabled
+              v-model="props.material" 
+              style="max-width: 220px"
+              >
+            </el-input>
+            <el-button type="success" plain @click="dialogVisible = true">Изменить материал</el-button>
+             <TextInputDialog 
+              v-model:dialogVisible="dialogVisible"
+              @update:dialogVisible="dialogVisible = $event"
+              @submit="handleSubmit"
+            />            
+          </div>
           <el-input
             v-model.number="start_items_num" :min="min_start_items_num" :max="10000"
             @change="(value: number) => {if (value < min_start_items_num) {start_items_num = min_start_items_num} else {if (value > 10000) {start_items_num = 10000}}}"

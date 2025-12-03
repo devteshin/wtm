@@ -168,7 +168,7 @@ const saveDoc = async () =>  {
               <div>
               </div>  
               <div>
-                <el-input 
+                <el-input disabled
                   v-model="doc_operation"
                   style="max-width: 300px"
                   placeholder="Операция"
