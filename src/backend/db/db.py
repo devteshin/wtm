@@ -561,8 +561,8 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         VALUES
     """ + values_string
     
-    raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
-
+    print(q_insert_arrival)
+    
     async with conn.cursor() as cur:
         await cur.execute("START TRANSACTION;")
         try:
