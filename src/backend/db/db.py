@@ -497,6 +497,9 @@ ORDER BY
 def make_key_material_string(material_id_dict: dict, arrival_items: list[dict]):
     key_material_string = ""
 
+    print(material_id_dict)
+    
+
     if arrival_items:
         key_material_string = reduce(lambda acc, item: acc  + ",'" + str(material_id_dict[item["material"]]) + "_" + str(item["tare_id"]) + "'", arrival_items, "")
         key_material_string = key_material_string[1:]
