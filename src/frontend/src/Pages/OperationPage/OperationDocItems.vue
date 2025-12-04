@@ -20,13 +20,13 @@ const tare_default = ref('');
 
 const add_items_num = ref(1);
 const start_items_num = ref(0);
+const material = ref('')
 let min_start_items_num = 0;
 
-onMounted(() => {
-  console.log(props.material);
-  console.log(props.items);
-  start_items_num.value = getStartItemsNum(props.material);
-  min_start_items_num = start_items_num.value
+onMounted(async () => {
+  start_items_num.value = await getStartItemsNum(props.material);
+  min_start_items_num = start_items_num.value;
+  material.value = (props.material);
 });
 
 const checkMaterial = () => {
@@ -43,16 +43,15 @@ function getFixedLengthNumber(value: number): string {
 };
 
 
-function getStartItemsNum(materail: string) {
+async function getStartItemsNum(materail: string) {
   if (!props.items.filter(item => item.material === materail)) {
-    return 1;
-    //TODO здесь нужно получить номер из БД
+    return await store.fetchMaxTareID(materail) + 1;
   }
   return (props.items.filter(item => item.material === materail).map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
 
 };
 
-function addItems(position_num: number) {
+async function addItems(position_num: number) {
 
   if (position_num == 0 || tare_default.value == '') {
     return;
@@ -67,12 +66,12 @@ function addItems(position_num: number) {
     item.gross_weight = 0;
     item.tare_type = tare_default.value;
     item.tare_weight = getTareWeight(tare_default.value);
-    item.material = props.material
-    item.key_material = item.material + '_' + item.tare_id
+    item.material = material.value;
+    item.key_material = item.material + '_' + item.tare_id;
     props.items.push(item);
   }
 
-  start_items_num.value = getStartItemsNum(props.material);
+  start_items_num.value = await getStartItemsNum(material.value);
   min_start_items_num = start_items_num.value;
 };
 
@@ -112,7 +111,7 @@ const handleSubmit = (value) => {
         <el-header>
           <div>
             <el-input disabled
-              v-model="props.material" 
+              v-model="material" 
               style="max-width: 220px"
               >
             </el-input>

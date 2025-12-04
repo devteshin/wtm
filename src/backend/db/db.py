@@ -395,6 +395,16 @@ ORDER BY
         operation = await cur.fetchall()
     return operation
 
+async def select_max_tare_id(conn: Connection, material: str):
+    q = """
+    SELECT IFNULL(MAX(tare_id), 0) AS max_tare_id FROM arrival
+    INNER JOIN material AS m ON m.id = arrival.material AND m.material = %(material)s
+"""
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"material": material})
+        max_tare_id = await cur.fetchone()
+    return max_tare_id
+
 async def select_arrival(conn: Connection, doc_id: int):
     q_items = """
 SELECT

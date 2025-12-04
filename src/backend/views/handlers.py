@@ -1,7 +1,7 @@
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, HTTPException, Request, Response
 
 from db import (check_user, select_task, select_tasks, change_password,
-                select_stocks, select_operations, select_dnm_doc_number, select_operation, select_arrival,
+                select_stocks, select_operations, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival,
                 check_material_item
                 )
@@ -66,6 +66,15 @@ async def get_operation(request: Request):
     async with request.app["db"].acquire() as conn:
         operation = await select_operation(conn, request.user_id, stock_id, operation_id)
     return await jsonify(operation, request)
+
+async def get_max_tare_id(request: Request):
+    material = request.match_info.get("material", None)
+    if material is None:
+        raise HTTPBadRequest()
+    max_tare_id = 0
+    async with request.app["db"].acquire() as conn:
+        max_tare_id = await select_max_tare_id(conn, material)
+    return await jsonify(max_tare_id, request)
 
 async def get_arrival(request: Request):
     """ получени позиций документа прихода """

@@ -103,6 +103,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const fetchMaxTareID = (material: string) => {
+        loading.value = true;
+        return api.fetchMaxTareID(material).finally(() => {
+            loading.value = false;
+        });
+    };
+
     const createArrival = (payload: any) => {
         loading.value = true;
         return api.createArrival(payload).finally(() => {
@@ -170,6 +177,7 @@ export default defineStore("app_store", () => {
         fetchOperations,
         fetchOperation,
         fetchDNMDocNumber,
+        fetchMaxTareID,
         fetchArrival,
         fetchTasksList,
         fetchTask,

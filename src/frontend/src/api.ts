@@ -91,6 +91,17 @@ class ClientAPI {
         return body;
     }
 
+    async fetchMaxTareID(material: string) {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/${MATERIAL}/${material}`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
     async fetchArrival(stockID: number, operationID: number, docID: number) {
         /** получение списка позиций в документе приема из производства */
         this.checkToken();
@@ -267,37 +278,6 @@ class ClientAPI {
         } catch (error) {
             this.handleError(error);
             return 0;
-        }
-    }
-
-
-    async createArrival_origin(payload: any) {
-        const url = `${BASE_URL}/${ARRIVAL_CREATE}`;
-        const headers = {
-            "Content-Type": "application/json",
-            ...this.requestHeaders()
-        };
-
-        try {
-            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-
-            if (!response.ok) {
-                const responseBody = await response.text(); // Считываем тело ответа как текст
-                let errorMessage = "";
-                try {
-                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
-                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
-                } catch {
-                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
-                }
-                throw new Error(errorMessage);
-            }
-            else {
-                return
-            };
-        } catch (error) {
-            this.handleError(error);
-            return;
         }
     }
 
