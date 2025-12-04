@@ -25,12 +25,12 @@ let min_start_items_num = 0;
 onMounted(() => {
   console.log(props.material);
   console.log(props.items);
-  start_items_num.value = getStartItemsNum();
+  start_items_num.value = getStartItemsNum(props.material);
   min_start_items_num = start_items_num.value
 });
 
 const checkMaterial = () => {
-  return store.operation.map(item => item.material).includes(props.material);
+  //return store.operation.map(item => item.material).includes(props.material);
 };
 
 
@@ -43,11 +43,13 @@ function getFixedLengthNumber(value: number): string {
 };
 
 
-function getStartItemsNum() {
-  if (!props.items) {
-    return 0;
+function getStartItemsNum(materail: string) {
+  if (!props.items.filter(item => item.material === materail)) {
+    return 1;
+    //TODO здесь нужно получить номер из БД
   }
-  return (props.items.map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
+  return (props.items.filter(item => item.material === materail).map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
+
 };
 
 function addItems(position_num: number) {
@@ -70,7 +72,7 @@ function addItems(position_num: number) {
     props.items.push(item);
   }
 
-  start_items_num.value = getStartItemsNum();
+  start_items_num.value = getStartItemsNum(props.material);
   min_start_items_num = start_items_num.value;
 };
 

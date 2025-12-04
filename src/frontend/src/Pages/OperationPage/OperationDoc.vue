@@ -21,6 +21,7 @@ const doc_date = ref('');
 const doc_operation = ref('');
 const doc_operation_material = ref('');
 const doc_items = ref([<frontend.IArrivalItems>{}]);
+let isNewDoc = false;  
 let doc_id = 0;
 let operation_id = 0;   
 
@@ -48,11 +49,10 @@ let doc_changed: boolean;
       if (!doc_id) {
         return;
       };
+      isNewDoc = true;
     }  
     else {
       doc_id = props.docID;
-    
-    
     };
 
 
@@ -118,6 +118,9 @@ const closeDoc = async () =>  {
     })
   }
   else {
+    if (isNewDoc) {
+      await store.deleteArrival(doc_id);
+    }
     router.push(`/stock/${props.stockID}/operation/${operation_id}`);
   }
 };
