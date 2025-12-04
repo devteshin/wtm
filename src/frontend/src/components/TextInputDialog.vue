@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
 const props = defineProps({
   dialogVisible: { type: Boolean, required: true },
@@ -35,9 +35,11 @@ const visible = computed({
 });
 
 const inputValue = ref(props.initialValue);
+const initialtValue = props.initialValue;
+console.log(props);
 
 const handleClose = () => {
-    inputValue.value = ''; 
+    inputValue.value = initialtValue; 
     emit('update:dialogVisible', false);
 };
 

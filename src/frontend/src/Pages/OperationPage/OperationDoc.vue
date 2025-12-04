@@ -20,6 +20,7 @@ const doc_number = ref('');
 const doc_date = ref('');
 const doc_operation = ref('');
 const doc_operation_material = ref('');
+const doc_material_list = ref(['']);
 const doc_items = ref([<frontend.IArrivalItems>{}]);
 let isNewDoc = false;  
 let doc_id = 0;
@@ -61,13 +62,12 @@ let doc_changed: boolean;
     await store.fetchArrival(props.stockID, operation_id, doc_id);  
 
     if (store.arrival) {
-        console.log(store.arrival.doc_number);
         doc_number.value = store.arrival.doc_number;
         doc_date.value = store.arrival.doc_date;
         doc_operation.value = store.arrival.operation;
         doc_operation_material.value = store.arrival.operation_material;
         doc_items.value = store.arrival.items;
-
+        doc_material_list.value = doc_items.value.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})
     };
 
     doc_changed = false
@@ -147,6 +147,16 @@ const saveDoc = async () =>  {
 };
 
 
+function addMaterial() {
+  let new_material = doc_operation_material.value;
+  if (doc_material_list.value.includes(new_material)) {
+    new_material = new_material + " " + doc_material_list.value.length;
+  };
+
+  doc_material_list.value.push(new_material);
+
+};
+
 </script>
 
 <template v-if="store.isAuth">
@@ -186,13 +196,14 @@ const saveDoc = async () =>  {
                 <el-button type="success" plain @click="saveDoc()">Сохранить</el-button>
                 <el-button type="success" plain @click="closeDoc()">Закрыть</el-button>
                 <el-button type="danger" plain @click="deleteDoc()">Удалить</el-button>
+                <el-button type="success" plain @click="addMaterial()">Добавить материал</el-button>
               </div>
             </el-main>
           </el-container>
         </div>
       </el-col>
       <el-col :span="12"><div class="grid-content ep-bg-purple" />
-        <div v-for="material in doc_items.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})" :key="material" >
+        <div v-for="material in doc_material_list" :key="material" >
           <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material" v-model:items="doc_items" ></OperationDocItems>
         </div>
       </el-col>

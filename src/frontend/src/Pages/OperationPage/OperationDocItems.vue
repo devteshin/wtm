@@ -21,12 +21,18 @@ const tare_default = ref('');
 const add_items_num = ref(1);
 const start_items_num = ref(0);
 const material = ref('')
+const operation_material = ref(props.operation_material);
 let min_start_items_num = 0;
 
 onMounted(async () => {
-  start_items_num.value = await getStartItemsNum(props.material);
+  if (props.material) {
+    material.value = (props.material);
+  } else {
+    material.value = (props.operation_material);
+  };
+  start_items_num.value = await getStartItemsNum(material.value);
   min_start_items_num = start_items_num.value;
-  material.value = (props.material);
+  
 });
 
 const checkMaterial = () => {
@@ -93,7 +99,6 @@ function onWeightChange(value: number, item: frontend.IArrivalItems) {
   if (value < item.tare_weight && value != 0) {
     item.gross_weight = item.tare_weight
   };
-  console.log(store.arrival);
 };  
 
 const dialogVisible = ref(false); // Управление видимостью диалога
@@ -120,7 +125,7 @@ const handleSubmit = (value) => {
               width="500"
               title="Введите название материала"
               v-model:dialogVisible="dialogVisible"
-              :initial-value="props.operation_material"
+              :initial-value="operation_material"
               @update:dialogVisible="dialogVisible = $event"
               @submit="handleSubmit"
             />            
