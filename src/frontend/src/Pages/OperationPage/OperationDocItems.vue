@@ -122,6 +122,15 @@ const onMaterialChanged = (value: string) => {
 
 
 
+//const tableData = ref([{}]);
+
+//tableData.value = props.items.filter(item => item.material === material.value);
+
+const handleSubmit = (row) => {
+  console.log('Сохраненное значение:', row.value);
+  // Здесь можно добавить логику для обработки данных
+};
+
 </script>
 
 <template v-if="store.isAuth">
@@ -170,6 +179,37 @@ const onMaterialChanged = (value: string) => {
           <el-button type="success" plain @click="addItems(add_items_num)">Добавить</el-button>
         </el-header>
         <el-main>
+
+
+          <el-table :data="items.filter(item => item.material === material)" style="width: 100%">
+            <el-table-column prop="tare_id" label="Номер"></el-table-column>
+            <el-table-column prop="gross_weight" label="Значение">
+              <template #default="scope">
+                <el-input v-model.number="scope.row.gross_weight" placeholder="Введите значение"></el-input>
+              </template>
+            </el-table-column>
+
+            <el-table-column prop="tare_type" label="Тара">
+              <template #default="scope">
+                <el-select v-model="scope.row.tare_type" placeholder="Тара" style="width: 100px" 
+                >
+                  <el-option
+                    v-for="item in store.arrival?.tare_options"
+                    :key="item.tare_type_id"
+                    :label="item.tare_type"
+                    :value="item.tare_type"
+                  />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="Действия">
+              <template #default="scope">
+                <el-button @click="handleSubmit(scope.row)">Сохранить</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+
           <div v-for="item in items.filter(item => item.material === material)" :key="item.tare_id">
             <el-input
               v-model.number="item.gross_weight" :min="item.tare_weight" 
