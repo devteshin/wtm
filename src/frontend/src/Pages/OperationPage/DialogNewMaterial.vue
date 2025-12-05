@@ -24,7 +24,6 @@ const emit = defineEmits<{
     "submit": [value: string],
 }>();
 
-
 const visible = computed({
     get: () => props.dialogVisible,
     set: (value: boolean) => {
@@ -33,9 +32,17 @@ const visible = computed({
 });
 
 const handleSubmit = (value) => {
-    console.log(props.material_list);
+    console.log(props.initialValue);
+    console.log(value);
+    if (props.initialValue === value) {
+        return;
+    };
+    if (props.material_list.includes(value)) {
+        console.log(value);
+    } else {
+        emit('submit', value);
+    };
 
-    emit('submit', value);
 
 };
 

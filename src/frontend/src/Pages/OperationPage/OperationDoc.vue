@@ -146,11 +146,12 @@ const saveDoc = async () =>  {
   
 };
 
-
 function addMaterial() {
+  const now = new Date();
+
   let new_material = doc_operation_material.value;
   if (doc_material_list.value.includes(new_material)) {
-    new_material = new_material + " " + doc_material_list.value.length;
+    new_material = new_material + " - " + now.getHours() +":"+ now.getMinutes().toString().padStart(2, '0') +":"+ now.getSeconds().toString().padStart(2, '0');
   };
 
   doc_material_list.value.push(new_material);
@@ -205,7 +206,7 @@ function addMaterial() {
       <el-col :span="12"><div class="grid-content ep-bg-purple" />
         <div v-for="material in doc_material_list" :key="material" >
           <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material"
-          :material_list="doc_material_list" 
+          v-model:material_list="doc_material_list" 
           v-model:items="doc_items" ></OperationDocItems>
         </div>
       </el-col>

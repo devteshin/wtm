@@ -24,7 +24,7 @@ const add_items_num = ref(1);
 const start_items_num = ref(0);
 const material = ref('')
 const operation_material = ref(props.operation_material);
-const doc_material_list = ref(props.material_list);
+//const doc_material_list = ref(props.material_list);
 let min_start_items_num = 0;
 
 onMounted(async () => {
@@ -67,10 +67,9 @@ async function addItems(position_num: number) {
   }
 
   const next_tare_id = start_items_num.value;
-
+  
   for (let i = 0; i < position_num; i++) {
-    const item = <frontend.IArrivalItems>{};
-
+    const item = <frontend.IArrivalItems>{};  
     item.tare_id = next_tare_id + i;
     item.gross_weight = 0;
     item.tare_type = tare_default.value;
@@ -106,10 +105,22 @@ function onWeightChange(value: number, item: frontend.IArrivalItems) {
 
 const dialogVisible = ref(false);
 
-const handleSubmit = (value) => {
-  console.log("Введенное значение:", value);
-  
+const onMaterialChanged = (value: string) => {
+  props.items.forEach(item => {
+    if (item.material === material.value) {
+      item.material = value;
+      item.key_material = value + "_" + item.tare_id;
+    };
+  });
+  var index = props.material_list.indexOf(material.value);
+  if (index >= 0) {
+    props.material_list.splice( index, 1 );
+  };
+  props.material_list.push(value);
+  material.value = value;
 };
+
+
 
 </script>
 
@@ -127,9 +138,9 @@ const handleSubmit = (value) => {
              <DialogNewMaterial
               v-model:dialogVisible="dialogVisible"
               :initial-value="operation_material"
-              :material_list ="doc_material_list"
+              :material_list ="props.material_list"
               @update:dialogVisible="dialogVisible = $event"
-              @submit="handleSubmit"
+              @submit="onMaterialChanged"
             />            
           </div>
           <el-input
