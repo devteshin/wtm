@@ -5,6 +5,7 @@ import useApplicationStore from "@/store";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import TextInputDialog from "@/components/TextInputDialog.vue";
+import DialogNewMaterial from "./DialogNewMaterial.vue";
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -13,6 +14,7 @@ const props = defineProps({
     operation: { type: String, required: true },
     operation_material: { type: String, required: true },
     material: { type: String, required: true },
+    material_list: { type: Array as PropType<string[]>, required: true },
     items: { type: Array as PropType<frontend.IArrivalItems[]>, required: true }
 });
 
@@ -22,6 +24,7 @@ const add_items_num = ref(1);
 const start_items_num = ref(0);
 const material = ref('')
 const operation_material = ref(props.operation_material);
+const doc_material_list = ref(props.material_list);
 let min_start_items_num = 0;
 
 onMounted(async () => {
@@ -101,11 +104,11 @@ function onWeightChange(value: number, item: frontend.IArrivalItems) {
   };
 };  
 
-const dialogVisible = ref(false); // Управление видимостью диалога
+const dialogVisible = ref(false);
 
 const handleSubmit = (value) => {
   console.log("Введенное значение:", value);
-  // Дополнительная логика обработки значения
+  
 };
 
 </script>
@@ -121,11 +124,10 @@ const handleSubmit = (value) => {
               >
             </el-input>
             <el-button type="success" plain @click="dialogVisible = true">Изменить материал</el-button>
-             <TextInputDialog
-              width="500"
-              title="Введите название материала"
+             <DialogNewMaterial
               v-model:dialogVisible="dialogVisible"
               :initial-value="operation_material"
+              :material_list ="doc_material_list"
               @update:dialogVisible="dialogVisible = $event"
               @submit="handleSubmit"
             />            

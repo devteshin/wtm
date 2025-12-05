@@ -204,7 +204,9 @@ function addMaterial() {
       </el-col>
       <el-col :span="12"><div class="grid-content ep-bg-purple" />
         <div v-for="material in doc_material_list" :key="material" >
-          <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material" v-model:items="doc_items" ></OperationDocItems>
+          <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material"
+          :material_list="doc_material_list" 
+          v-model:items="doc_items" ></OperationDocItems>
         </div>
       </el-col>
 
