@@ -121,11 +121,11 @@ const onMaterialChanged = (value: string) => {
   material.value = value;
 };
 
-const tableLayout = ref<TableInstance['tableLayout']>('auto')
+const tareColumnEnabled = ref(false);
+const tableLayout = ref<TableInstance['tableLayout']>('auto');
 
 const handleSubmit = (row) => {
   console.log('Сохраненное значение:', row.value);
-  // Здесь можно добавить логику для обработки данных
 };
 
 </script>
@@ -147,7 +147,8 @@ const handleSubmit = (row) => {
               :material_list ="props.material_list"
               @update:dialogVisible="dialogVisible = $event"
               @submit="onMaterialChanged"
-            />            
+            />
+            <el-checkbox v-model="tareColumnEnabled" label="тара" border />            
           </div>
           <el-input
             v-model.number="start_items_num" :min="min_start_items_num" :max="10000"
@@ -178,7 +179,7 @@ const handleSubmit = (row) => {
         <el-main>
 
 
-          <el-table :data="items.filter(item => item.material === material)" style="width: 100%" :table-layout=tableLayout show-summary>
+          <el-table :data="items.filter(item => item.material === material)" style="width: 100%" :table-layout=tableLayout show-summary sum-text="Итого вес">
             <el-table-column prop="tare_id" label="Номер"></el-table-column>
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
@@ -189,7 +190,7 @@ const handleSubmit = (row) => {
 
             <el-table-column prop="tare_type" label="Тара">
               <template #default="scope">
-                <el-select v-model="scope.row.tare_type" placeholder="Тара" style="width: 100px" disabled 
+                <el-select v-model="scope.row.tare_type" :disabled="!tareColumnEnabled" placeholder="Тара" style="width: 100px" 
                 >
                   <el-option
                     v-for="item in store.arrival?.tare_options"
