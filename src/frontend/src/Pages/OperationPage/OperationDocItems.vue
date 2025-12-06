@@ -3,6 +3,7 @@ import { onMounted, onBeforeUnmount, computed, ref, PropType, watch } from "vue"
 import { useRouter } from "vue-router";
 import useApplicationStore from "@/store";
 import { ElMessage, ElMessageBox } from "element-plus";
+import type { TableInstance } from 'element-plus'
 import dayjs from "dayjs";
 import TextInputDialog from "@/components/TextInputDialog.vue";
 import DialogNewMaterial from "./DialogNewMaterial.vue";
@@ -120,11 +121,7 @@ const onMaterialChanged = (value: string) => {
   material.value = value;
 };
 
-
-
-//const tableData = ref([{}]);
-
-//tableData.value = props.items.filter(item => item.material === material.value);
+const tableLayout = ref<TableInstance['tableLayout']>('auto')
 
 const handleSubmit = (row) => {
   console.log('Сохраненное значение:', row.value);
@@ -181,17 +178,18 @@ const handleSubmit = (row) => {
         <el-main>
 
 
-          <el-table :data="items.filter(item => item.material === material)" style="width: 100%">
+          <el-table :data="items.filter(item => item.material === material)" style="width: 100%" :table-layout=tableLayout show-summary>
             <el-table-column prop="tare_id" label="Номер"></el-table-column>
-            <el-table-column prop="gross_weight" label="Значение">
+            <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
-                <el-input v-model.number="scope.row.gross_weight" placeholder="Введите значение"></el-input>
+                <el-input v-model.number="scope.row.gross_weight" placeholder="Введите значение"
+                ></el-input>
               </template>
             </el-table-column>
 
             <el-table-column prop="tare_type" label="Тара">
               <template #default="scope">
-                <el-select v-model="scope.row.tare_type" placeholder="Тара" style="width: 100px" 
+                <el-select v-model="scope.row.tare_type" placeholder="Тара" style="width: 100px" disabled 
                 >
                   <el-option
                     v-for="item in store.arrival?.tare_options"
@@ -202,14 +200,16 @@ const handleSubmit = (row) => {
                 </el-select>
               </template>
             </el-table-column>
+<!-- 
             <el-table-column label="Действия">
               <template #default="scope">
                 <el-button @click="handleSubmit(scope.row)">Сохранить</el-button>
               </template>
             </el-table-column>
+             -->
           </el-table>
 
-
+<!-- 
           <div v-for="item in items.filter(item => item.material === material)" :key="item.tare_id">
             <el-input
               v-model.number="item.gross_weight" :min="item.tare_weight" 
@@ -230,6 +230,8 @@ const handleSubmit = (row) => {
               />
             </el-select>
           </div>
+ -->
+
         </el-main>
       </el-container>
     </div>
