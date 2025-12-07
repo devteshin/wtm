@@ -131,12 +131,10 @@ const handleSubmit = (row) => {
 </script>
 
 <template v-if="store.isAuth">
-
      <div class="common-layout">
       <el-container>
-        <el-header height="10%" >
+        <el-header>
           <div>
-            Материал:
             <el-input disabled
               v-model="material" 
               style="max-width: 220px"
@@ -150,19 +148,20 @@ const handleSubmit = (row) => {
               @update:dialogVisible="dialogVisible = $event"
               @submit="onMaterialChanged"
             />
+            <el-checkbox v-model="tareColumnEnabled" label="тара" border />            
           </div>
           <el-input
             v-model.number="start_items_num" :min="min_start_items_num" :max="10000"
             @change="(value: number) => {if (value < min_start_items_num) {start_items_num = min_start_items_num} else {if (value > 10000) {start_items_num = 10000}}}"
-            style="max-width: 160px"
+            style="max-width: 220px"
             type="number"
             >
-            <template #prepend>Номер</template>
+            <template #prepend>Начальный номер</template>
           </el-input>          
           <el-input
             v-model.number="add_items_num" :min="1" :max="100"
             @change="(value: number) => {if (value < 1) {add_items_num = 1} else {if (value > 100) {add_items_num = 100}}}"
-            style="max-width: 160px"
+            style="max-width: 180px"
             type="number"
             >
             <template #prepend>Кол-во</template>
@@ -176,7 +175,6 @@ const handleSubmit = (row) => {
             />
           </el-select>
           <el-button type="success" plain @click="addItems(add_items_num)">Добавить</el-button>
-          <el-checkbox v-model="tareColumnEnabled" label="тара" border />            
         </el-header>
         <el-main>
 

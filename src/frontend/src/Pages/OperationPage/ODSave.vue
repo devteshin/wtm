@@ -161,14 +161,13 @@ function addMaterial() {
 </script>
 
 <template v-if="store.isAuth">
-    <el-row :gutter="0">
+    <el-row :gutter="20">
       <el-col :span="8"><div class="grid-content ep-bg-purple" />
 
         <div class="common-layout">
           <el-container>
-            <el-header height="20%">
+            <el-header height="120px">
               <div>
-                Документ:
                 <el-input clearable
                   v-model="doc_number"
                   style="max-width: 300px"
@@ -183,7 +182,8 @@ function addMaterial() {
                 </el-input>
               </div>  
               <div>
-                Операция:
+              </div>  
+              <div>
                 <el-input disabled
                   v-model="doc_operation"
                   style="max-width: 300px"
@@ -193,19 +193,17 @@ function addMaterial() {
               </div>  
             </el-header>
             <el-main>
-              <div class="button-row" style="margin-bottom: 20px">
+              <div class="button-row">
                 <el-button type="success" plain @click="saveDoc()">Сохранить</el-button>
                 <el-button type="success" plain @click="closeDoc()">Закрыть</el-button>
                 <el-button type="danger" plain @click="deleteDoc()">Удалить</el-button>
-              </div>
-              <div class="button-row">
                 <el-button type="success" plain @click="addMaterial()">Добавить материал</el-button>
               </div>
             </el-main>
           </el-container>
         </div>
       </el-col>
-      <el-col :span="16"><div class="grid-content ep-bg-purple" />
+      <el-col :span="12"><div class="grid-content ep-bg-purple" />
         <div v-for="material in doc_material_list" :key="material" >
           <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material"
           v-model:material_list="doc_material_list" 
