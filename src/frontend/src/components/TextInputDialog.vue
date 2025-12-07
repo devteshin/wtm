@@ -36,7 +36,6 @@ const visible = computed({
 
 const inputValue = ref(props.initialValue);
 const initialtValue = props.initialValue;
-console.log(props);
 
 const handleClose = () => {
     inputValue.value = initialtValue; 

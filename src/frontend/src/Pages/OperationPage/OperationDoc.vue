@@ -167,7 +167,7 @@ function addMaterial() {
         <div class="common-layout">
           <el-container>
             <el-header height="20%">
-              <div>
+              <div class="form-row-doc">
                 Документ:
                 <el-input clearable
                   v-model="doc_number"
@@ -182,7 +182,7 @@ function addMaterial() {
                 >
                 </el-input>
               </div>  
-              <div>
+              <div class="form-row-doc">
                 Операция:
                 <el-input disabled
                   v-model="doc_operation"
@@ -205,7 +205,7 @@ function addMaterial() {
           </el-container>
         </div>
       </el-col>
-      <el-col :span="16"><div class="grid-content ep-bg-purple" />
+      <el-col :span="16" ><div class="grid-content ep-bg-purple" />
         <div v-for="material in doc_material_list" :key="material" >
           <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material"
           v-model:material_list="doc_material_list" 
@@ -219,6 +219,10 @@ function addMaterial() {
 </template>
 
 <style scoped>
+.form-row-doc {
+  margin-bottom: 10px;
+}
+
 .el-row {
   margin-bottom: 20px;
 }

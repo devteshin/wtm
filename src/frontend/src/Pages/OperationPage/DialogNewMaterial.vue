@@ -10,8 +10,8 @@
 
 <script setup lang="ts">
 import TextInputDialog from "@/components/TextInputDialog.vue";
-
-import { ref, computed, PropType } from 'vue';
+import { ElMessageBox } from 'element-plus';
+import { computed, PropType } from 'vue';
 
 const props = defineProps({
   dialogVisible: { type: Boolean, required: true },
@@ -32,13 +32,8 @@ const visible = computed({
 });
 
 const handleSubmit = (value) => {
-    console.log(props.initialValue);
-    console.log(value);
-    if (props.initialValue === value) {
-        return;
-    };
     if (props.material_list.includes(value)) {
-        console.log(value);
+        ElMessageBox.alert(`Материал "${value}" уже есть в этом документе`, 'Предупреждение')
     } else {
         emit('submit', value);
     };

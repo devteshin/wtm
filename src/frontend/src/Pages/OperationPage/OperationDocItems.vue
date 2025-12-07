@@ -7,6 +7,16 @@ import type { TableInstance } from 'element-plus'
 import dayjs from "dayjs";
 import TextInputDialog from "@/components/TextInputDialog.vue";
 import DialogNewMaterial from "./DialogNewMaterial.vue";
+import {
+  Check,
+  Delete,
+  Edit,
+  Message,
+  Search,
+  Star,
+} from '@element-plus/icons-vue'
+import { Row } from "element-plus/es/components/table-v2/src/components";
+
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -104,6 +114,8 @@ function onWeightChange(value: number, item: frontend.IArrivalItems) {
   };
 };  
 
+
+
 const dialogVisible = ref(false);
 
 const onMaterialChanged = (value: string) => {
@@ -125,7 +137,7 @@ const tareColumnEnabled = ref(false);
 const tableLayout = ref<TableInstance['tableLayout']>('auto');
 
 const handleSubmit = (row) => {
-  console.log('Сохраненное значение:', row.value);
+  //console.log('Сохраненное значение:', row.value);
 };
 
 </script>
@@ -135,15 +147,15 @@ const handleSubmit = (row) => {
      <div class="common-layout">
       <el-container>
         <el-header height="10%" >
-          <div>
+          <div class="form-row">
             Материал:
             <el-input disabled
               v-model="material" 
               style="max-width: 220px"
               >
             </el-input>
-            <el-button type="success" plain @click="dialogVisible = true">Изменить материал</el-button>
-             <DialogNewMaterial
+            <el-button type="primary" :icon="Edit" @click="dialogVisible = true" circle style="margin-left: 10px;" />
+            <DialogNewMaterial
               v-model:dialogVisible="dialogVisible"
               :initial-value="operation_material"
               :material_list ="props.material_list"
@@ -151,31 +163,33 @@ const handleSubmit = (row) => {
               @submit="onMaterialChanged"
             />
           </div>
-          <el-input
-            v-model.number="start_items_num" :min="min_start_items_num" :max="10000"
-            @change="(value: number) => {if (value < min_start_items_num) {start_items_num = min_start_items_num} else {if (value > 10000) {start_items_num = 10000}}}"
-            style="max-width: 160px"
-            type="number"
-            >
-            <template #prepend>Номер</template>
-          </el-input>          
-          <el-input
-            v-model.number="add_items_num" :min="1" :max="100"
-            @change="(value: number) => {if (value < 1) {add_items_num = 1} else {if (value > 100) {add_items_num = 100}}}"
-            style="max-width: 160px"
-            type="number"
-            >
-            <template #prepend>Кол-во</template>
-          </el-input>
-          <el-select v-model="tare_default" placeholder="Тара" style="width: 100px">
-            <el-option
-              v-for="item in store.arrival?.tare_options"
-              :key="item.tare_type_id"
-              :label="item.tare_type"
-              :value="item.tare_type"
-            />
-          </el-select>
-          <el-button type="success" plain @click="addItems(add_items_num)">Добавить</el-button>
+          <div class="form-row">
+            <el-input
+              v-model.number="start_items_num" :min="min_start_items_num" :max="10000"
+              @change="(value: number) => {if (value < min_start_items_num) {start_items_num = min_start_items_num} else {if (value > 10000) {start_items_num = 10000}}}"
+              style="max-width: 160px"
+              type="number"
+              >
+              <template #prepend>Номер</template>
+            </el-input>          
+            <el-input
+              v-model.number="add_items_num" :min="1" :max="100"
+              @change="(value: number) => {if (value < 1) {add_items_num = 1} else {if (value > 100) {add_items_num = 100}}}"
+              style="max-width: 160px"
+              type="number"
+              >
+              <template #prepend>Кол-во</template>
+            </el-input>
+            <el-select v-model="tare_default" placeholder="Тара" style="width: 100px">
+              <el-option
+                v-for="item in store.arrival?.tare_options"
+                :key="item.tare_type_id"
+                :label="item.tare_type"
+                :value="item.tare_type"
+              />
+            </el-select>
+            <el-button type="success" :icon="Check" @click="addItems(add_items_num)" circle style="margin-left: 10px;"/>
+          </div>
           <el-checkbox v-model="tareColumnEnabled" label="тара" border />            
         </el-header>
         <el-main>
@@ -186,13 +200,15 @@ const handleSubmit = (row) => {
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
                 <el-input v-model.number="scope.row.gross_weight" placeholder="Введите значение"
+                  @change="onWeightChange(scope.row.gross_weight, scope.row)"
                 ></el-input>
               </template>
             </el-table-column>
 
             <el-table-column prop="tare_type" label="Тара">
               <template #default="scope">
-                <el-select v-model="scope.row.tare_type" :disabled="!tareColumnEnabled" placeholder="Тара" style="width: 100px" 
+                <el-select v-model="scope.row.tare_type" :disabled="!tareColumnEnabled" placeholder="Тара" style="width: 100px"
+                  @change="onTareChange(scope.row.tare_type, scope.row)" 
                 >
                   <el-option
                     v-for="item in store.arrival?.tare_options"
@@ -203,38 +219,7 @@ const handleSubmit = (row) => {
                 </el-select>
               </template>
             </el-table-column>
-<!-- 
-            <el-table-column label="Действия">
-              <template #default="scope">
-                <el-button @click="handleSubmit(scope.row)">Сохранить</el-button>
-              </template>
-            </el-table-column>
-             -->
           </el-table>
-
-<!-- 
-          <div v-for="item in items.filter(item => item.material === material)" :key="item.tare_id">
-            <el-input
-              v-model.number="item.gross_weight" :min="item.tare_weight" 
-              @change="onWeightChange(item.gross_weight, item)"
-              style="max-width: 200px"
-              type="number"
-              >
-              <template #prepend>Номер {{ getFixedLengthNumber(item.tare_id)}}</template>
-            </el-input>          
-            <el-select v-model="item.tare_type" placeholder="Тара" style="width: 100px" 
-            @change="onTareChange(item.tare_type, item)"
-            >
-              <el-option
-                v-for="item in store.arrival?.tare_options"
-                :key="item.tare_type_id"
-                :label="item.tare_type"
-                :value="item.tare_type"
-              />
-            </el-select>
-          </div>
- -->
-
         </el-main>
       </el-container>
     </div>
@@ -243,6 +228,10 @@ const handleSubmit = (row) => {
 </template>
 
 <style scoped>
+.form-row {
+  margin-bottom: 10px;
+}
+
 .el-row {
   margin-bottom: 2px;
 }
