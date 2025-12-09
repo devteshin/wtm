@@ -648,18 +648,21 @@ async def check_items(conn: Connection, err_tab_name: str):
 
 async def delete_arrival(conn: Connection, doc_id: int):
 
-    q = """
-		DELETE FROM arrival_doc
-        WHERE
-		id = %(doc_id)s
-    """
+    async with conn.cursor() as cur:
+        try:
+            await cur.callproc("action_arrival_delete_before")
+            await cur.execute("START TRANSACTION;")
+            await cur.callproc("CALL action_arrival_delete", [doc_id])
+            await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
+            result = await cur.fetchone()
+            if result.get("check_consumption_err", 0) != 0:
+                items_list = await check_items(conn, "check_consumption_err")
+                raise ItemsConsumptionError(f"Есть списание по позициям: {items_list}.")
+            await cur.execute("COMMIT;")
 
-    try:
-        async with conn.cursor() as cur:
-            await cur.execute(q, {"doc_id": doc_id})
-
-    except Exception as e:
-        print(f"ERROR \"delete_arrival\": {e}")
+        except Exception as e:
+            await cur.execute("ROLLBACK;")
+            print(f"ERROR \"delete_arrival\": {e}")
 
 async def create_arrival(conn: Connection, stock_id: int, operation_id: int, user_id: int, doc_number: str):
     if operation_id == 0:
