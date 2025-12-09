@@ -652,7 +652,7 @@ async def delete_arrival(conn: Connection, doc_id: int):
         try:
             await cur.callproc("action_arrival_delete_before")
             await cur.execute("START TRANSACTION;")
-            await cur.callproc("CALL action_arrival_delete", [doc_id])
+            await cur.callproc("action_arrival_delete", [doc_id])
             await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
             result = await cur.fetchone()
             if result.get("check_consumption_err", 0) != 0:
