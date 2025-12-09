@@ -6,7 +6,7 @@ from db import (check_user, select_task, select_tasks, change_password,
                 check_material_item
                 )
 from utils import jsonify
-from db import DocumentExistsError, ItemsExistsError, MaterialError
+from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
 import json
 
 async def login_handler(request: Request):
@@ -240,6 +240,8 @@ async def update_arrival_handler(request: Request):
         except DocumentExistsError as exc:
             raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
         except ItemsExistsError as exc:
+            raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
+        except ItemsConsumptionError as exc:
             raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
         except MaterialError as exc:
             raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from

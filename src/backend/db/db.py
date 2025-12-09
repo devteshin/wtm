@@ -12,6 +12,10 @@ class MaterialError(Exception):
 class ItemsExistsError(Exception):
     pass
 
+class ItemsConsumptionError(Exception):
+    pass
+
+
 MATERIAL_KIND_MATERIAL = 0
 MATERIAL_KIND_PROBE = 1
 
@@ -504,17 +508,13 @@ ORDER BY
         stocks = await cur.fetchall()
     return stocks
 
-def make_key_material_string(material_id_dict: dict, arrival_items: list[dict]):
-    key_material_string = ""
-
-    print(material_id_dict)
-
-
-    if arrival_items:
-        key_material_string = reduce(lambda acc, item: acc  + ",'" + str(material_id_dict[item["material"]]) + "_" + str(item["tare_id"]) + "'", arrival_items, "")
-        key_material_string = key_material_string[1:]
-
-    return key_material_string
+#def make_key_material_string(material_id_dict: dict, arrival_items: list[dict]):
+#    key_material_string = ""
+#    print(material_id_dict)
+#    if arrival_items:
+#        key_material_string = reduce(lambda acc, item: acc  + ",'" + str(material_id_dict[item["material"]]) + "_" + str(item["tare_id"]) + "'", arrival_items, "")
+#        key_material_string = key_material_string[1:]
+#    return key_material_string
 
 def make_arrival_items_string(doc_id: int, material_id_dict: dict, arrival_items: list[dict]):
 
@@ -545,41 +545,43 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     if material_id_dict is None:
         raise MaterialError(f"Ошибка при формировании кода материала.")
 
-    items_list = await check_items(conn, stock_id, doc_id, material_id_dict, arrival_items)
-
-    if items_list:
-        raise ItemsExistsError(f"Позиции документа уже приняты из производства: {items_list}.")
-
-    q_update_doc = """
-		UPDATE arrival_doc
-		SET
-		doc_number = %(doc_number)s
-		, doc_date = %(doc_date)s
-		WHERE
-		id = %(doc_id)s
-    """
-
-    q_delete_arrival = """
-		DELETE FROM arrival
-		WHERE
-		doc_id = %(doc_id)s
+    q_insert_doc_tmp = """
+        insert into arrival_doc_tmp 
+        (
+        doc_number, doc_date, supplier, operation, car_number, car_brand, car_driver, stock, stock_from, executor
+        )
+        select 
+        %(doc_number)s, %(doc_date)s, supplier, operation, car_number, car_brand, car_driver, stock, stock_from, executor 
+        from arrival_doc where id = %(doc_id)s
     """
 
     values_string = make_arrival_items_string(doc_id, material_id_dict, arrival_items)
-    q_insert_arrival = """
-		INSERT INTO arrival (material, tare_id, tare_type, tare_amount, gross_weight_arrival, net_weight_arrival, gross_weight, net_weight, key_material, doc_id)
+    q_insert_arrival_tmp = """
+		INSERT INTO arrival_tmp (material, tare_id, tare_type, tare_amount, gross_weight_arrival, net_weight_arrival, gross_weight, net_weight, key_material, doc_id)
         VALUES
     """ + values_string
     
-    print(q_insert_arrival)
-    
     async with conn.cursor() as cur:
+        await cur.callproc("action_arrival_write_before")
+        await cur.execute("CREATE TEMPORARY TABLE arrival_doc_tmp AS SELECT * FROM arrival_doc LIMIT 0")
+        await cur.execute("CREATE TEMPORARY TABLE arrival_tmp AS SELECT * FROM arrival LIMIT 0")
         await cur.execute("START TRANSACTION;")
         try:
-            await cur.execute(q_update_doc, {"doc_id": doc_id, "doc_number": doc_number, "doc_date": doc_date})
-            await cur.execute(q_delete_arrival, {"doc_id": doc_id})
-            if values_string:
-                await cur.execute(q_insert_arrival)
+            await cur.execute(q_insert_doc_tmp, {"doc_number": doc_number, "doc_date": doc_date, "doc_id": doc_id})
+            await cur.execute(q_insert_arrival_tmp)
+            await cur.callproc("action_arrival_write", [doc_id, 0])
+            await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
+            result = await cur.fetchone()
+            if result.get("check_consumption_err", 0) != 0:
+                items_list = await check_items(conn, "check_consumption_err")
+                raise ItemsConsumptionError(f"По измененным позициям есть списание: {items_list}.")
+            await cur.execute("SELECT IFNULL(@check_extra_input_err, 0) AS check_extra_input_err")
+            result = await cur.fetchone()
+            if result.get("check_extra_input_err", 0) != 0:
+                items_list = await check_items(conn, "check_extra_input_err")
+                raise ItemsExistsError(f"Повторный приход по позициям: {items_list}.")
+
+
             await cur.execute("COMMIT;")
 
         except Exception as e:
@@ -628,40 +630,21 @@ async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
             doc_number_exists = True
     return doc_number_exists
 
-async def check_items(conn: Connection, stock_id: int, doc_id: int, material_id_dict: dict, arrival_items: list):
+async def check_items(conn: Connection, err_tab_name: str):
 
-    key_material_string = make_key_material_string(material_id_dict, arrival_items)
-
-    if not key_material_string:
-        return ""
-    
     q = """
-        SELECT CONCAT('(', tare_id_list, ')', ' - ', doc_number) AS material_exists FROM
+        SELECT IFNULL(GROUP_CONCAT(err_string), '') AS err_string FROM
         (
-        SELECT doc.doc_number, GROUP_CONCAT(tare_id) AS tare_id_list FROM stock_data AS sd
-        INNER JOIN arrival_doc AS doc ON doc.id = sd.doc_id
-        WHERE key_material IN (""" + key_material_string + """)
-        AND sd.stock = %(stock_id)s
-        AND doc_type = 0
-        AND doc_id <> %(doc_id)s
-        GROUP BY doc_number
-        ) sd
-    """
-
-    items_list = []
-
-    print(q)
+        "SELECT CONCAT(material, ' номер ', tare_id) AS err_string FROM """ + err_tab_name + """
+        LIMIT 5 ) err_tbl
+        """
 
     async with conn.cursor() as cur:
-        await cur.execute(q, {"stock_id": stock_id, "doc_id": doc_id})
-        items_list = await cur.fetchall()
-        if isinstance(items_list, tuple):
-            items_string = ""
-        else:
-            items_string = reduce(lambda acc, item: acc  + " " + item["material_exists"], items_list, "")
+        await cur.execute(q)
+        result = await cur.fetchone()
+        items_string = result.get("err_string", "")
 
     return items_string
-
 
 async def delete_arrival(conn: Connection, doc_id: int):
 
