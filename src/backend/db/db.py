@@ -660,7 +660,7 @@ async def delete_arrival(conn: Connection, doc_id: int):
                 for item in consumption_err_list:
                     err_string += f", '{item['material']} номер {item['tare_id']}'"
                 err_string = err_string[1:] if err_string else ""
-                print(err_string)
+                raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
             await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
             result = await cur.fetchone()
             if result.get("check_consumption_err", 0) != 0:
