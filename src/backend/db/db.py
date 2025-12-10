@@ -660,21 +660,21 @@ async def delete_arrival(conn: Connection, doc_id: int):
             print(f"ERROR \"delete_arrival\": {e}")
             return
 
-        err_string = await check_arrival_consumption_error(conn)
+        err_string = await check_arrival_error(conn, "check_consumption_err")
         if err_string:
             await cur.execute("ROLLBACK;")
             raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
         await cur.execute("COMMIT;")
 
 
-async def check_arrival_consumption_error(conn: Connection):
+async def check_arrival_error(conn: Connection, err_table_name: str):
     async with conn.cursor() as cur:
         try:
-            await cur.execute("SELECT material, tare_id from check_consumption_err")
-            consumption_err_list = await cur.fetchall()
+            await cur.execute("SELECT material, tare_id FROM " + err_table_name)
+            err_list = await cur.fetchall()
             err_string = ""
-            if not isinstance(consumption_err_list, tuple):
-                for item in consumption_err_list:
+            if not isinstance(err_list, tuple):
+                for item in err_list:
                     err_string += f", '{item['material']} номер {item['tare_id']}'"
                 err_string = err_string[1:] if err_string else ""
             return err_string
