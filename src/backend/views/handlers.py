@@ -258,6 +258,8 @@ async def delete_arrival_handler(request: Request):
     async with request.app["db"].acquire() as conn:
         try:
             await delete_arrival(conn, doc_id)
+        except ItemsConsumptionError as exc:
+            raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
         except Exception as exc:
             raise HTTPBadRequest(
                 body=str(exc))  # pylint: disable=raise-missing-from
