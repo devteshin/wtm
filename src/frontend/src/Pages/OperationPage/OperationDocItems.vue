@@ -131,7 +131,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             Материал:
             <el-input disabled
               v-model="material" 
-              style="max-width: 220px"
+              style="max-width: 345px"
               >
             </el-input>
             <el-button type="primary" :icon="Edit" @click="dialogVisible = true" circle style="margin-left: 10px;" />
