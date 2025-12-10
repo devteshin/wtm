@@ -570,23 +570,22 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
             await cur.execute(q_insert_doc_tmp, {"doc_number": doc_number, "doc_date": doc_date, "doc_id": doc_id})
             await cur.execute(q_insert_arrival_tmp)
             await cur.callproc("action_arrival_write", [doc_id, 0])
-            await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
-            result = await cur.fetchone()
-            if result.get("check_consumption_err", 0) != 0:
-                items_list = await check_items(conn, "check_consumption_err")
-                raise ItemsConsumptionError(f"По измененным позициям есть списание: {items_list}.")
-            await cur.execute("SELECT IFNULL(@check_extra_input_err, 0) AS check_extra_input_err")
-            result = await cur.fetchone()
-            if result.get("check_extra_input_err", 0) != 0:
-                items_list = await check_items(conn, "check_extra_input_err")
-                raise ItemsExistsError(f"Повторный приход по позициям: {items_list}.")
-
-
-            await cur.execute("COMMIT;")
 
         except Exception as e:
             await cur.execute("ROLLBACK;")
             print(f"ERROR \"update_arrival\": {e}")
+            return
+
+    err_string = await check_arrival_error(conn, "check_consumption_err")
+    if err_string:
+        await cur.execute("ROLLBACK;")
+        raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
+    err_string = await check_arrival_error(conn, "check_extra_input_err")
+    if err_string:
+        await cur.execute("ROLLBACK;")
+        raise ItemsConsumptionError(f"Повторный приход по позициям: {err_string}.")
+    await cur.execute("COMMIT;")
+
 
     return    
 
@@ -630,21 +629,6 @@ async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
             doc_number_exists = True
     return doc_number_exists
 
-async def check_items(conn: Connection, err_tab_name: str):
-
-    q = """
-        SELECT IFNULL(GROUP_CONCAT(err_string), '') AS err_string FROM
-        (
-        "SELECT CONCAT(material, ' номер ', tare_id) AS err_string FROM """ + err_tab_name + """ 
-        LIMIT 5 ) err_tbl
-        """
-
-    async with conn.cursor() as cur:
-        await cur.execute(q)
-        result = await cur.fetchone()
-        items_string = result.get("err_string", "")
-
-    return items_string
 
 async def delete_arrival(conn: Connection, doc_id: int):
 
@@ -653,18 +637,17 @@ async def delete_arrival(conn: Connection, doc_id: int):
             await cur.callproc("action_arrival_delete_before")
             await cur.execute("START TRANSACTION;")
             await cur.callproc("action_arrival_delete", [doc_id])
-            #await cur.execute("SELECT material, tare_id from check_consumption_err")
 
         except Exception as e:
             await cur.execute("ROLLBACK;")
             print(f"ERROR \"delete_arrival\": {e}")
             return
 
-        err_string = await check_arrival_error(conn, "check_consumption_err")
-        if err_string:
-            await cur.execute("ROLLBACK;")
-            raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
-        await cur.execute("COMMIT;")
+    err_string = await check_arrival_error(conn, "check_consumption_err")
+    if err_string:
+        await cur.execute("ROLLBACK;")
+        raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
+    await cur.execute("COMMIT;")
 
 
 async def check_arrival_error(conn: Connection, err_table_name: str):
