@@ -661,11 +661,11 @@ async def delete_arrival(conn: Connection, doc_id: int):
                     err_string += f", '{item['material']} номер {item['tare_id']}'"
                 err_string = err_string[1:] if err_string else ""
                 raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
-            await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
-            result = await cur.fetchone()
-            if result.get("check_consumption_err", 0) != 0:
-                items_list = await check_items(conn, "check_consumption_err")
-                raise ItemsConsumptionError(f"Есть списание по позициям: {items_list}.")
+            #await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
+            #result = await cur.fetchone()
+            #if result.get("check_consumption_err", 0) != 0:
+            #    items_list = await check_items(conn, "check_consumption_err")
+            #    raise ItemsConsumptionError(f"Есть списание по позициям: {items_list}.")
             await cur.execute("COMMIT;")
 
         except Exception as e:

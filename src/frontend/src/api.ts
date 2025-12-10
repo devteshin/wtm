@@ -290,9 +290,28 @@ class ClientAPI {
             "Content-Type": "application/json",
             ...this.requestHeaders()
         };
-        const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });  
-        if (response.status !== 201) {
-           throw new Error(await response.text());
+        //const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });  
+        //if (response.status !== 201) {
+        //   throw new Error(await response.text());
+        //}
+
+        try {
+            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+            console.log(response);
+            if (!response.ok) {
+                const responseBody = await response.text(); // Считываем тело ответа как текст
+                let errorMessage = "";
+                try {
+                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
+                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
+                } catch {
+                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
+                }
+                throw new Error(errorMessage);
+            };
+        } catch (error) {
+            this.handleError(error);
+            return;
         }
         return;
     }
