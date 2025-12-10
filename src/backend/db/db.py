@@ -405,9 +405,14 @@ async def select_max_tare_id(conn: Connection, material: str):
     INNER JOIN material AS m ON m.id = arrival.material AND m.material = %(material)s
 """
     async with conn.cursor() as cur:
-        await cur.execute(q, {"material": material})
-        max_tare_id = await cur.fetchone()
-    return max_tare_id
+        try:
+            await cur.execute(q, {"material": material})
+            result = await cur.fetchone()
+            max_tare_id = result.get("max_tare_id", 0)
+            return max_tare_id
+
+        except Exception as e:
+            return 0
 
 async def select_arrival(conn: Connection, doc_id: int):
     q_items = """

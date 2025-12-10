@@ -35,7 +35,6 @@ const add_items_num = ref(1);
 const start_items_num = ref(0);
 const material = ref('')
 const operation_material = ref(props.operation_material);
-//const doc_material_list = ref(props.material_list);
 let min_start_items_num = 0;
 
 onMounted(async () => {
@@ -49,22 +48,8 @@ onMounted(async () => {
   
 });
 
-const checkMaterial = () => {
-  //return store.operation.map(item => item.material).includes(props.material);
-};
-
-
-
-function getFixedLengthNumber(value: number): string {
-  if (value) {
-    return value.toString().padStart(4, '_');
-  }
-  return '';
-};
-
-
 async function getStartItemsNum(materail: string) {
-  if (!props.items.filter(item => item.material === materail)) {
+  if (props.items.filter(item => item.material === materail).length == 0) {
     return await store.fetchMaxTareID(materail) + 1;
   }
   return (props.items.filter(item => item.material === materail).map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
@@ -136,14 +121,9 @@ const onMaterialChanged = (value: string) => {
 const tareColumnEnabled = ref(false);
 const tableLayout = ref<TableInstance['tableLayout']>('auto');
 
-const handleSubmit = (row) => {
-  //console.log('Сохраненное значение:', row.value);
-};
-
 </script>
 
 <template v-if="store.isAuth">
-
      <div class="common-layout">
       <el-container>
         <el-header height="10%" >
@@ -175,7 +155,7 @@ const handleSubmit = (row) => {
             <el-input
               v-model.number="add_items_num" :min="1" :max="100"
               @change="(value: number) => {if (value < 1) {add_items_num = 1} else {if (value > 100) {add_items_num = 100}}}"
-              style="max-width: 160px"
+              style="max-width: 160px;"
               type="number"
               >
               <template #prepend>Кол-во</template>
@@ -193,9 +173,7 @@ const handleSubmit = (row) => {
           <el-checkbox v-model="tareColumnEnabled" label="тара" border />            
         </el-header>
         <el-main>
-
-
-          <el-table :data="items.filter(item => item.material === material)" style="width: 100%" :table-layout=tableLayout show-summary sum-text="Итого вес" border>
+          <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 500px;" :table-layout=tableLayout show-summary sum-text="Итого" border>
             <el-table-column prop="tare_id" label="Номер"></el-table-column>
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
