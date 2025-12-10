@@ -576,15 +576,15 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
             print(f"ERROR \"update_arrival\": {e}")
             return
 
-    err_string = await check_arrival_error(conn, "check_consumption_err")
-    if err_string:
-        await cur.execute("ROLLBACK;")
-        raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
-    err_string = await check_arrival_error(conn, "check_extra_input_err")
-    if err_string:
-        await cur.execute("ROLLBACK;")
-        raise ItemsConsumptionError(f"Повторный приход по позициям: {err_string}.")
-    await cur.execute("COMMIT;")
+        err_string = await check_arrival_error(conn, "check_consumption_err")
+        if err_string:
+            await cur.execute("ROLLBACK;")
+            raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
+        err_string = await check_arrival_error(conn, "check_extra_input_err")
+        if err_string:
+            await cur.execute("ROLLBACK;")
+            raise ItemsConsumptionError(f"Повторный приход по позициям: {err_string}.")
+        await cur.execute("COMMIT;")
 
 
     return    
