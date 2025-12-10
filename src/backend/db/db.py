@@ -654,7 +654,7 @@ async def delete_arrival(conn: Connection, doc_id: int):
             await cur.execute("START TRANSACTION;")
             await cur.callproc("action_arrival_delete", [doc_id])
             await cur.execute("SELECT material, tare_id from check_consumption_err")
-            result = await cur.fetall()
+            result = await cur.fetchall()
             print(result)
             await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
             result = await cur.fetchone()
