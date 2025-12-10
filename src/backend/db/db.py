@@ -653,22 +653,33 @@ async def delete_arrival(conn: Connection, doc_id: int):
             await cur.callproc("action_arrival_delete_before")
             await cur.execute("START TRANSACTION;")
             await cur.callproc("action_arrival_delete", [doc_id])
-            await cur.execute("SELECT material, tare_id from check_consumption_err")
+            #await cur.execute("SELECT material, tare_id from check_consumption_err")
 
         except Exception as e:
             await cur.execute("ROLLBACK;")
             print(f"ERROR \"delete_arrival\": {e}")
             return
 
-        consumption_err_list = await cur.fetchall()
-        if not isinstance(consumption_err_list, tuple):
-            err_string = ""
-            for item in consumption_err_list:
-                err_string += f", '{item['material']} номер {item['tare_id']}'"
-            err_string = err_string[1:] if err_string else ""
+        err_string = await check_arrival_consumption_error(conn)
+        if err_string:
             await cur.execute("ROLLBACK;")
             raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
         await cur.execute("COMMIT;")
+
+
+async def check_arrival_consumption_error(conn: Connection):
+    async with conn.cursor() as cur:
+        try:
+            await cur.execute("SELECT material, tare_id from check_consumption_err")
+            consumption_err_list = await cur.fetchall()
+            err_string = ""
+            if not isinstance(consumption_err_list, tuple):
+                for item in consumption_err_list:
+                    err_string += f", '{item['material']} номер {item['tare_id']}'"
+                err_string = err_string[1:] if err_string else ""
+            return err_string
+        except:
+            return ""
 
 
 async def create_arrival(conn: Connection, stock_id: int, operation_id: int, user_id: int, doc_number: str):

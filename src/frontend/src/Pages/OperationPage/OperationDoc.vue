@@ -92,8 +92,10 @@ const deleteDoc = async () =>  {
         return;
     }
 
-    await store.deleteArrival(doc_id);
-    router.push(`/stock/${props.stockID}/operation/${operation_id}`);
+    let success = await store.deleteArrival(doc_id);
+    if (success) {
+      router.push(`/stock/${props.stockID}/operation/${operation_id}`);
+    };
 };
 
 const closeDoc = async () =>  {

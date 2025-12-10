@@ -311,9 +311,9 @@ class ClientAPI {
             };
         } catch (error) {
             this.handleError(error);
-            return;
+            return false;
         }
-        return;
+        return true;
     }
 
     async checkMaterialItem(materialID: number, taraID: number, taskID: number) {
