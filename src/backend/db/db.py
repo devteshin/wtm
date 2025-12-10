@@ -643,11 +643,11 @@ async def delete_arrival(conn: Connection, doc_id: int):
             print(f"ERROR \"delete_arrival\": {e}")
             return
 
-    err_string = await check_arrival_error(conn, "check_consumption_err")
-    if err_string:
-        await cur.execute("ROLLBACK;")
-        raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
-    await cur.execute("COMMIT;")
+        err_string = await check_arrival_error(conn, "check_consumption_err")
+        if err_string:
+            await cur.execute("ROLLBACK;")
+            raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
+        await cur.execute("COMMIT;")
 
 
 async def check_arrival_error(conn: Connection, err_table_name: str):
