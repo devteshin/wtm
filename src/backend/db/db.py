@@ -635,7 +635,7 @@ async def check_items(conn: Connection, err_tab_name: str):
     q = """
         SELECT IFNULL(GROUP_CONCAT(err_string), '') AS err_string FROM
         (
-        "SELECT CONCAT(material, ' номер ', tare_id) AS err_string FROM """ + err_tab_name + """
+        "SELECT CONCAT(material, ' номер ', tare_id) AS err_string FROM """ + err_tab_name + """ 
         LIMIT 5 ) err_tbl
         """
 
@@ -654,8 +654,13 @@ async def delete_arrival(conn: Connection, doc_id: int):
             await cur.execute("START TRANSACTION;")
             await cur.callproc("action_arrival_delete", [doc_id])
             await cur.execute("SELECT material, tare_id from check_consumption_err")
-            result = await cur.fetchall()
-            print(result)
+            consumption_err_list = await cur.fetchall()
+            if not isinstance(consumption_err_list, tuple):
+                err_string = ""
+                for item in consumption_err_list:
+                    err_string += f", '{item['material']} номер {item['tare_id']}'"
+                err_string = err_string[1:] if err_string else ""
+                print(err_string)
             await cur.execute("SELECT IFNULL(@check_consumption_err, 0) AS check_consumption_err")
             result = await cur.fetchone()
             if result.get("check_consumption_err", 0) != 0:
