@@ -128,7 +128,7 @@ const closeDoc = async () =>  {
 };
 
 const saveDoc = async () =>  {
-  if (doc_number.value == '' ||  doc_date.value == '') {
+  if (doc_number.value == '' ||  doc_date.value == '' || doc_items.value.map(item => item.material).find(item => item === "")) {
     return
   };
 
@@ -151,7 +151,7 @@ const saveDoc = async () =>  {
 function addMaterial() {
   const now = new Date();
 
-  let new_material = doc_operation_material.value;
+  let new_material = doc_operation_material.value || doc_operation.value;
   if (doc_material_list.value.includes(new_material)) {
     new_material = new_material + " - " + now.getHours() +":"+ now.getMinutes().toString().padStart(2, '0') +":"+ now.getSeconds().toString().padStart(2, '0');
   };

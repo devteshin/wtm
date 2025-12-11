@@ -32,6 +32,11 @@ const visible = computed({
 });
 
 const handleSubmit = (value) => {
+    if (value === "") {
+        ElMessageBox.alert(`Наименование материала должно быть указано`, 'Предупреждение')
+        return;
+    };
+
     if (props.material_list.includes(value)) {
         ElMessageBox.alert(`Материал "${value}" уже есть в этом документе`, 'Предупреждение')
     } else {
