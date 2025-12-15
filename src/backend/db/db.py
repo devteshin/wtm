@@ -381,6 +381,7 @@ LEFT JOIN material as m ON m.id = a.material
 WHERE 
 	doc.stock = %(stock_id)s 
 	AND doc.operation = %(operation_id)s
+    AND doc.executor = %(user_id)s
 GROUP BY 
 	doc.id
     , doc_number
