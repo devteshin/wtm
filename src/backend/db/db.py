@@ -532,7 +532,7 @@ def make_arrival_items_string(doc_id: int, material_id_dict: dict, arrival_items
 
         item_string = (f",({material_id_dict[item["material"]]},{item["tare_id"]},'{item["tare_type"]}',1"
         f",{item["gross_weight"]},{item_net_weight},{item["gross_weight"]},{item_net_weight}"
-        f",'{material_id_dict[item["material"]]}_{item["tare_id"]}',{doc_id})")
+        f",'{material_id_dict[item["material"]]}_{item["tare_id"]}',{doc_id},'{item["next_operation_flag"]}')")
 
         res_string = res_string + item_string
 
@@ -564,7 +564,8 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     values_string = make_arrival_items_string(doc_id, material_id_dict, arrival_items)
     q_insert_arrival_tmp = """
-		INSERT INTO arrival_tmp (material, tare_id, tare_type, tare_amount, gross_weight_arrival, net_weight_arrival, gross_weight, net_weight, key_material, doc_id)
+		INSERT INTO arrival_tmp (material, tare_id, tare_type, tare_amount, gross_weight_arrival
+        , net_weight_arrival, gross_weight, net_weight, key_material, doc_id, next_operation_flag)
         VALUES
     """ + values_string
     
