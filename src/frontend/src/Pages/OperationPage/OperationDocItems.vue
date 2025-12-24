@@ -72,6 +72,7 @@ async function addItems(position_num: number) {
     item.tare_weight = getTareWeight(tare_default.value);
     item.material = material.value;
     item.key_material = item.material + '_' + item.tare_id;
+    item.next_operation_flag = '';
     props.items.push(item);
   }
 
@@ -197,6 +198,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
                 </el-select>
               </template>
             </el-table-column>
+            <el-table-column prop="next_operation_flag" label="След. этап"></el-table-column>
           </el-table>
         </el-main>
       </el-container>

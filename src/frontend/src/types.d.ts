@@ -118,6 +118,7 @@ declare namespace frontend {
         gross_weight: number
         tare_type: string
         tare_weight: number
+        next_operation_flag: string
     }
 
     export type ITareOptions = {

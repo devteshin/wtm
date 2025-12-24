@@ -422,7 +422,8 @@ SELECT
 	, tare_id
 	, gross_weight
 	, tare_type
-	, tare.weight AS tare_weight 
+	, tare.weight AS tare_weight
+    , IFNULL(next_operation_flag, '') AS next_operation_flag 
 FROM
 	arrival
 LEFT JOIN tare ON tare.id = arrival.tare_type    
