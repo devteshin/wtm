@@ -529,10 +529,11 @@ def make_arrival_items_string(doc_id: int, material_id_dict: dict, arrival_items
 
     for item in arrival_items:
         item_net_weight = item["gross_weight"] - item["tare_weight"]
+        item_next_operation_flag = item["next_operation_flag"] if item["next_operation_flag"] != "" else "NULL"    
 
         item_string = (f",({material_id_dict[item["material"]]},{item["tare_id"]},'{item["tare_type"]}',1"
         f",{item["gross_weight"]},{item_net_weight},{item["gross_weight"]},{item_net_weight}"
-        f",'{material_id_dict[item["material"]]}_{item["tare_id"]}',{doc_id},'{item["next_operation_flag"]}')")
+        f",'{material_id_dict[item["material"]]}_{item["tare_id"]}',{doc_id},'{item_next_operation_flag}')")
 
         res_string = res_string + item_string
 
