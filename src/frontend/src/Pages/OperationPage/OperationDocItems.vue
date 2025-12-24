@@ -119,6 +119,34 @@ const onMaterialChanged = (value: string) => {
   material.value = value;
 };
 
+const formatFlag = (flag: string) => {
+  if (flag === '1') return '+';
+  if (flag === '0') return '-';
+  return '';
+};
+
+const flag_options = [
+  {
+    value: '0',
+    label: '-',
+  },
+  {
+    value: '1',
+    label: '+',
+  }
+];
+
+
+function onNextOperationFlagChange(value: string, item: frontend.IArrivalItems) {
+  if (value === undefined) {
+    item.next_operation_flag = ''  
+  }
+  else {
+    item.next_operation_flag = value;
+  };
+  console.log(item);
+};
+
 const tareColumnEnabled = ref(false);
 const tableLayout = ref<TableInstance['tableLayout']>('auto');
 
@@ -147,7 +175,14 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
           <div class="form-row">
             <el-input
               v-model.number="start_items_num" :min="min_start_items_num" :max="10000"
-              @change="(value: number) => {if (value < min_start_items_num) {start_items_num = min_start_items_num} else {if (value > 10000) {start_items_num = 10000}}}"
+              @change="(value: string) => {
+                const numValue = Number(value);
+                if (numValue < 1) {
+                  add_items_num = 1;
+                } else if (numValue > 100) {
+                  add_items_num = 100; 
+                }
+              }"
               style="max-width: 160px"
               type="number"
               >
@@ -155,7 +190,10 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             </el-input>          
             <el-input
               v-model.number="add_items_num" :min="1" :max="100"
-              @change="(value: number) => {if (value < 1) {add_items_num = 1} else {if (value > 100) {add_items_num = 100}}}"
+              @change="(value: string) => {
+                const numValue = Number(value);
+                if (numValue < 1) {add_items_num = 1} else {if (numValue > 100) {add_items_num = 100}}
+                }"
               style="max-width: 160px;"
               type="number"
               >
@@ -198,7 +236,20 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column prop="next_operation_flag" label="След. этап"></el-table-column>
+            <el-table-column prop="next_operation_flag" label="След. этап">
+              <template #default="scope">
+                <el-select v-model="scope.row.next_operation_flag" :disabled="!tareColumnEnabled" placeholder="" clearable style="width: 100px"
+                  @change="onNextOperationFlagChange(scope.row.next_operation_flag, scope.row)" 
+                >
+                  <el-option
+                    v-for="item in flag_options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </template>
+            </el-table-column>
           </el-table>
         </el-main>
       </el-container>
