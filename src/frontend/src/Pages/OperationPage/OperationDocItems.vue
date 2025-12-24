@@ -48,11 +48,14 @@ onMounted(async () => {
   
 });
 
-async function getStartItemsNum(materail: string) {
-  if (props.items.filter(item => item.material === materail).length == 0) {
-    return await store.fetchMaxTareID(materail) + 1;
+async function getStartItemsNum(material: string) {
+  if (material === '') {
+    return 0;
+  };
+  if (props.items.filter(item => item.material === material).length == 0) {
+    return await store.fetchMaxTareID(material) + 1;
   }
-  return (props.items.filter(item => item.material === materail).map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
+  return (props.items.filter(item => item.material === material).map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
 
 };
 
@@ -119,12 +122,6 @@ const onMaterialChanged = (value: string) => {
   material.value = value;
 };
 
-const formatFlag = (flag: string) => {
-  if (flag === '1') return '+';
-  if (flag === '0') return '-';
-  return '';
-};
-
 const flag_options = [
   {
     value: '0',
@@ -144,7 +141,6 @@ function onNextOperationFlagChange(value: string, item: frontend.IArrivalItems) 
   else {
     item.next_operation_flag = value;
   };
-  console.log(item);
 };
 
 const tareColumnEnabled = ref(false);
