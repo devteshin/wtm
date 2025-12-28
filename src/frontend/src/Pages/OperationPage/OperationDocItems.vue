@@ -59,17 +59,15 @@ async function getStartItemsNum(material: string) {
 
 };
 
-async function addItems(position_num: number) {
+async function addItems(position_num: number, start_num: number) {
 
   if (position_num == 0 || tare_default.value == '') {
     return;
   }
 
-  const next_tare_id = start_items_num.value;
-  
   for (let i = 0; i < position_num; i++) {
     const item = <frontend.IArrivalItems>{};  
-    item.tare_id = next_tare_id + i;
+    item.tare_id = start_num + i;
     item.gross_weight = 0;
     item.tare_type = tare_default.value;
     item.tare_weight = getTareWeight(tare_default.value);
@@ -142,14 +140,20 @@ function onNextOperationFlagChange(value: string, item: frontend.IArrivalItems) 
 };
 
 function handleInsertRow(index: number, item: frontend.IArrivalItems) {
-  if (props.items[index].tare_id < item.tare_id) {
-    addItems(1)
+  
+  if (props.items.filter(item => item.material === material.value).length = index + 1) {
+    return;
+  };
+  if (props.items.filter(item => item.material === material.value)[index + 1].tare_id > item.tare_id + 1) {
+    addItems(add_items_num.value, item.tare_id + 1);
+    props.items.sort((a, b) => a.tare_id - b.tare_id);
   }
     
 };
 
 const tareColumnEnabled = ref(false);
 const nextOperatinColumnEnabled = ref(false);
+const insertColumnEnabled = ref(false);
 const tableLayout = ref<TableInstance['tableLayout']>('auto');
 
 </script>
@@ -176,7 +180,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
           </div>
           <div class="form-row">
             <el-input
-              v-model.number="start_items_num" :min="min_start_items_num" :max="99999"
+              v-model.number="start_items_num" :min="min_start_items_num" :max="99999" :disabled="insertColumnEnabled"
               @change="(value: string) => {
                 const numValue = Number(value);
                 console.log(value);
@@ -210,10 +214,11 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
                 :value="item.tare_type"
               />
             </el-select>
-            <el-button type="success" :icon="Check" @click="addItems(add_items_num)" circle style="margin-left: 10px;"/>
+            <el-button type="success" :icon="Check" @click="addItems(add_items_num, start_items_num)" circle style="margin-left: 10px;"/>
           </div>
           <el-checkbox v-model="tareColumnEnabled" label="тара" border />
           <el-checkbox v-model="nextOperatinColumnEnabled" label="следующая операция" border />            
+          <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
         <el-main>
           <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 500px;" :table-layout=tableLayout show-summary sum-text="Итог" border>
@@ -256,7 +261,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             </el-table-column>
             <el-table-column label="">
               <template #default="scope">
-                <el-button size="small" @click="handleInsertRow(scope.$index, scope.row)">
+                <el-button size="small" @click="handleInsertRow(scope.$index, scope.row)" :disabled="!insertColumnEnabled">
                   Вставить
                 </el-button>
               </template>
