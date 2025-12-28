@@ -103,8 +103,6 @@ function onWeightChange(value: number, item: frontend.IArrivalItems) {
   };
 };  
 
-
-
 const dialogVisible = ref(false);
 
 const onMaterialChanged = (value: string) => {
@@ -143,7 +141,15 @@ function onNextOperationFlagChange(value: string, item: frontend.IArrivalItems) 
   };
 };
 
+function handleInsertRow(index: number, item: frontend.IArrivalItems) {
+  if (props.items[index].tare_id < item.tare_id) {
+    addItems(1)
+  }
+    
+};
+
 const tareColumnEnabled = ref(false);
+const nextOperatinColumnEnabled = ref(false);
 const tableLayout = ref<TableInstance['tableLayout']>('auto');
 
 </script>
@@ -170,13 +176,14 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
           </div>
           <div class="form-row">
             <el-input
-              v-model.number="start_items_num" :min="min_start_items_num" :max="10000"
+              v-model.number="start_items_num" :min="min_start_items_num" :max="99999"
               @change="(value: string) => {
                 const numValue = Number(value);
-                if (numValue < 1) {
-                  add_items_num = 1;
-                } else if (numValue > 100) {
-                  add_items_num = 100; 
+                console.log(value);
+                if (numValue < min_start_items_num) {
+                  start_items_num = min_start_items_num;
+                } else if (numValue > 99999) {
+                  start_items_num = 99999; 
                 }
               }"
               style="max-width: 160px"
@@ -205,11 +212,12 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             </el-select>
             <el-button type="success" :icon="Check" @click="addItems(add_items_num)" circle style="margin-left: 10px;"/>
           </div>
-          <el-checkbox v-model="tareColumnEnabled" label="тара" border />            
+          <el-checkbox v-model="tareColumnEnabled" label="тара" border />
+          <el-checkbox v-model="nextOperatinColumnEnabled" label="следующая операция" border />            
         </el-header>
         <el-main>
-          <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 500px;" :table-layout=tableLayout show-summary sum-text="Итого" border>
-            <el-table-column prop="tare_id" label="Номер"></el-table-column>
+          <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 500px;" :table-layout=tableLayout show-summary sum-text="Итог" border>
+            <el-table-column prop="tare_id" label="N"></el-table-column>
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
                 <el-input v-model.number="scope.row.gross_weight" placeholder="Введите значение"
@@ -234,7 +242,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             </el-table-column>
             <el-table-column prop="next_operation_flag" label="След. этап">
               <template #default="scope">
-                <el-select v-model="scope.row.next_operation_flag" :disabled="!tareColumnEnabled" placeholder="" clearable style="width: 100px"
+                <el-select v-model="scope.row.next_operation_flag" :disabled="!nextOperatinColumnEnabled" placeholder="" clearable style="width: 100px"
                   @change="onNextOperationFlagChange(scope.row.next_operation_flag, scope.row)" 
                 >
                   <el-option
@@ -244,6 +252,13 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
                     :value="item.value"
                   />
                 </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="">
+              <template #default="scope">
+                <el-button size="small" @click="handleInsertRow(scope.$index, scope.row)">
+                  Вставить
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
