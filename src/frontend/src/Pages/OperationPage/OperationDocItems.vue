@@ -56,8 +56,11 @@ async function getStartItemsNum(material: string) {
     return await store.fetchMaxTareID(material) + 1;
   }
   return (props.items.filter(item => item.material === material).map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
-
 };
+
+function getItemsWeightTotal(material: string) {
+  return (props.items.filter(item => item.material === material).map(item => item.gross_weight)).reduce((sum, currentValue) => sum + currentValue, 0);
+}
 
 async function addItems(position_num: number, start_num: number) {
 
@@ -221,7 +224,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
           <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
         <el-main>
-          <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 500px;" :table-layout=tableLayout show-summary sum-text="Итог" border>
+          <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 500px;" :table-layout=tableLayout border>
             <el-table-column prop="tare_id" label="N"></el-table-column>
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
@@ -267,6 +270,9 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
               </template>
             </el-table-column>
           </el-table>
+          <div class="form-row" style="margin-top: 10px;">
+            <el-text class="mx-1" type="success" size="large" >Итого вес: {{ getItemsWeightTotal(material) }}</el-text>
+          </div>
         </el-main>
       </el-container>
     </div>
