@@ -224,8 +224,8 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
           <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
         <el-main>
-          <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 500px;" :table-layout=tableLayout border>
-            <el-table-column prop="tare_id" label="N"></el-table-column>
+          <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 600px;" :table-layout=tableLayout border>
+            <el-table-column prop="tare_id" label="Номер"></el-table-column>
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
                 <el-input v-model.number="scope.row.gross_weight" placeholder="Введите значение"
@@ -265,7 +265,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             <el-table-column label="">
               <template #default="scope">
                 <el-button size="small" @click="handleInsertRow(scope.$index, scope.row)" :disabled="!insertColumnEnabled">
-                  Вставить
+                  +
                 </el-button>
               </template>
             </el-table-column>
