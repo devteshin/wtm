@@ -377,11 +377,12 @@ FROM
 LEFT JOIN  
 	arrival AS a ON
 	a.doc_id = doc.id
-LEFT JOIN material as m ON m.id = a.material    
+LEFT JOIN material as m ON m.id = a.material
+INNER JOIN operations AS o ON o.id = doc.operation
+    AND o.id IN (SELECT operation_id FROM operation_executors WHERE executor_id = %(user_id)s)    
 WHERE 
 	doc.stock = %(stock_id)s 
 	AND doc.operation = %(operation_id)s
-    AND doc.executor = %(user_id)s
 GROUP BY 
 	doc.id
     , doc_number
