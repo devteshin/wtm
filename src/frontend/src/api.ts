@@ -297,7 +297,6 @@ class ClientAPI {
 
         try {
             const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-            console.log(response);
             if (!response.ok) {
                 const responseBody = await response.text(); // Считываем тело ответа как текст
                 let errorMessage = "";

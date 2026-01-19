@@ -5,6 +5,7 @@ import useApplicationStore from "@/store";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
+import { fa } from "element-plus/es/locale";
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -54,6 +55,7 @@ let doc_changed: boolean;
     }  
     else {
       doc_id = props.docID;
+      isNewDoc = false;
     };
 
 
@@ -62,7 +64,6 @@ let doc_changed: boolean;
     await store.fetchArrival(props.stockID, operation_id, doc_id);  
 
     if (store.arrival) {
-        console.log(store.arrival);
         doc_number.value = store.arrival.doc_number;
         doc_date.value = store.arrival.doc_date;
         doc_operation.value = store.arrival.operation;
@@ -135,6 +136,7 @@ const saveDoc = async () =>  {
     return
   };
 
+   
   const docParams = {
       stockID: props.stockID,
       docID: doc_id,
@@ -146,7 +148,8 @@ const saveDoc = async () =>  {
 try {
   let success = await store.updateArrival(docParams);
   if (success) {
-  doc_changed = false;
+    doc_changed = false;
+    isNewDoc = false;
   } else {
     console.error('Сохранение не удалось (success=false)');
   }
