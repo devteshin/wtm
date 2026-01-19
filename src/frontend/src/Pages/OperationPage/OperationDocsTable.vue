@@ -59,15 +59,15 @@ const columns = [
         <el-col
             v-loading="store.loading"
             :span="24"
-            :sm="10">
+            :sm="20">
             <div class="button-row" style="margin-bottom: 20px;">
-                <el-button type="success" plain @click="createDoc()">Нвый документ</el-button>
+                <el-button type="success" plain @click="createDoc()">Новый документ</el-button>
             </div>    
             <el-table
                 :data="store.operation"
                 :row-style="{cursor: 'pointer'}"
                 :border="true"
-                style="width: 100%"
+                style="width: 95%"
                 table-layout="auto"
                 @row-click="handleRowClick">
                 <el-table-column

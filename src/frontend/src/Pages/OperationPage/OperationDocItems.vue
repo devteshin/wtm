@@ -155,7 +155,7 @@ function handleInsertRow(index: number, item: frontend.IArrivalItems) {
 };
 
 const tareColumnEnabled = ref(false);
-const nextOperatinColumnEnabled = ref(false);
+const nextOperationColumnEnabled = ref(false);
 const insertColumnEnabled = ref(false);
 const tableLayout = ref<TableInstance['tableLayout']>('auto');
 
@@ -220,15 +220,15 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             <el-button type="success" :icon="Check" @click="addItems(add_items_num, start_items_num)" circle style="margin-left: 10px;"/>
           </div>
           <el-checkbox v-model="tareColumnEnabled" label="тара" border />
-          <el-checkbox v-model="nextOperatinColumnEnabled" label="следующая операция" border />            
+          <el-checkbox v-model="nextOperationColumnEnabled" label="следующая операция" border />            
           <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
         <el-main>
           <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 600px;" :table-layout=tableLayout border>
             <el-table-column prop="tare_id" label="Номер"></el-table-column>
-            <el-table-column prop="gross_weight" label="Вес">
+            <el-table-column prop="gross_weight" label="Вес" :min-width="10">
               <template #default="scope">
-                <el-input v-model.number="scope.row.gross_weight" placeholder="Введите значение"
+                <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите значение"
                   @change="onWeightChange(scope.row.gross_weight, scope.row)"
                 ></el-input>
               </template>
@@ -250,7 +250,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             </el-table-column>
             <el-table-column prop="next_operation_flag" label="След. этап">
               <template #default="scope">
-                <el-select v-model="scope.row.next_operation_flag" :disabled="!nextOperatinColumnEnabled" placeholder="" clearable style="width: 100px"
+                <el-select v-model="scope.row.next_operation_flag" :disabled="!nextOperationColumnEnabled" placeholder="" clearable style="width: 100px"
                   @change="onNextOperationFlagChange(scope.row.next_operation_flag, scope.row)" 
                 >
                   <el-option

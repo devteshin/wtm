@@ -175,7 +175,12 @@ function addMaterial() {
 
 <template v-if="store.isAuth">
     <el-row :gutter="0">
-      <el-col :span="8"><div class="grid-content ep-bg-purple" />
+      <el-col 
+        :span="8"
+        :xs="{ span: 24 }"
+        :sm="{ span: 12 }"
+        :md="{ span: 8 }"      
+      ><div class="grid-content ep-bg-purple" />
 
         <div class="common-layout">
           <el-container>
@@ -218,7 +223,12 @@ function addMaterial() {
           </el-container>
         </div>
       </el-col>
-      <el-col :span="16" ><div class="grid-content ep-bg-purple" />
+      <el-col 
+        :span="16"
+        :xs="{ span: 24 }"
+        :sm="{ span: 12 }"
+        :md="{ span: 16 }"
+      ><div class="grid-content ep-bg-purple" />
         <div v-for="material in doc_material_list" :key="material" >
           <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material"
           v-model:material_list="doc_material_list" 
