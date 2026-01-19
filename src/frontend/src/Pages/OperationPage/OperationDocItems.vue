@@ -226,7 +226,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
         </el-header>
         <el-main>
           <el-table :data="items.filter(item => item.material === material)" :style="{ width: tableWidth, maxWidth: '100%' }" :table-layout=tableLayout border>
-            <el-table-column prop="tare_id" label="Номер"></el-table-column>
+            <el-table-column prop="tare_id" label="Номер" cell-class-name="large-font-cell"></el-table-column>
             <el-table-column prop="gross_weight" label="Вес" :min-width="10">
               <template #default="scope">
                 <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите значение"
@@ -306,13 +306,24 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
+}
 
-/* Для предотвращения переполнения внутри ячеек */
 .el-table .cell {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}  
+}
+
+:deep(.large-font-cell .cell) {
+  font-size: 24px;
+  font-weight: 500;
+  height: 32px;
+}
+
+:deep(.el-table .el-input__inner) {
+  font-size: 24px;
+  font-weight: 500;
+  height: 32px;
 }
 
 </style>
