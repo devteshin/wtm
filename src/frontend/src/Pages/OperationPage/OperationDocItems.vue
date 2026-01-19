@@ -26,7 +26,8 @@ const props = defineProps({
     operation_material: { type: String, required: true },
     material: { type: String, required: true },
     material_list: { type: Array as PropType<string[]>, required: true },
-    items: { type: Array as PropType<frontend.IArrivalItems[]>, required: true }
+    items: { type: Array as PropType<frontend.IArrivalItems[]>, required: true },
+    tableWidth: {type: String, default: '100%'}
 });
 
 const tare_default = ref('');
@@ -224,7 +225,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
           <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
         <el-main>
-          <el-table :data="items.filter(item => item.material === material)" style="width: 100%; max-width: 600px;" :table-layout=tableLayout border>
+          <el-table :data="items.filter(item => item.material === material)" :style="{ width: tableWidth, maxWidth: '100%' }" :table-layout=tableLayout border>
             <el-table-column prop="tare_id" label="Номер"></el-table-column>
             <el-table-column prop="gross_weight" label="Вес" :min-width="10">
               <template #default="scope">
@@ -305,6 +306,13 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
+
+/* Для предотвращения переполнения внутри ячеек */
+.el-table .cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}  
 }
 
 </style>

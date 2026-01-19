@@ -228,11 +228,13 @@ function addMaterial() {
         :xs="{ span: 24 }"
         :sm="{ span: 12 }"
         :md="{ span: 16 }"
+        class="table-container"
       ><div class="grid-content ep-bg-purple" />
         <div v-for="material in doc_material_list" :key="material" >
           <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material"
           v-model:material_list="doc_material_list" 
-          v-model:items="doc_items" ></OperationDocItems>
+          v-model:items="doc_items" 
+          :table-width="'100%'"></OperationDocItems>
         </div>
       </el-col>
 
@@ -266,6 +268,21 @@ function addMaterial() {
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
+}
+
+.table-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.table-container .el-table {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 </style>
