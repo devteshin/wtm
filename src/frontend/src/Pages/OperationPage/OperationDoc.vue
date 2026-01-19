@@ -62,6 +62,7 @@ let doc_changed: boolean;
     await store.fetchArrival(props.stockID, operation_id, doc_id);  
 
     if (store.arrival) {
+        console.log(store.arrival);
         doc_number.value = store.arrival.doc_number;
         doc_date.value = store.arrival.doc_date;
         doc_operation.value = store.arrival.operation;
@@ -107,9 +108,11 @@ const closeDoc = async () =>  {
       distinguishCancelAndClose: true,
       callback: (action) => {
         if (action === 'confirm') {
-          saveDoc();
-          router.push(`/stock/${props.stockID}/operation/${operation_id}`);
-        } 
+          saveDoc().then(() => {
+            router.push(`/stock/${props.stockID}/operation/${operation_id}`);
+          }).catch((error) => {
+            ElMessage.error('Ошибка сохранения: ' + error.message);
+          });        } 
         else if (action === 'cancel') {
           router.push(`/stock/${props.stockID}/operation/${operation_id}`);
         } 
@@ -140,11 +143,16 @@ const saveDoc = async () =>  {
       arrival_items: doc_items.value.filter(item => item.gross_weight > 0 && item.tare_type != '')
   };
 
+try {
   let success = await store.updateArrival(docParams);
   if (success) {
-    doc_changed = false
-  };
-
+  doc_changed = false;
+  } else {
+    console.error('Сохранение не удалось (success=false)');
+  }
+} catch (error) {
+  console.error('Ошибка API:', error);
+};
   
 };
 

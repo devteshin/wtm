@@ -475,7 +475,7 @@ SELECT
 	doc_number
 	, doc_date
     , o.name as operation
-    , m.material as operation_material
+    , IFNULL(m.material, '') AS operation_material
 FROM
 	arrival_doc AS a
 LEFT JOIN operations AS o ON o.id = a.operation
