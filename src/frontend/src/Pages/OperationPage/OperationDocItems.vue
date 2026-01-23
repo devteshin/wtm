@@ -144,8 +144,8 @@ function onNextOperationFlagChange(value: string, item: frontend.IArrivalItems) 
 };
 
 function handleInsertRow(index: number, item: frontend.IArrivalItems) {
-  
-  if (props.items.filter(item => item.material === material.value).length = index + 1) {
+  if (props.items.filter(item => item.material === material.value).length == index + 1) {
+    console.log("return");
     return;
   };
   if (props.items.filter(item => item.material === material.value)[index + 1].tare_id > item.tare_id + 1) {
@@ -158,7 +158,8 @@ function handleInsertRow(index: number, item: frontend.IArrivalItems) {
 const tareColumnEnabled = ref(false);
 const nextOperationColumnEnabled = ref(false);
 const insertColumnEnabled = ref(false);
-const tableLayout = ref<TableInstance['tableLayout']>('auto');
+const tableLayout = ref<TableInstance['tableLayout']>('fixed');
+//const tableLayout = ref<TableInstance['tableLayout']>('auto');
 
 </script>
 
@@ -225,11 +226,16 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
           <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
         <el-main>
-          <el-table :data="items.filter(item => item.material === material)" :style="{ width: tableWidth, maxWidth: '100%' }" :table-layout=tableLayout border>
-            <el-table-column prop="tare_id" label="Номер"></el-table-column>
+          <el-table :data="items.filter(item => item.material === material)" :table-layout=tableLayout border>
+            <el-table-column prop="tare_id" label="Номер">
+              <template #default="scope">
+                <el-input type="number" v-model.number="scope.row.tare_id" placeholder="" disabled
+                ></el-input>
+              </template>
+            </el-table-column>  
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
-                <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите значение"
+                <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите вес"
                   @change="onWeightChange(scope.row.gross_weight, scope.row)"
                 ></el-input>
               </template>
@@ -272,7 +278,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
             </el-table-column>
           </el-table>
           <div class="form-row" style="margin-top: 10px;">
-            <el-text class="mx-1" type="success" size="large" >Итого вес: {{ getItemsWeightTotal(material) }}</el-text>
+            <el-text class="mx-1" type="success" size="large" >Итого вес: {{ getItemsWeightTotal(material).toLocaleString('ru-RU') }}</el-text>
           </div>
         </el-main>
       </el-container>
@@ -314,5 +320,22 @@ const tableLayout = ref<TableInstance['tableLayout']>('auto');
   font-weight: 500;
   height: 32px;
 }
+
+/* Для экранов < 1024px (планшеты/смартфоны) */
+@media (max-width: 1024px) {
+  :deep(.el-table .el-input__inner) {
+    font-size: 18px;
+    height: 28px;
+  }
+}
+
+/* Для очень маленьких экранов (< 480px) */
+@media (max-width: 480px) {
+  :deep(.el-table .el-input__inner) {
+    font-size: 14px;
+    height: 24px;
+  }
+}  
+  
 
 </style>
