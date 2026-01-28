@@ -59,6 +59,14 @@ async function getStartItemsNum(material: string) {
   return (props.items.filter(item => item.material === material).map(item => item.tare_id)).reduce((max, currentValue) => Math.max(max, currentValue), 0) + 1;
 };
 
+const totalWeight = computed(() => {
+  return getItemsWeightTotal(material.value);
+});
+
+const filteredItems = computed(() => {
+  return props.items.filter(item => item.material === material.value);
+});
+
 function getItemsWeightTotal(material: string) {
   return (props.items.filter(item => item.material === material).map(item => item.gross_weight)).reduce((sum, currentValue) => sum + currentValue, 0);
 }
@@ -226,7 +234,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
           <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
         <el-main>
-          <el-table :data="items.filter(item => item.material === material)" :table-layout=tableLayout border>
+          <el-table :data="filteredItems" :table-layout=tableLayout border>
             <el-table-column prop="tare_id" label="Номер">
               <template #default="scope">
                 <el-input type="number" v-model.number="scope.row.tare_id" placeholder="" disabled
@@ -278,7 +286,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
             </el-table-column>
           </el-table>
           <div class="form-row" style="margin-top: 10px;">
-            <el-text class="mx-1" type="success" size="large" >Итого вес: {{ getItemsWeightTotal(material).toLocaleString('ru-RU') }}</el-text>
+            <el-text class="mx-1" type="success" size="large" >Итого вес: {{ totalWeight.toLocaleString('ru-RU') }}</el-text>
           </div>
         </el-main>
       </el-container>
