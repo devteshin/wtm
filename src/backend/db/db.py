@@ -557,11 +557,12 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     """
 
     values_string = make_arrival_items_string(doc_id, material_id_dict, arrival_items)
-    q_insert_arrival_tmp = """
-		INSERT INTO arrival_tmp (material, tare_id, tare_type, tare_amount, gross_weight_arrival
-        , net_weight_arrival, gross_weight, net_weight, key_material, doc_id, next_operation_flag)
-        VALUES
-    """ + values_string
+    if values_string:
+        q_insert_arrival_tmp = """
+            INSERT INTO arrival_tmp (material, tare_id, tare_type, tare_amount, gross_weight_arrival
+            , net_weight_arrival, gross_weight, net_weight, key_material, doc_id, next_operation_flag)
+            VALUES
+        """ + values_string
     
     async with conn.cursor() as cur:
         await cur.callproc("action_arrival_write_before")
@@ -570,7 +571,8 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         await cur.execute("START TRANSACTION;")
         try:
             await cur.execute(q_insert_doc_tmp, {"doc_number": doc_number, "doc_date": doc_date, "doc_id": doc_id})
-            await cur.execute(q_insert_arrival_tmp)
+            if values_string:
+                await cur.execute(q_insert_arrival_tmp)
             await cur.callproc("action_arrival_write", [doc_id, 0])
 
         except Exception as e:
