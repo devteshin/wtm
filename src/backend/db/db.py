@@ -600,7 +600,6 @@ async def get_material_id_dict(conn: Connection, arrival_items: list[dict]):
         material_id_dict[item] = await get_material_id(conn, item)
         if material_id_dict[item] == 0:
             return None
-    print(material_id_dict)
     return material_id_dict
 
 async def get_material_id(conn: Connection, material: str):
@@ -608,8 +607,6 @@ async def get_material_id(conn: Connection, material: str):
     async with conn.cursor() as cur:
         await cur.execute(q, {"material": material})
         result = await cur.fetchone()
-        print("result")
-        print(result)
         if result is None:
             q = "insert into material (material, kind) values (%(material)s, %(kind)s)"
             await cur.execute(q, {"material": material, "kind": MATERIAL_KIND_MATERIAL})
