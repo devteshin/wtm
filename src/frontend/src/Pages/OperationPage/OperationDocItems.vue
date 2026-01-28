@@ -201,10 +201,10 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
               <template #prepend>Номер</template>
             </el-input>          
             <el-input
-              v-model.number="add_items_num" :min="1" :max="100"
+              v-model.number="add_items_num" :min="1" :max="300"
               @change="(value: string) => {
                 const numValue = Number(value);
-                if (numValue < 1) {add_items_num = 1} else {if (numValue > 100) {add_items_num = 100}}
+                if (numValue < 1) {add_items_num = 1} else {if (numValue > 300) {add_items_num = 300}}
                 }"
               style="max-width: 160px;"
               type="number"
