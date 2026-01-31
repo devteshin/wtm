@@ -5,7 +5,6 @@ import useApplicationStore from "@/store";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
-import { fa } from "element-plus/es/locale";
 
 const router = useRouter();
 const store = useApplicationStore();

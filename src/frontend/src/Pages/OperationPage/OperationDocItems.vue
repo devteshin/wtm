@@ -14,8 +14,8 @@ import {
   Message,
   Search,
   Star,
-} from '@element-plus/icons-vue'
-import { Row } from "element-plus/es/components/table-v2/src/components";
+} from '@element-plus/icons-vue';
+import { debounce } from 'lodash-es';
 
 
 const router = useRouter();
@@ -47,6 +47,7 @@ onMounted(async () => {
   start_items_num.value = await getStartItemsNum(material.value);
   min_start_items_num = start_items_num.value;
   
+  
 });
 
 async function getStartItemsNum(material: string) {
@@ -77,21 +78,26 @@ async function addItems(position_num: number, start_num: number) {
     return;
   }
 
+  const newItems: frontend.IArrivalItems[] = [];
   for (let i = 0; i < position_num; i++) {
-    const item = <frontend.IArrivalItems>{};  
-    item.tare_id = start_num + i;
-    item.gross_weight = 0;
-    item.tare_type = tare_default.value;
-    item.tare_weight = getTareWeight(tare_default.value);
-    item.material = material.value;
-    item.key_material = item.material + '_' + item.tare_id;
-    item.next_operation_flag = '';
-    props.items.push(item);
+    const item: frontend.IArrivalItems = {
+      tare_id: start_num + i,
+      gross_weight: 0,
+      tare_type: tare_default.value,
+      tare_weight: getTareWeight(tare_default.value),
+      material: material.value,
+      key_material: material.value + '_' + (start_num + i),
+      next_operation_flag: ''
+    };
+    newItems.push(item);
   }
+
+  props.items.push(...newItems);
 
   start_items_num.value = await getStartItemsNum(material.value);
   min_start_items_num = start_items_num.value;
 };
+
 
 function getTareWeight(value: string) {
   let weight = store.arrival?.tare_options.find(t => t.tare_type == value)?.tare_weight;
@@ -106,6 +112,8 @@ function onTareChange(value: string, item: frontend.IArrivalItems) {
   onWeightChange(item.gross_weight, item);
   
 };
+
+const debouncedOnWeightChange = debounce(onWeightChange, 300);
 
 function onWeightChange(value: number, item: frontend.IArrivalItems) {
   if (value < item.tare_weight && value != 0) {
@@ -244,7 +252,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
                 <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите вес"
-                  @change="onWeightChange(scope.row.gross_weight, scope.row)"
+                  @change="debouncedOnWeightChange(scope.row.gross_weight, scope.row)"
                 ></el-input>
               </template>
             </el-table-column>
