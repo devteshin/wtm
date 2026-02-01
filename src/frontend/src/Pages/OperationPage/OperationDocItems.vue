@@ -15,7 +15,8 @@ import {
   Search,
   Star,
 } from '@element-plus/icons-vue';
-import { debounce } from 'lodash-es';
+//import { debounce } from 'lodash-es';
+//import { throttle } from 'lodash-es';
 
 
 const router = useRouter();
@@ -50,6 +51,7 @@ onMounted(async () => {
   
 });
 
+
 async function getStartItemsNum(material: string) {
   if (material === '') {
     return 0;
@@ -64,9 +66,11 @@ const totalWeight = computed(() => {
   return getItemsWeightTotal(material.value);
 });
 
+ 
 const filteredItems = computed(() => {
   return props.items.filter(item => item.material === material.value);
 });
+
 
 function getItemsWeightTotal(material: string) {
   return (props.items.filter(item => item.material === material).map(item => item.gross_weight)).reduce((sum, currentValue) => sum + currentValue, 0);
@@ -113,13 +117,13 @@ function onTareChange(value: string, item: frontend.IArrivalItems) {
   
 };
 
-const debouncedOnWeightChange = debounce(onWeightChange, 300);
 
 function onWeightChange(value: number, item: frontend.IArrivalItems) {
   if (value < item.tare_weight && value != 0) {
     item.gross_weight = item.tare_weight
   };
 };  
+
 
 const dialogVisible = ref(false);
 
@@ -161,7 +165,6 @@ function onNextOperationFlagChange(value: string, item: frontend.IArrivalItems) 
 
 function handleInsertRow(index: number, item: frontend.IArrivalItems) {
   if (props.items.filter(item => item.material === material.value).length == index + 1) {
-    console.log("return");
     return;
   };
   if (props.items.filter(item => item.material === material.value)[index + 1].tare_id > item.tare_id + 1) {
@@ -252,7 +255,6 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
             <el-table-column prop="gross_weight" label="Вес">
               <template #default="scope">
                 <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите вес"
-                  @change="debouncedOnWeightChange(scope.row.gross_weight, scope.row)"
                 ></el-input>
               </template>
             </el-table-column>

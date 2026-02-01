@@ -170,6 +170,7 @@ function addMaterial() {
 
 };
 
+
 </script>
 
 <template v-if="store.isAuth">
