@@ -15,9 +15,6 @@ import {
   Search,
   Star,
 } from '@element-plus/icons-vue';
-//import { debounce } from 'lodash-es';
-//import { throttle } from 'lodash-es';
-
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -38,6 +35,11 @@ const start_items_num = ref(0);
 const material = ref('')
 const operation_material = ref(props.operation_material);
 let min_start_items_num = 0;
+
+const currentPage = ref(1);
+const pageSize = ref(20);
+const totalItems = ref(0);
+
 
 onMounted(async () => {
   if (props.material) {
@@ -71,6 +73,24 @@ const filteredItems = computed(() => {
   return props.items.filter(item => item.material === material.value);
 });
 
+const paginatedItems = computed(() => {
+  const filtered = props.items.filter(item => item.material === material.value);
+  totalItems.value = filtered.length;
+
+  const startIndex = (currentPage.value - 1) * pageSize.value;
+  const endIndex = startIndex + pageSize.value;
+
+  return filtered.slice(startIndex, endIndex);
+});
+
+function handleCurrentChange(newPage: number) {
+  currentPage.value = newPage;
+}
+
+function handleSizeChange(newSize: number) {
+  pageSize.value = newSize;
+  currentPage.value = 1;
+}
 
 function getItemsWeightTotal(material: string) {
   return (props.items.filter(item => item.material === material).map(item => item.gross_weight)).reduce((sum, currentValue) => sum + currentValue, 0);
@@ -245,58 +265,72 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
           <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
         <el-main>
-          <el-table :data="filteredItems" :table-layout=tableLayout border>
-            <el-table-column prop="tare_id" label="Номер">
-              <template #default="scope">
-                <el-input type="number" v-model.number="scope.row.tare_id" placeholder="" disabled
-                ></el-input>
-              </template>
-            </el-table-column>  
-            <el-table-column prop="gross_weight" label="Вес">
-              <template #default="scope">
-                <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите вес"
-                ></el-input>
-              </template>
-            </el-table-column>
-
-            <el-table-column prop="tare_type" label="Тара">
-              <template #default="scope">
-                <el-select v-model="scope.row.tare_type" :disabled="!tareColumnEnabled" placeholder="Тара" style="width: 100px"
-                  @change="onTareChange(scope.row.tare_type, scope.row)" 
-                >
-                  <el-option
-                    v-for="item in store.arrival?.tare_options"
-                    :key="item.tare_type_id"
-                    :label="item.tare_type"
-                    :value="item.tare_type"
-                  />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column prop="next_operation_flag" label="След. этап">
-              <template #default="scope">
-                <el-select v-model="scope.row.next_operation_flag" :disabled="!nextOperationColumnEnabled" placeholder="" clearable style="width: 100px"
-                  @change="onNextOperationFlagChange(scope.row.next_operation_flag, scope.row)" 
-                >
-                  <el-option
-                    v-for="item in flag_options"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column label="">
-              <template #default="scope">
-                <el-button size="small" @click="handleInsertRow(scope.$index, scope.row)" :disabled="!insertColumnEnabled">
-                  +
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <div class="form-row" style="margin-top: 10px;">
-            <el-text class="mx-1" type="success" size="large" >Итого вес: {{ totalWeight.toLocaleString('ru-RU') }}</el-text>
+          <div class="table-wrapper">
+            <el-table :data="paginatedItems" :table-layout=tableLayout border>
+              <el-table-column prop="tare_id" label="Номер">
+                <template #default="scope">
+                  <el-input type="number" v-model.number="scope.row.tare_id" placeholder="" disabled
+                  ></el-input>
+                </template>
+              </el-table-column>  
+              <el-table-column prop="gross_weight" label="Вес">
+                <template #default="scope">
+                  <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите вес"
+                  ></el-input>
+                </template>
+              </el-table-column>
+  
+              <el-table-column prop="tare_type" label="Тара">
+                <template #default="scope">
+                  <el-select v-model="scope.row.tare_type" :disabled="!tareColumnEnabled" placeholder="Тара" style="width: 100px"
+                    @change="onTareChange(scope.row.tare_type, scope.row)" 
+                  >
+                    <el-option
+                      v-for="item in store.arrival?.tare_options"
+                      :key="item.tare_type_id"
+                      :label="item.tare_type"
+                      :value="item.tare_type"
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column prop="next_operation_flag" label="След. этап">
+                <template #default="scope">
+                  <el-select v-model="scope.row.next_operation_flag" :disabled="!nextOperationColumnEnabled" placeholder="" clearable style="width: 100px"
+                    @change="onNextOperationFlagChange(scope.row.next_operation_flag, scope.row)" 
+                  >
+                    <el-option
+                      v-for="item in flag_options"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="">
+                <template #default="scope">
+                  <el-button size="small" @click="handleInsertRow(scope.$index, scope.row)" :disabled="!insertColumnEnabled">
+                    +
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+  
+            <el-pagination
+              v-if="totalItems > 0"
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :total="totalItems"
+              layout="prev, pager, next, jumper, sizes, total"
+              :page-sizes="[10, 20, 50, 100]"
+              @current-change="handleCurrentChange"
+              @size-change="handleSizeChange"
+            />
+  
+            <div class="form-row">
+              <el-text class="mx-1" type="success" size="large" >Итого вес: {{ totalWeight.toLocaleString('ru-RU') }}</el-text>
+            </div>
           </div>
         </el-main>
       </el-container>
@@ -314,7 +348,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
   margin-bottom: 2px;
 }
 .el-row:last-child {
-  margin-bottom: 0;
+  margin-bottom: 10;
 }
 .el-col {
   border-radius: 4px;
@@ -354,6 +388,11 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
     height: 24px;
   }
 }  
-  
+
+.table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* отступ между элементами */
+}
 
 </style>
