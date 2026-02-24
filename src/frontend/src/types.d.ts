@@ -1,4 +1,30 @@
 declare namespace frontend {
+    /** Материалы */
+    export type IMaterialsMeta = {
+        material_list: Array<IMaterial> 
+        stock_list: Array<IStock>
+        material_group_list: Array<IMaterialGroup>
+    }
+
+    export type IMaterial = {
+        id: number
+        name: string
+    }
+
+    export type IStock = {
+        id: number
+        name: string
+    }
+
+    export type IMaterialGroups = {
+        code: string
+        name: string
+        min_value: number
+        max_value: number
+        umi: string
+    }
+
+
     /** Операции */
     export type IOperations = {
         id: number

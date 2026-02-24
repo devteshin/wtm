@@ -49,8 +49,6 @@ onMounted(async () => {
   };
   start_items_num.value = await getStartItemsNum(material.value);
   min_start_items_num = start_items_num.value;
-  
-  
 });
 
 

@@ -85,6 +85,11 @@ const routes = computed(() => {
             path: `/stock/${route.params.stockID as string}/operations`,
             icon: "MessageBox"
         });
+        menuRoutes.push({
+            label: "Материалы",
+            path: `/stock/${route.params.stockID as string}/materials`,
+            icon: "MessageBox"
+        });
     }
     return menuRoutes;
 });

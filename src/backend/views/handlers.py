@@ -1,6 +1,6 @@
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, HTTPException, Request, Response
 
-from db import (check_user, select_task, select_tasks, change_password,
+from db import (check_user, select_task, select_tasks, change_password, select_materials_meta,
                 select_stocks, select_operations, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival,
                 check_material_item
@@ -93,6 +93,14 @@ async def get_stocks(request: Request):
         stocks = await select_stocks(conn, request.user_id)
     return await jsonify(stocks, request)
 
+async def get_materials_meta(request: Request):
+    stock_id = request.match_info.get("stockID", None)
+    if stock_id is None:
+        raise HTTPBadRequest()
+    materials_meta = []
+    async with request.app["db"].acquire() as conn:
+        materials_meta = await select_materials_meta(conn, request.user_id, stock_id)
+    return await jsonify(materials_meta, request)
 
 async def get_tasks(request: Request):
     """ получение списка заданий """

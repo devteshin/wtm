@@ -19,6 +19,54 @@ class ItemsConsumptionError(Exception):
 MATERIAL_KIND_MATERIAL = 0
 MATERIAL_KIND_PROBE = 1
 
+async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
+    q_stock = """
+SELECT 
+    id
+    , name 
+    FROM stock
+WHERE organization_id = 
+    (SELECT organization_id FROM stock WHERE id = %(stock_id)s)    
+    """
+
+    q_element = """
+SELECT 
+    code
+    , name 
+    , min_value
+    , max_value
+    , umi
+    FROM element
+WHERE type <> 0 
+    AND FIND_IN_SET((SELECT organization_id FROM stock WHERE id = %(stock_id)s), organization_id)
+    ORDER BY code    
+    """
+
+    q_material = """
+SELECT 
+    id
+    , material as name
+    FROM material
+WHERE kind = 0    
+ORDER BY material    
+    """
+
+    async with conn.cursor() as cur:
+        await cur.execute(q_stock, {"stock_id": stock_id})
+        stock_list = await cur.fetchall()
+
+        await cur.execute(q_element, {"stock_id": stock_id})
+        material_group_list = await cur.fetchall()
+
+        await cur.execute(q_material)
+        material_list = await cur.fetchall()
+
+    return {
+        "material_list": material_list,
+        "stock_list": stock_list,
+        "material_group_list": material_group_list
+    }
+
 async def select_tasks(conn: Connection, user_id: int, stock_id: int) -> list:
     """ получение списка заданий """
 

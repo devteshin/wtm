@@ -21,6 +21,8 @@ export default defineStore("app_store", () => {
     const operation = ref<Array<frontend.IOperation>>([]);
     /** документ приема из производства */
     const arrival = ref<frontend.IArrival | null>(null);
+    /** данные материалов для отчета по остаткам */
+    const materials_meta = ref<frontend.IMaterialsMeta | null>(null);
     /** список складов */
     const stocks = shallowRef<Array<frontend.IStock>>([]);
     /** список заданий */
@@ -33,6 +35,10 @@ export default defineStore("app_store", () => {
 
 
     const doLogin = (payload: frontend.ILoginPayload) => api.doLogin(payload);
+    /** запрос к API для получения данных для отчета по остаткам материалов */
+    const fetchMaterialsMeta = (stockID: number) => {
+        return api.fetchMaterialsMeta(stockID).then(body => materials_meta.value = body).finally(() => loading.value = false);
+    };
     /** запрос к API для получения списка операций */
     const fetchOperations = (stockID: number) => {
         return api.fetchOperations(stockID).then(body => operations.value = body).finally(() => loading.value = false);
@@ -174,6 +180,7 @@ export default defineStore("app_store", () => {
     return {
         doLogin,
         fetchStocks,
+        fetchMaterialsMeta,
         fetchOperations,
         fetchOperation,
         fetchDNMDocNumber,

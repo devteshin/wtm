@@ -58,6 +58,17 @@ class ClientAPI {
         return this.token ? { token: this.token } : {};
     }
 
+    async fetchMaterialsMeta(stockID: number) {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/materials`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
     async fetchDNMDocNumber(operationID: number) {
         this.checkToken();
         const response = await fetch(`${BASE_URL}/${DNM}/${operationID}`, { headers: this.requestHeaders() });
