@@ -198,6 +198,7 @@ export default defineStore("app_store", () => {
         stocks,
         operations,
         operation,
+        materials_meta,
         tasks,
         tasks_progress,
         task,

@@ -6,10 +6,10 @@
         <el-form-item label="Склад">
           <el-select v-model="selectedStore" placeholder="Склад" clearable multiple>
             <el-option
-              v-for="item in optionsStore"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              v-for="item in store.materials_meta?.stock_list"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
             />
           </el-select>
         </el-form-item>
@@ -17,24 +17,31 @@
         <el-form-item label="Сырьевая группа">
           <el-select v-model="selectedMaterialGroup" placeholder="Сырьевая группа" clearable multiple>
             <el-option
-              v-for="item in optionsMaterialGroup"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              v-for="item in store.materials_meta?.material_group_list"
+              :key="item.code"
+              :label="item.code"
+              :value="item.code"
             />
           </el-select>
         </el-form-item>
 
         <el-form-item label="Материал">
-          <el-select v-model="selectedOptionMaterial" placeholder="Материал" clearable multiple filterable>
+          <el-select v-model="selectedMaterial" placeholder="Материал" clearable multiple filterable>
             <el-option
-              v-for="item in optionsMaterial"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              v-for="item in store.materials_meta?.material_list"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
             />
           </el-select>
         </el-form-item>
+          <el-button
+            type="primary"
+            @click="handleApplyFilters"
+            class="apply-button"
+          >
+            Применить фильтры
+          </el-button>        
       </el-form>
     </el-aside>
 
@@ -72,7 +79,7 @@ onMounted(async () => {
 //    await store.fetchOperations(props.stockID);
 //    console.log(store.operations);
     await store.fetchMaterialsMeta(props.stockID);
-//    await store.fetchMaterialsList(props.stockID);
+    console.log(store.materials_meta)
 
 });
 
@@ -98,7 +105,7 @@ const optionsMaterial = [
 // Выбранные значения селектов
 const selectedStore = ref([]);
 const selectedMaterialGroup = ref([]);
-const selectedOptionMaterial = ref([]);
+const selectedMaterial = ref([]);
 
 // Данные таблицы
 const tableData = ref([
@@ -107,6 +114,14 @@ const tableData = ref([
   { id: 3, name: 'Элемент 3', category: 'Категория C', status: 'Активен', date: '2023-10-03' },
   { id: 4, name: 'Элемент 4', category: 'Категория A', status: 'Ожидает', date: '2023-10-04' }
 ]);
+
+const handleApplyFilters = () => {
+  console.log('Выбранные фильтры:', {
+    option1: selectedStore.value,
+    option2: selectedMaterialGroup.value,
+    option3: selectedMaterial.value
+  });
+};
 
 </script>
 
