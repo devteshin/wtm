@@ -9,11 +9,7 @@ import TextInputDialog from "@/components/TextInputDialog.vue";
 import DialogNewMaterial from "./DialogNewMaterial.vue";
 import {
   Check,
-  Delete,
-  Edit,
-  Message,
-  Search,
-  Star,
+  Edit
 } from '@element-plus/icons-vue';
 
 const router = useRouter();
@@ -34,7 +30,6 @@ const add_items_num = ref(1);
 const start_items_num = ref(0);
 const material = ref('')
 const operation_material = ref(props.operation_material);
-let min_start_items_num = 0;
 
 const currentPage = ref(1);
 const pageSize = ref(20);
@@ -48,7 +43,6 @@ onMounted(async () => {
     material.value = (props.operation_material);
   };
   start_items_num.value = await getStartItemsNum(material.value);
-  min_start_items_num = start_items_num.value;
 });
 
 
@@ -64,11 +58,6 @@ async function getStartItemsNum(material: string) {
 
 const totalWeight = computed(() => {
   return getItemsWeightTotal(material.value);
-});
-
- 
-const filteredItems = computed(() => {
-  return props.items.filter(item => item.material === material.value);
 });
 
 const paginatedItems = computed(() => {
@@ -102,6 +91,10 @@ async function addItems(position_num: number, start_num: number) {
 
   const newItems: frontend.IArrivalItems[] = [];
   for (let i = 0; i < position_num; i++) {
+    if (props.items.some(item => item.material === material.value && item.tare_id === start_num + i)) {
+      break;
+    }
+    
     const item: frontend.IArrivalItems = {
       tare_id: start_num + i,
       gross_weight: 0,
@@ -114,10 +107,12 @@ async function addItems(position_num: number, start_num: number) {
     newItems.push(item);
   }
 
-  props.items.push(...newItems);
-
+  if (newItems.length > 0) {
+    props.items.push(...newItems);
+    props.items.sort((a, b) => a.tare_id - b.tare_id);
+  };
+  
   start_items_num.value = await getStartItemsNum(material.value);
-  min_start_items_num = start_items_num.value;
 };
 
 
@@ -132,7 +127,6 @@ function getTareWeight(value: string) {
 function onTareChange(value: string, item: frontend.IArrivalItems) {
   item.tare_weight = getTareWeight(value);
   onWeightChange(item.gross_weight, item);
-  
 };
 
 
@@ -171,7 +165,6 @@ const flag_options = [
   }
 ];
 
-
 function onNextOperationFlagChange(value: string, item: frontend.IArrivalItems) {
   if (value === undefined) {
     item.next_operation_flag = ''  
@@ -182,14 +175,14 @@ function onNextOperationFlagChange(value: string, item: frontend.IArrivalItems) 
 };
 
 function handleInsertRow(index: number, item: frontend.IArrivalItems) {
-  if (props.items.filter(item => item.material === material.value).length == index + 1) {
+  let tableIndex = (currentPage.value - 1) * pageSize.value + index + 1;
+  if (props.items.filter(item => item.material === material.value).length == tableIndex) {
+    addItems(add_items_num.value, item.tare_id + 1);
     return;
   };
-  if (props.items.filter(item => item.material === material.value)[index + 1].tare_id > item.tare_id + 1) {
+  if (props.items.filter(item => item.material === material.value)[tableIndex].tare_id > item.tare_id + 1) {
     addItems(add_items_num.value, item.tare_id + 1);
-    props.items.sort((a, b) => a.tare_id - b.tare_id);
   }
-    
 };
 
 const tareColumnEnabled = ref(false);
@@ -222,12 +215,12 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
           </div>
           <div class="form-row">
             <el-input
-              v-model.number="start_items_num" :min="min_start_items_num" :max="99999" :disabled="insertColumnEnabled"
+              v-model.number="start_items_num" :min=1 :max="99999" :disabled="insertColumnEnabled"
               @change="(value: string) => {
                 const numValue = Number(value);
                 console.log(value);
-                if (numValue < min_start_items_num) {
-                  start_items_num = min_start_items_num;
+                if (numValue < 1) {
+                  start_items_num = 1;
                 } else if (numValue > 99999) {
                   start_items_num = 99999; 
                 }
