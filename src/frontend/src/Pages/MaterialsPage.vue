@@ -112,12 +112,14 @@ const tableData = ref([
   { id: 4, name: 'Элемент 4', category: 'Категория A', status: 'Ожидает', date: '2023-10-04' }
 ]);
 
-const handleMakeReport = () => {
+const handleMakeReport = async () => {
   console.log('Выбранные фильтры:', {
     option1: selectedStore.value,
     option2: selectedMaterialGroup.value,
-    option3: selectedMaterial.value
+    option3: selectedMaterial.value,
+    isAdvancedMode: isAdvancedMode.value
   });
+  await store.fetchMaterialsData();
 };
 
 const handleSwitchChange = (value) => {

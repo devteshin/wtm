@@ -24,6 +24,18 @@ declare namespace frontend {
         umi: string
     }
 
+    export type IMaterialsData = {
+        stock_name: string
+        material: string
+        tare_type: string
+        tare_id: number
+        tare_mark: string
+        material_mark: string
+        material_group: string
+        rest_tare_amount: number
+        rest_net_weight: number
+        rest_gross_weight: number
+    }    
 
     /** Операции */
     export type IOperations = {
