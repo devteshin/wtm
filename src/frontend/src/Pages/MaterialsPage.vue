@@ -35,12 +35,25 @@
             />
           </el-select>
         </el-form-item>
+          <el-form-item label="Расширенный режим">
+            <div class="switch-container">
+              <el-switch
+                v-model="isAdvancedMode"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+                @change="handleSwitchChange"
+              />
+              <span class="switch-description">
+                {{ isAdvancedMode ? 'развернуть материалы' : 'группировать материалы' }}
+              </span>
+            </div>
+          </el-form-item>
           <el-button
             type="primary"
-            @click="handleApplyFilters"
+            @click="handleMakeReport"
             class="apply-button"
           >
-            Применить фильтры
+            Сформировать
           </el-button>        
       </el-form>
     </el-aside>
@@ -83,29 +96,13 @@ onMounted(async () => {
 
 });
 
-// Данные для селектов
-const optionsStore = [
-  { value: 'option1-1', label: 'Вариант 1-1' },
-  { value: 'option1-2', label: 'Вариант 1-2' },
-  { value: 'option1-3', label: 'Вариант 1-3' }
-];
-
-const optionsMaterialGroup = [
-  { value: 'option2-1', label: 'Вариант 2-1' },
-  { value: 'option2-2', label: 'Вариант 2-2' },
-  { value: 'option2-3', label: 'Вариант 2-3' }
-];
-
-const optionsMaterial = [
-  { value: 'option3-1', label: 'Вариант 3-1' },
-  { value: 'option3-2', label: 'Вариант 3-2' },
-  { value: 'option3-3', label: 'Вариант 3-3' }
-];
 
 // Выбранные значения селектов
 const selectedStore = ref([]);
 const selectedMaterialGroup = ref([]);
 const selectedMaterial = ref([]);
+
+const isAdvancedMode = ref(false);
 
 // Данные таблицы
 const tableData = ref([
@@ -115,7 +112,7 @@ const tableData = ref([
   { id: 4, name: 'Элемент 4', category: 'Категория A', status: 'Ожидает', date: '2023-10-04' }
 ]);
 
-const handleApplyFilters = () => {
+const handleMakeReport = () => {
   console.log('Выбранные фильтры:', {
     option1: selectedStore.value,
     option2: selectedMaterialGroup.value,
@@ -123,6 +120,18 @@ const handleApplyFilters = () => {
   });
 };
 
+const handleSwitchChange = (value) => {
+  console.log('Режим расширенного фильтра:', value ? 'включён' : 'выключен');
+
+  // Здесь можно добавить логику, которая будет выполняться при переключении режима
+  if (value) {
+    // Действия при включении расширенного режима
+    console.log('Активированы дополнительные функции фильтрации');
+  } else {
+    // Действия при выключении расширенного режима
+    console.log('Дополнительные функции фильтрации отключены');
+  }
+};
 </script>
 
 <style scoped>
@@ -142,6 +151,18 @@ const handleApplyFilters = () => {
 
 .table-container {
   padding: 20px;
+}
+
+.switch-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.switch-description {
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
 }
 
 :deep(.el-table) {
