@@ -119,7 +119,13 @@ const handleMakeReport = async () => {
     option3: selectedMaterial.value,
     isAdvancedMode: isAdvancedMode.value
   });
-  await store.fetchMaterialsData();
+  await store.fetchMaterialsData(1, {
+    materials: "4356, 3322, 567",
+    stocks: "1, 11",
+    material_groups: "'Mo', 'Al', 'Zn'",
+    indicators: "C, S",
+    indicator_conditions: "0, 100, 2, 5"
+  });
 };
 
 const handleSwitchChange = (value) => {

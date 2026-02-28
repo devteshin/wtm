@@ -38,8 +38,8 @@ export default defineStore("app_store", () => {
 
     const doLogin = (payload: frontend.ILoginPayload) => api.doLogin(payload);
     /** запрос к API для получения данных для отчета по остаткам материалов */
-    const fetchMaterialsData = (stockID: number) => {
-        return api.fetchMaterialsData(stockID).then(body => materials_data.value = body).finally(() => loading.value = false);
+    const fetchMaterialsData = (stockID: number, params?: frontend.IMaterialsQueryParams) => {
+        return api.fetchMaterialsData(stockID, params).then(body => materials_data.value = body).finally(() => loading.value = false);
     };
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsMeta = (stockID: number) => {

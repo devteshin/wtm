@@ -69,6 +69,29 @@ class ClientAPI {
         return body;
     }
 
+    async fetchMaterialsData(stockID: number, params: frontend.IMaterialsQueryParams = {}) {
+        this.checkToken();
+
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+            queryParams.append(key, String(value));
+            }
+        });
+
+        const url = `${BASE_URL}/${STOCK}/${stockID}/materials_data${
+            queryParams.toString() ? `?${queryParams.toString()}` : ''
+        }`;        
+
+        const response = await fetch(url, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
     async fetchDNMDocNumber(operationID: number) {
         this.checkToken();
         const response = await fetch(`${BASE_URL}/${DNM}/${operationID}`, { headers: this.requestHeaders() });

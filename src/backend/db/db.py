@@ -19,6 +19,25 @@ class ItemsConsumptionError(Exception):
 MATERIAL_KIND_MATERIAL = 0
 MATERIAL_KIND_PROBE = 1
 
+async def select_materials_data(
+    conn: Connection, 
+    user_id: int, 
+    stock_id: int,
+    materials: str | None = None,
+    stocks: str | None = None,
+    material_groups: str | None = None,
+    indicators: str | None = None,
+    indicator_conditions: str | None = None
+    ):
+
+    print(materials)
+    print(stocks)
+    print(material_groups)
+    print(indicators)
+    print(indicator_conditions)
+
+    q_stock = ""
+
 async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
     q_stock = """
 SELECT 

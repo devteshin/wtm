@@ -37,6 +37,14 @@ declare namespace frontend {
         rest_gross_weight: number
     }    
 
+    export type IMaterialsQueryParams = {
+        materials?: string;
+        stocks?: string;
+        material_groups?: string;
+        indicators?: string;
+        indicator_conditions?: string;
+    }
+
     /** Операции */
     export type IOperations = {
         id: number

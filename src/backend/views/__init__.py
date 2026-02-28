@@ -7,7 +7,7 @@ from .handlers import (
     get_tasks, get_dnm_doc_number, get_operations, get_operation, get_arrival, login_handler, rest_gross_weight,
     tasks_progress, update_job_status_handler, get_max_tare_id,
     update_jobs_status_handler, create_arrival_handler, update_arrival_handler, delete_arrival_handler, 
-    check_material_item_handler, get_materials_meta)
+    check_material_item_handler, get_materials_meta, get_materials_data)
 
 
 def index_spa(path: str, filename: str):
@@ -48,6 +48,7 @@ def setup_handlers(app: Application):
         ("GET", "/api/stock/{stockID}/tasks_progress", tasks_progress, "tasks_progress"),
         ("GET", "/api/stock/{stockID}/task/{taskID}/material/{materialID}", get_task, "get_task"),
         ("GET", "/api/stock/{stockID}/materials", get_materials_meta, "get_materials_meta"),
+        ("GET", "/api/stock/{stockID}/materials_data", get_materials_data, "get_materials_data"),
         ("PUT", "/api/rest_gross_weight", rest_gross_weight, "rest_gross_weight"),
         ("POST", "/api/check_item", check_material_item_handler, "check_material_item_handler")
     ]
