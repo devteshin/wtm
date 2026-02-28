@@ -115,16 +115,16 @@ const tableData = ref([
 const handleMakeReport = async () => {
   console.log('Выбранные фильтры:', {
     option1: selectedStore.value,
-    option2: selectedMaterialGroup.value,
+    option2: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
     option3: selectedMaterial.value,
     isAdvancedMode: isAdvancedMode.value
   });
   await store.fetchMaterialsData(1, {
-    materials: "4356, 3322, 567",
-    stocks: "1, 11",
-    material_groups: "'Mo', 'Al', 'Zn'",
-    indicators: "C, S",
-    indicator_conditions: "0, 100, 2, 5"
+    materials: selectedMaterial.value.toString(),
+    stocks: selectedStore.value.toString(),
+    material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
+    indicators: "",
+    indicator_conditions: ""
   });
 };
 
