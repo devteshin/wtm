@@ -53,8 +53,9 @@ async def select_materials_data(
             return report_result    
         result = await cur.fetchone()
         if result:
-            q_report = result[0]
-            print("Полученный SQL:", q_report)
+            #q_report = result[0]
+            #print("Полученный SQL:", q_report)
+            print("Полученный SQL:", result)
 
     return report_result
 
