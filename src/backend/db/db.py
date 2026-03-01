@@ -62,6 +62,7 @@ async def select_materials_data(
             report_result = cur.fetchall()            
             if isinstance(report_result, tuple):
                 report_result = []
+            print(report_result)
 
     return report_result
 
