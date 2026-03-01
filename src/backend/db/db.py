@@ -38,24 +38,25 @@ async def select_materials_data(
 
     q_report = ""
     result = []
+    report_result = []
 
     async with conn.cursor() as cur:
 
         try:
-            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, "summary", "@report_sql"])
+            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, "summary", None])
         except Exception as e:
             print(f"ERROR callproc \"query_material_stock_report\": {e}")
-            return result    
+            return report_result    
         try:
-            await cur.execute("select @report_sql")
+            await cur.execute("SELECT @_query_material_stock_report_6")
         except Exception as e:
-            return result    
-        q_report = await cur.fetchone()
-        if q_report == "":
-            result = []
+            return report_result    
+        result = await cur.fetchone()
+        if result:
+            q_report = result[0]
+            print("Полученный SQL:", q_report)
 
-        print(q_report)    
-    return result
+    return report_result
 
 
 async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
