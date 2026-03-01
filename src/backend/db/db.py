@@ -53,7 +53,7 @@ async def select_materials_data(
         if result:
             print("Полученный SQL:", result)
             q_report = result["q_report"]
-
+            print("Полученный SQL:", q_report)
             cur.execute(q_report)
             report_result = cur.fetchall()            
             print(report_result)
