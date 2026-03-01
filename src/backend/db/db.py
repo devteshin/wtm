@@ -42,7 +42,7 @@ async def select_materials_data(
     async with conn.cursor() as cur:
 
         try:
-            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, "@report_sql"])
+            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, "summary", "@report_sql"])
         except Exception as e:
             print(f"ERROR callproc \"query_material_stock_report\": {e}")
             return result    
