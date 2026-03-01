@@ -46,20 +46,24 @@ async def select_materials_data(
             print(f"ERROR callproc \"query_material_stock_report\": {e}")
             return report_result    
         try:
+            # Получение сформированного SQL
             await cur.execute("SELECT @_query_material_stock_report_6 AS q_report")
+            result = await cur.fetchone()
+            if result:
+                q_report = result["q_report"]
+                print("Полученный SQL:", q_report)
+
+                # Создаём новый курсор для выполнения динамического запроса
+                async with conn.cursor() as new_cur:
+                    await new_cur.execute(q_report)
+                    report_result = await new_cur.fetchall()
+                    print("Результат выполнения:", report_result)
+            else:
+                print("Не получен SQL-запрос из хранимой процедуры")
         except Exception as e:
-            return report_result    
-        result = await cur.fetchone()
-        if result:
-            print("Полученный SQL:", result)
-            q_report = result["q_report"]
-            print("Полученный SQL:", q_report)
-            cur.execute(q_report)
-            report_result = cur.fetchall()            
-            print(report_result)
-            if isinstance(report_result, tuple):
-                report_result = []
-            print(report_result)
+            print(f"ERROR выполнения динамического SQL: {e}")
+            print(f"Попытка выполнить: {q_report}")
+            return report_result
 
     return report_result
 
