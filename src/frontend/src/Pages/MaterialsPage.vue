@@ -119,7 +119,7 @@ const handleMakeReport = async () => {
     option3: selectedMaterial.value,
     isAdvancedMode: isAdvancedMode.value
   });
-  await store.fetchMaterialsData(1, {
+  await store.fetchMaterialsData(props.stockID, {
     materials: selectedMaterial.value.toString(),
     stocks: selectedStore.value.toString(),
     material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
