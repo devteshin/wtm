@@ -61,13 +61,25 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-        <el-table :data="tableData" style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="name" label="Название" width="200" />
-          <el-table-column prop="category" label="Категория" width="150" />
-          <el-table-column prop="status" label="Статус" width="120" />
-          <el-table-column prop="date" label="Дата" width="180" />
+          <div v-if="isLoading" class="loading-indicator">
+            <el-spin
+              size="large"
+              tip="Загрузка данных..."
+            />
+          </div>
+          <el-table v-else-if="tableData && tableData.length > 0" :data="tableData" style="width: 100%">
+          <el-table-column prop="stock_name" label="Склад" width="80" />
+          <el-table-column prop="material" label="Материал" width="200" />
+          <el-table-column prop="tare_type" label="Тара" width="150" />
+          <el-table-column prop="material_mark" label="Вид материала" width="120" />
+          <el-table-column prop="material_group" label="Группа материала" width="180" />
+          <el-table-column prop="rest_tare_amount" label="Количество" width="180" />
+          <el-table-column prop="rest_net_weight" label="Нетто" width="180" />
+          <el-table-column prop="rest_gross_weight" label="Брутто" width="180" />
         </el-table>
+        <div v-else class="no-data-message">
+          <p>Нет данных.</p>
+        </div>        
       </el-main>
     </el-container>
   </el-container>
@@ -103,30 +115,58 @@ const selectedMaterialGroup = ref([]);
 const selectedMaterial = ref([]);
 
 const isAdvancedMode = ref(false);
+const isLoading = ref(false);
 
 // Данные таблицы
-const tableData = ref([
+/* const tableData = ref([
   { id: 1, name: 'Элемент 1', category: 'Категория A', status: 'Активен', date: '2023-10-01' },
   { id: 2, name: 'Элемент 2', category: 'Категория B', status: 'Неактивен', date: '2023-10-02' },
   { id: 3, name: 'Элемент 3', category: 'Категория C', status: 'Активен', date: '2023-10-03' },
   { id: 4, name: 'Элемент 4', category: 'Категория A', status: 'Ожидает', date: '2023-10-04' }
 ]);
+ */
+let tableData = ref([{}]);
+
 
 const handleMakeReport = async () => {
+  isLoading.value = true;
   console.log('Выбранные фильтры:', {
     option1: selectedStore.value,
     option2: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
     option3: selectedMaterial.value,
     isAdvancedMode: isAdvancedMode.value
   });
-  await store.fetchMaterialsData(props.stockID, {
+/*   await store.fetchMaterialsData(props.stockID, {
     materials: selectedMaterial.value.toString(),
     stocks: selectedStore.value.toString(),
     material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
     indicators: "",
     indicator_conditions: ""
   });
-  console.log(store.materials_data);
+  if (store.materials_data && Array.isArray(store.materials_data)) {
+    tableData.value = store.materials_data;
+  } 
+ */  
+  try {
+    await store.fetchMaterialsData(props.stockID, {
+      materials: selectedMaterial.value.toString(),
+      stocks: selectedStore.value.toString(),
+      material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
+      indicators: "",
+      indicator_conditions: ""
+    });
+
+    if (store.materials_data && Array.isArray(store.materials_data)) {
+      tableData.value = store.materials_data;
+    }
+  } catch (error) {
+    console.error('Ошибка при загрузке данных:', error);
+    // Здесь можно добавить уведомление об ошибке для пользователя
+  } finally {
+    isLoading.value = false; // Завершаем загрузку в любом случае
+  }
+
+
 };
 
 const handleSwitchChange = (value) => {
@@ -176,5 +216,25 @@ const handleSwitchChange = (value) => {
 
 :deep(.el-table) {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px; /* Гарантирует видимую область */
+  color: #606266;
+  font-size: 16px;
+  text-align: center;
+}
+
+.no-data-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #909399;
+  font-style: italic;
 }
 </style>
