@@ -126,6 +126,7 @@ const handleMakeReport = async () => {
     indicators: "",
     indicator_conditions: ""
   });
+  console.log(store.materials_data);
 };
 
 const handleSwitchChange = (value) => {

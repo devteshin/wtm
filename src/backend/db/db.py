@@ -48,7 +48,7 @@ async def select_materials_data(
             print(f"ERROR callproc \"query_material_stock_report\": {e}")
             return report_result    
         try:
-            await cur.execute("SELECT @_query_material_stock_report_6")
+            await cur.execute("SELECT @_query_material_stock_report_6 AS q_report")
         except Exception as e:
             return report_result    
         result = await cur.fetchone()
@@ -56,6 +56,12 @@ async def select_materials_data(
             #q_report = result[0]
             #print("Полученный SQL:", q_report)
             print("Полученный SQL:", result)
+            q_report = result["q_report"]
+
+            cur.execute(q_report)
+            report_result = cur.fetchall()            
+            if isinstance(report_result, tuple):
+                report_result = []
 
     return report_result
 
