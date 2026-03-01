@@ -57,7 +57,6 @@ async def select_materials_data(
                 async with conn.cursor() as new_cur:
                     await new_cur.execute(q_report)
                     report_result = await new_cur.fetchall()
-                    print("Результат выполнения:", report_result)
             else:
                 print("Не получен SQL-запрос из хранимой процедуры")
         except Exception as e:

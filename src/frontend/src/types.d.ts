@@ -24,7 +24,7 @@ declare namespace frontend {
         umi: string
     }
 
-/*     export type IMaterialsData = {
+    export type IMaterialsData = {
         stock_name: string
         material: string
         tare_type: string
@@ -36,8 +36,8 @@ declare namespace frontend {
         rest_net_weight: number
         rest_gross_weight: number
     }    
- */
-    export type IMaterialsData = {
+
+/*     export type IMaterialsData = {
         stock_name: string
         material: string
         tare_type: string
@@ -45,7 +45,7 @@ declare namespace frontend {
         material_group: string
         rest_net_weight: number
     }    
-
+ */
 
     export type IMaterialsQueryParams = {
         materials?: string;
