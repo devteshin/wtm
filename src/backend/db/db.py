@@ -37,8 +37,6 @@ async def select_materials_data(
     print(indicator_conditions)
 
     q_report = ""
-    result = []
-    report_result = []
 
     async with conn.cursor() as cur:
 
@@ -53,13 +51,12 @@ async def select_materials_data(
             return report_result    
         result = await cur.fetchone()
         if result:
-            #q_report = result[0]
-            #print("Полученный SQL:", q_report)
             print("Полученный SQL:", result)
             q_report = result["q_report"]
 
             cur.execute(q_report)
             report_result = cur.fetchall()            
+            print(report_result)
             if isinstance(report_result, tuple):
                 report_result = []
             print(report_result)
