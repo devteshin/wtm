@@ -35,16 +35,29 @@
             />
           </el-select>
         </el-form-item>
-          <el-form-item label="Расширенный режим">
+          <el-form-item>
             <div class="switch-container">
-              <el-switch
+              <el-switch 
                 v-model="isDetailedMode"
+                :disabled="isDetailedModeDisabled"
                 active-color="#13ce66"
                 inactive-color="#ff4949"
-                @change="handleSwitchChange"
+                @change="handleSwitchDetailedMode"
               />
               <span class="switch-description">
                 {{ isDetailedMode ? 'развернуть материалы' : 'группировать материалы' }}
+              </span>
+            </div>
+          </el-form-item>
+          <el-form-item>
+            <div class="switch-container">
+              <el-switch 
+                v-model="isOnlyNonZeroMode"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              />
+              <span class="switch-description">
+                {{ isOnlyNonZeroMode ? 'только ненулевые остатки' : 'выводить нулевые остатки' }}
               </span>
             </div>
           </el-form-item>
@@ -61,13 +74,15 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-        <el-table v-loading="isLoading" v-if="tableData" :data="tableData" style="width: 100%" stripe border show-overflow-tooltip height="85vh">
+        <el-table v-loading="isLoading" v-if="tableData" :data="tableData" style="width: 100%" stripe border show-overflow-tooltip height="85vh"
+        >
           <el-table-column
             v-for="column in visibleColumns"
             :key="column.prop"
             :prop="column.prop"
             :label="column.label"
             :width="column.width"
+            :fixed="column.isFixed"
           />
         </el-table>
       </el-main>
@@ -101,33 +116,42 @@ const selectedMaterialGroup = ref([]);
 const selectedMaterial = ref([]);
 
 const isDetailedMode = ref(false);
+const isOnlyNonZeroMode = ref(false);
 const isLoading = ref(false);
 
 let tableData = ref([{}]);
 
 const basicColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80' },
-  { prop: 'material', label: 'Материал', width: '300' },
-  { prop: 'tare_type', label: 'Тара', width: '80' },
-  { prop: 'material_mark', label: 'Вид', width: '100' },
-  { prop: 'material_group', label: 'Группа', width: '100' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
+  { prop: 'stock_name', label: 'Склад', width: '80', isFixed: true },
+  { prop: 'material', label: 'Материал', width: '300', isFixed: true },
+  { prop: 'tare_type', label: 'Тара', width: '80', isFixed: false },
+  { prop: 'material_mark', label: 'Вид', width: '100', isFixed: false },
+  { prop: 'material_group', label: 'Группа', width: '100', isFixed: false },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', isFixed: false },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', isFixed: false },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', isFixed: false }
 ]);
 
 const detailedColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80' },
-  { prop: 'material', label: 'Материал', width: '300' },
-  { prop: 'tare_type', label: 'Тара', width: '80' },
-  { prop: 'tare_id', label: 'Номер', width: '80' },
-  { prop: 'tare_mark', label: 'Маркировка', width: '100' },
-  { prop: 'material_mark', label: 'Вид', width: '100' },
-  { prop: 'material_group', label: 'Группа', width: '100' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
+  { prop: 'stock_name', label: 'Склад', width: '80', isFixed: true },
+  { prop: 'material', label: 'Материал', width: '300', isFixed: true },
+  { prop: 'tare_type', label: 'Тара', width: '80', isFixed: false },
+  { prop: 'tare_id', label: 'Номер', width: '80', isFixed: false },
+  { prop: 'tare_mark', label: 'Маркировка', width: '120', isFixed: false },
+  { prop: 'material_mark', label: 'Вид', width: '100', isFixed: false },
+  { prop: 'material_group', label: 'Группа', width: '100', isFixed: false },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', isFixed: false },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', isFixed: false },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', isFixed: false }
 ]);
+
+const isDetailedModeDisabled = computed(() => {
+  if (selectedMaterial.value && selectedMaterial.value.length > 0) {
+    return false;
+  };
+  isDetailedMode.value = false;
+  return true;
+});
 
 const visibleColumns = computed(() => {
   return isDetailedMode.value ? detailedColumns.value : basicColumns.value;
@@ -149,7 +173,8 @@ const handleMakeReport = async () => {
       material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
       indicators: "",
       indicator_conditions: "",
-      detailed_mode: isDetailedMode.value ? "detailed" : "summary"
+      detailed_mode: isDetailedMode.value ? "detailed" : "summary",
+      only_non_zero_mode: isOnlyNonZeroMode.value
     });
 
     if (store.materials_data && Array.isArray(store.materials_data)) {
@@ -165,18 +190,11 @@ const handleMakeReport = async () => {
 
 };
 
-const handleSwitchChange = (value) => {
-  console.log('Режим расширенного фильтра:', value ? 'включён' : 'выключен');
-
-  // Здесь можно добавить логику, которая будет выполняться при переключении режима
-  if (value) {
-    // Действия при включении расширенного режима
-    console.log('Активированы дополнительные функции фильтрации');
-  } else {
-    // Действия при выключении расширенного режима
-    console.log('Дополнительные функции фильтрации отключены');
-  }
+const handleSwitchDetailedMode = (value) => {
+  tableData.value = [];
 };
+
+
 </script>
 
 <style scoped>

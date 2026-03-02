@@ -28,7 +28,8 @@ async def select_materials_data(
     material_groups: str = '',
     indicators: str = '',
     indicator_conditions: str = '',
-    detailed_mode: str = ''
+    detailed_mode: str = '',
+    only_non_zero_mode: bool = False
     ):
 
     print(materials)
@@ -36,19 +37,21 @@ async def select_materials_data(
     print(material_groups)
     print(indicators)
     print(indicator_conditions)
+    print(detailed_mode)
+    print(only_non_zero_mode)
 
     q_report = ""
 
     async with conn.cursor() as cur:
 
         try:
-            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, None])
+            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, only_non_zero_mode, None])
         except Exception as e:
             print(f"ERROR callproc \"query_material_stock_report\": {e}")
             return report_result    
         try:
             # Получение сформированного SQL
-            await cur.execute("SELECT @_query_material_stock_report_6 AS q_report")
+            await cur.execute("SELECT @_query_material_stock_report_7 AS q_report")
             result = await cur.fetchone()
             if result:
                 q_report = result["q_report"]

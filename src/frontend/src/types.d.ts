@@ -54,6 +54,7 @@ declare namespace frontend {
         indicators?: string;
         indicator_conditions?: string;
         detailed_mode?: string;
+        only_non_zero_mode?: boolean;
     }
 
     /** Операции */
