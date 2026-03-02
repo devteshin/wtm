@@ -1,7 +1,7 @@
 <template>
   <el-container class="page-container">
     <!-- Левый блок: панель с формой -->
-    <el-aside width="300px" class="sidebar">
+    <el-aside width="400px" class="sidebar">
       <el-form label-position="top" class="filter-form">
         <el-form-item label="Склад">
           <el-select v-model="selectedStore" placeholder="Склад" clearable multiple>
@@ -61,6 +61,31 @@
               </span>
             </div>
           </el-form-item>
+          <el-form-item label="Дополнительные параметры">
+            <el-table :data="tableCondition" style="width: 100%" max-height="250">
+              <el-table-column
+                v-for="column in tableConditionColumns"
+                :key="column.prop"
+                :label="column.label"
+                :width="column.width"
+              />
+              <el-table-column fixed="right" label="" min-width="100">
+                <template #default="scope">
+                  <el-button
+                    link
+                    type="primary"
+                    size="small"
+                    @click.prevent="deleteRow(scope.$index)"
+                  >
+                    Удалить
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-button class="mt-4" style="width: 100%" @click="onAddItem">
+              Add Item
+            </el-button>            
+          </el-form-item>
           <el-button
             type="primary"
             @click="handleMakeReport"
@@ -95,6 +120,7 @@ import { onMounted } from "vue";
 import { ref, computed } from "vue";
 import useApplicationStore from "@/store";
 import { useRouter } from "vue-router";
+import { max } from "lodash-es";
 
 const props = defineProps({
     /** ID склада */
@@ -120,6 +146,14 @@ const isOnlyNonZeroMode = ref(false);
 const isLoading = ref(false);
 
 let tableData = ref([{}]);
+let tableCondition = ref([{}]);
+
+let tableConditionColumns = ref([
+  { prop: 'element', label: '', width: '80' },
+  { prop: 'min', label: 'Мин.', width: '80' },
+  { prop: 'max', label: 'Макс.', width: '80' }
+]);
+
 
 const basicColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80', isFixed: true },
@@ -194,12 +228,23 @@ const handleSwitchDetailedMode = (value) => {
   tableData.value = [];
 };
 
+const deleteRow = (index: number) => {
+  tableCondition.value.splice(index, 1)
+}
+
+const onAddItem = () => {
+  tableCondition.value.push({
+    element: '',
+    min: '',
+    max: ''
+  })
+}
 
 </script>
 
 <style scoped>
 .page-container {
-  height: 90vh; /* Занимает всю высоту экрана */
+  height: 85vh; 
 }
 
 .sidebar {
