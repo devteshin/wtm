@@ -29,7 +29,7 @@ async def select_materials_data(
     indicators: str = '',
     indicator_conditions: str = '',
     detailed_mode: str = '',
-    only_non_zero_mode: bool = False
+    only_non_zero_mode: bool | str = False
     ):
 
     print(materials)
@@ -40,12 +40,18 @@ async def select_materials_data(
     print(detailed_mode)
     print(only_non_zero_mode)
 
+    if isinstance(only_non_zero_mode, str):
+        only_non_zero_mode_int = 1 if only_non_zero_mode.lower() in ('true', '1') else 0
+    else:
+        only_non_zero_mode_int = int(only_non_zero_mode)
+
+
     q_report = ""
 
     async with conn.cursor() as cur:
 
         try:
-            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, only_non_zero_mode, None])
+            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, only_non_zero_mode_int, None])
         except Exception as e:
             print(f"ERROR callproc \"query_material_stock_report\": {e}")
             return report_result    
