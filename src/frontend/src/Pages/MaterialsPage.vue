@@ -38,13 +38,13 @@
           <el-form-item label="Расширенный режим">
             <div class="switch-container">
               <el-switch
-                v-model="isAdvancedMode"
+                v-model="isDetailedMode"
                 active-color="#13ce66"
                 inactive-color="#ff4949"
                 @change="handleSwitchChange"
               />
               <span class="switch-description">
-                {{ isAdvancedMode ? 'развернуть материалы' : 'группировать материалы' }}
+                {{ isDetailedMode ? 'развернуть материалы' : 'группировать материалы' }}
               </span>
             </div>
           </el-form-item>
@@ -61,25 +61,16 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-          <div v-if="isLoading" class="loading-indicator">
-            <el-spin
-              size="large"
-              tip="Загрузка данных..."
-            />
-          </div>
-          <el-table v-else-if="tableData && tableData.length > 0" :data="tableData" style="width: 100%">
+        <el-table  v-loading="isLoading" v-if="tableData" :data="tableData" style="width: 100%" stripe border show-overflow-tooltip height="85vh">
           <el-table-column prop="stock_name" label="Склад" width="80" />
-          <el-table-column prop="material" label="Материал" width="200" />
-          <el-table-column prop="tare_type" label="Тара" width="150" />
-          <el-table-column prop="material_mark" label="Вид материала" width="120" />
-          <el-table-column prop="material_group" label="Группа материала" width="180" />
-          <el-table-column prop="rest_tare_amount" label="Количество" width="180" />
-          <el-table-column prop="rest_net_weight" label="Нетто" width="180" />
-          <el-table-column prop="rest_gross_weight" label="Брутто" width="180" />
+          <el-table-column prop="material" label="Материал" width="300" />
+          <el-table-column prop="tare_type" label="Тара" width="80" />
+          <el-table-column prop="material_mark" label="Вид" width="100" />
+          <el-table-column prop="material_group" label="Группа" width="100" />
+          <el-table-column prop="rest_tare_amount" label="Кол-во" width="100" />
+          <el-table-column prop="rest_net_weight" label="Нетто" width="100" />
+          <el-table-column prop="rest_gross_weight" label="Брутто" width="100" />
         </el-table>
-        <div v-else class="no-data-message">
-          <p>Нет данных.</p>
-        </div>        
       </el-main>
     </el-container>
   </el-container>
@@ -114,7 +105,7 @@ const selectedStore = ref([]);
 const selectedMaterialGroup = ref([]);
 const selectedMaterial = ref([]);
 
-const isAdvancedMode = ref(false);
+const isDetailedMode = ref(false);
 const isLoading = ref(false);
 
 // Данные таблицы
@@ -130,23 +121,13 @@ let tableData = ref([{}]);
 
 const handleMakeReport = async () => {
   isLoading.value = true;
+  tableData.value = [];
   console.log('Выбранные фильтры:', {
     option1: selectedStore.value,
     option2: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
     option3: selectedMaterial.value,
-    isAdvancedMode: isAdvancedMode.value
+    isDetailedMode: isDetailedMode.value
   });
-/*   await store.fetchMaterialsData(props.stockID, {
-    materials: selectedMaterial.value.toString(),
-    stocks: selectedStore.value.toString(),
-    material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
-    indicators: "",
-    indicator_conditions: ""
-  });
-  if (store.materials_data && Array.isArray(store.materials_data)) {
-    tableData.value = store.materials_data;
-  } 
- */  
   try {
     await store.fetchMaterialsData(props.stockID, {
       materials: selectedMaterial.value.toString(),
@@ -185,7 +166,7 @@ const handleSwitchChange = (value) => {
 
 <style scoped>
 .page-container {
-  height: 100vh; /* Занимает всю высоту экрана */
+  height: 90vh; /* Занимает всю высоту экрана */
 }
 
 .sidebar {
@@ -218,23 +199,7 @@ const handleSwitchChange = (value) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.loading-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px; /* Гарантирует видимую область */
-  color: #606266;
-  font-size: 16px;
-  text-align: center;
-}
-
-.no-data-message {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: #909399;
-  font-style: italic;
+.example-showcase .el-loading-mask {
+  z-index: 9;
 }
 </style>
