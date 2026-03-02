@@ -3,7 +3,7 @@ declare namespace frontend {
     export type IMaterialsMeta = {
         material_list: Array<IMaterial> 
         stock_list: Array<IStock>
-        material_group_list: Array<IMaterialGroup>
+        material_group_list: Array<IMaterialGroups>
     }
 
     export type IMaterial = {
@@ -22,6 +22,7 @@ declare namespace frontend {
         min_value: number
         max_value: number
         umi: string
+        type: number
     }
 
     export type IMaterialsData = {

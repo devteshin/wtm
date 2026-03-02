@@ -63,7 +63,6 @@ async def select_materials_data(
                 q_report = result["q_report"]
                 print("Полученный SQL:", q_report)
 
-                # Создаём новый курсор для выполнения динамического запроса
                 async with conn.cursor() as new_cur:
                     await new_cur.execute(q_report)
                     report_result = await new_cur.fetchall()
@@ -94,9 +93,9 @@ SELECT
     , min_value
     , max_value
     , umi
+    , type
     FROM element
-WHERE type <> 0 
-    AND FIND_IN_SET((SELECT organization_id FROM stock WHERE id = %(stock_id)s), organization_id)
+WHERE FIND_IN_SET((SELECT organization_id FROM stock WHERE id = %(stock_id)s), organization_id)
     ORDER BY code    
     """
 

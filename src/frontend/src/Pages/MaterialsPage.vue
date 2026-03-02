@@ -17,7 +17,7 @@
         <el-form-item label="Сырьевая группа">
           <el-select v-model="selectedMaterialGroup" placeholder="Сырьевая группа" clearable multiple>
             <el-option
-              v-for="item in store.materials_meta?.material_group_list"
+              v-for="item in store.materials_meta?.material_group_list.filter(item => item.type != 0)"
               :key="item.code"
               :label="item.code"
               :value="item.code"
@@ -75,7 +75,7 @@
     <el-container>
       <el-main class="table-container">
         <el-table v-loading="isLoading" v-if="tableData" :data="tableData" style="width: 100%" stripe border show-overflow-tooltip height="85vh"
-        >
+         >
           <el-table-column
             v-for="column in visibleColumns"
             :key="column.prop"
