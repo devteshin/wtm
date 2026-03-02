@@ -27,7 +27,8 @@ async def select_materials_data(
     stocks: str = '',
     material_groups: str = '',
     indicators: str = '',
-    indicator_conditions: str = ''
+    indicator_conditions: str = '',
+    detailed_mode: str = ''
     ):
 
     print(materials)
@@ -41,7 +42,7 @@ async def select_materials_data(
     async with conn.cursor() as cur:
 
         try:
-            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, "summary", None])
+            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, None])
         except Exception as e:
             print(f"ERROR callproc \"query_material_stock_report\": {e}")
             return report_result    

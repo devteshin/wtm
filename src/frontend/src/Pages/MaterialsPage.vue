@@ -61,15 +61,14 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-        <el-table  v-loading="isLoading" v-if="tableData" :data="tableData" style="width: 100%" stripe border show-overflow-tooltip height="85vh">
-          <el-table-column prop="stock_name" label="Склад" width="80" />
-          <el-table-column prop="material" label="Материал" width="300" />
-          <el-table-column prop="tare_type" label="Тара" width="80" />
-          <el-table-column prop="material_mark" label="Вид" width="100" />
-          <el-table-column prop="material_group" label="Группа" width="100" />
-          <el-table-column prop="rest_tare_amount" label="Кол-во" width="100" />
-          <el-table-column prop="rest_net_weight" label="Нетто" width="100" />
-          <el-table-column prop="rest_gross_weight" label="Брутто" width="100" />
+        <el-table v-loading="isLoading" v-if="tableData" :data="tableData" style="width: 100%" stripe border show-overflow-tooltip height="85vh">
+          <el-table-column
+            v-for="column in visibleColumns"
+            :key="column.prop"
+            :prop="column.prop"
+            :label="column.label"
+            :width="column.width"
+          />
         </el-table>
       </el-main>
     </el-container>
@@ -78,7 +77,7 @@
 
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import useApplicationStore from "@/store";
 import { useRouter } from "vue-router";
 
@@ -92,11 +91,7 @@ const router = useRouter();
 const store = useApplicationStore();
 
 onMounted(async () => {
-//    await store.fetchOperations(props.stockID);
-//    console.log(store.operations);
     await store.fetchMaterialsMeta(props.stockID);
-    console.log(store.materials_meta)
-
 });
 
 
@@ -108,16 +103,35 @@ const selectedMaterial = ref([]);
 const isDetailedMode = ref(false);
 const isLoading = ref(false);
 
-// Данные таблицы
-/* const tableData = ref([
-  { id: 1, name: 'Элемент 1', category: 'Категория A', status: 'Активен', date: '2023-10-01' },
-  { id: 2, name: 'Элемент 2', category: 'Категория B', status: 'Неактивен', date: '2023-10-02' },
-  { id: 3, name: 'Элемент 3', category: 'Категория C', status: 'Активен', date: '2023-10-03' },
-  { id: 4, name: 'Элемент 4', category: 'Категория A', status: 'Ожидает', date: '2023-10-04' }
-]);
- */
 let tableData = ref([{}]);
 
+const basicColumns = ref([
+  { prop: 'stock_name', label: 'Склад', width: '80' },
+  { prop: 'material', label: 'Материал', width: '300' },
+  { prop: 'tare_type', label: 'Тара', width: '80' },
+  { prop: 'material_mark', label: 'Вид', width: '100' },
+  { prop: 'material_group', label: 'Группа', width: '100' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
+]);
+
+const detailedColumns = ref([
+  { prop: 'stock_name', label: 'Склад', width: '80' },
+  { prop: 'material', label: 'Материал', width: '300' },
+  { prop: 'tare_type', label: 'Тара', width: '80' },
+  { prop: 'tare_id', label: 'Номер', width: '80' },
+  { prop: 'tare_mark', label: 'Маркировка', width: '100' },
+  { prop: 'material_mark', label: 'Вид', width: '100' },
+  { prop: 'material_group', label: 'Группа', width: '100' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
+]);
+
+const visibleColumns = computed(() => {
+  return isDetailedMode.value ? detailedColumns.value : basicColumns.value;
+});
 
 const handleMakeReport = async () => {
   isLoading.value = true;
@@ -134,7 +148,8 @@ const handleMakeReport = async () => {
       stocks: selectedStore.value.toString(),
       material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
       indicators: "",
-      indicator_conditions: ""
+      indicator_conditions: "",
+      detailed_mode: isDetailedMode.value ? "detailed" : "summary"
     });
 
     if (store.materials_data && Array.isArray(store.materials_data)) {

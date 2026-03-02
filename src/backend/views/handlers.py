@@ -112,6 +112,7 @@ async def get_materials_data(request: Request):
     material_groups = request.query.get("material_groups")
     indicators = request.query.get("indicators")
     indicator_conditions = request.query.get("indicator_conditions")
+    detailed_mode = request.query.get("detailed_mode")
 
     materials_data = []
     async with request.app["db"].acquire() as conn:
@@ -123,7 +124,8 @@ async def get_materials_data(request: Request):
             stocks=stocks,
             material_groups=material_groups,
             indicators=indicators,
-            indicator_conditions=indicator_conditions
+            indicator_conditions=indicator_conditions,
+            detailed_mode=detailed_mode
         )
 
     return await jsonify(materials_data, request)

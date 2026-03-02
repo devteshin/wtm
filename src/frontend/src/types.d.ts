@@ -53,6 +53,7 @@ declare namespace frontend {
         material_groups?: string;
         indicators?: string;
         indicator_conditions?: string;
+        detailed_mode?: string;
     }
 
     /** Операции */
