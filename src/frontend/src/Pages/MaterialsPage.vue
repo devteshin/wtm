@@ -120,15 +120,15 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-        <el-table v-loading="isLoading" v-if="tableData" :data="tableData" style="width: 100%" stripe border show-overflow-tooltip height="85vh"
-         >
+        <el-table v-loading="isLoading" v-if="tableData" :data="tableData" style="width: fit-content; min-width: max-content;"
+        stripe border show-overflow-tooltip height="85vh">
           <el-table-column
             v-for="column in visibleColumns"
             :key="column.prop"
             :prop="column.prop"
             :label="column.label"
             :width="column.width"
-            :fixed="column.isFixed"
+            :fixed="column.fixed"
           />
         </el-table>
       </el-main>
@@ -148,14 +148,22 @@ const props = defineProps({
     stockID: { type: Number, required: true },
 });
 
+interface TableConditionItem {
+  element: string;
+  min: string;
+  max: string;
+};
+
+interface Column {
+  prop: string;
+  label: string;
+  width: string;
+  fixed?: string;
+}
 
 const router = useRouter();
 const store = useApplicationStore();
 
-onMounted(async () => {
-    await store.fetchMaterialsMeta(props.stockID);
-    onAddItem();
-});
 
 
 // Выбранные значения селектов
@@ -168,32 +176,49 @@ const isOnlyNonZeroMode = ref(false);
 const isLoading = ref(false);
 
 let tableData = ref([{}]);
-let tableCondition = ref([{}]);
+let tableCondition = ref<TableConditionItem[]>([
+    {
+      element: '',
+      min: '',
+      max: ''
+    }
+]);
 
 
 const basicColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80', isFixed: true },
-  { prop: 'material', label: 'Материал', width: '300', isFixed: true },
-  { prop: 'tare_type', label: 'Тара', width: '80', isFixed: false },
-  { prop: 'material_mark', label: 'Вид', width: '100', isFixed: false },
-  { prop: 'material_group', label: 'Группа', width: '100', isFixed: false },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', isFixed: false },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', isFixed: false },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', isFixed: false }
+  { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
+  { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
+  { prop: 'tare_type', label: 'Тара', width: '80' },
+  { prop: 'material_mark', label: 'Вид', width: '100' },
+  { prop: 'material_group', label: 'Группа', width: '100' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
 ]);
 
 const detailedColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80', isFixed: true },
-  { prop: 'material', label: 'Материал', width: '300', isFixed: true },
-  { prop: 'tare_type', label: 'Тара', width: '80', isFixed: false },
-  { prop: 'tare_id', label: 'Номер', width: '80', isFixed: false },
-  { prop: 'tare_mark', label: 'Маркировка', width: '120', isFixed: false },
-  { prop: 'material_mark', label: 'Вид', width: '100', isFixed: false },
-  { prop: 'material_group', label: 'Группа', width: '100', isFixed: false },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', isFixed: false },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', isFixed: false },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', isFixed: false }
+  { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
+  { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
+  { prop: 'tare_type', label: 'Тара', width: '80' },
+  { prop: 'tare_id', label: 'Номер', width: '80' },
+  { prop: 'tare_mark', label: 'Маркировка', width: '120' },
+  { prop: 'material_mark', label: 'Вид', width: '100' },
+  { prop: 'material_group', label: 'Группа', width: '100' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
 ]);
+
+onMounted(async () => {
+    await store.fetchMaterialsMeta(props.stockID);
+    tableCondition.value = [
+    {
+      element: '',
+      min: '',
+      max: ''
+    }
+  ];  
+});
 
 const isDetailedModeDisabled = computed(() => {
   if (selectedMaterial.value && selectedMaterial.value.length > 0) {
@@ -214,15 +239,58 @@ const handleMakeReport = async () => {
     option1: selectedStore.value,
     option2: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
     option3: selectedMaterial.value,
-    isDetailedMode: isDetailedMode.value
+    isDetailedMode: isDetailedMode.value,
+    tableCondition: tableCondition.value
   });
+
+  const percent_items: Column[] = [];
+  for (const item of tableCondition.value) {
+    const item_element = item.element
+    if (item_element !== '') {
+      percent_items.push(
+          { prop: item_element + '_percent', 
+            label: item_element + ', ' + store.materials_meta?.material_group_list.find(item => item.code === item_element)?.umi ,
+            width: '100'
+          }
+        );
+    }
+  }
+  if (isDetailedMode.value) {
+    detailedColumns.value = [...detailedColumns.value.slice(0, 10)];
+    detailedColumns.value = [...detailedColumns.value, ...percent_items];
+  } else {
+    basicColumns.value = [...basicColumns.value.slice(0, 8)];
+    basicColumns.value = [...basicColumns.value, ...percent_items];
+  }
+
+  const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
+  const indicator_conditions_list = tableCondition.value.map((item) => {
+    if (item.element != '') {
+      const item_element = item.element 
+      let item_min = item.min;
+      if (item_min ==  '') {
+        item_min = store.materials_meta?.material_group_list.find(item => item.code === item_element)?.min_value.toString() ?? '0' 
+      };
+      let item_max = item.max;
+      if (item.max ==  '') {
+        item_max = store.materials_meta?.material_group_list.find(item => item.code === item_element)?.max_value.toString() ?? '100' 
+      };
+      return item_min + '|' + item_max;  
+    };
+    return;
+  }).join('|');
+
+  console.log(indicators_list);
+  console.log(indicator_conditions_list);
+
+
   try {
     await store.fetchMaterialsData(props.stockID, {
       materials: selectedMaterial.value.toString(),
       stocks: selectedStore.value.toString(),
       material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
-      indicators: "",
-      indicator_conditions: "",
+      indicators: indicators_list,
+      indicator_conditions: indicator_conditions_list,
       detailed_mode: isDetailedMode.value ? "detailed" : "summary",
       only_non_zero_mode: isOnlyNonZeroMode.value
     });
@@ -298,4 +366,5 @@ const onAddItem = () => {
 .example-showcase .el-loading-mask {
   z-index: 9;
 }
+
 </style>

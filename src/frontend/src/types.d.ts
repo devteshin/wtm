@@ -36,17 +36,9 @@ declare namespace frontend {
         rest_tare_amount: number
         rest_net_weight: number
         rest_gross_weight: number
+        [key: string]: number;
     }    
 
-/*     export type IMaterialsData = {
-        stock_name: string
-        material: string
-        tare_type: string
-        material_mark: string
-        material_group: string
-        rest_net_weight: number
-    }    
- */
 
     export type IMaterialsQueryParams = {
         materials?: string;

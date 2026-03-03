@@ -61,7 +61,6 @@ export default defineStore("app_store", () => {
             api.fetchTasksList(stockID).then(body => tasks.value = body),
             api.fetchTasksProgress(stockID).then(body => tasks_progress.value = body)
         ]).finally(() => loading.value = false);
-        return api.fetchTasksList(stockID).then(body => tasks.value = body).finally(() => loading.value = false);
     };
 
     /** запрос к API для получения данных задания */
