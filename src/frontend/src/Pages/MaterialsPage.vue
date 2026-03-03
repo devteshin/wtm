@@ -120,8 +120,8 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-        <el-table v-loading="isLoading" v-if="tableData" :data="tableData" style="width: fit-content; min-width: max-content;"
-        stripe border show-overflow-tooltip height="85vh">
+        <el-table v-loading="isLoading" v-if="tableData" :data="formattedTableData" style="width: 100%;"
+        stripe border show-overflow-tooltip height="85vh" virtual-scroll>
           <el-table-column
             v-for="column in visibleColumns"
             :key="column.prop"
@@ -219,6 +219,41 @@ onMounted(async () => {
     }
   ];  
 });
+
+const formattedTableData = computed(() => {
+  if (!tableData.value || !Array.isArray(tableData.value)) {
+    return [];
+  }
+
+  return tableData.value.map(row => {
+    const formattedRow = { ...row };
+
+    const numericFields = [
+      'rest_tare_amount',
+      'rest_net_weight',
+      'rest_gross_weight'
+    ];
+
+    const keys = Object.keys(tableData.value[0]);
+    console.log(keys);
+    numericFields.forEach(field => {
+      if (formattedRow[field] !== undefined) {
+        formattedRow[field] = formatNumber(formattedRow[field]);
+      }
+    });
+
+    return formattedRow;
+  });
+});
+
+function formatNumber(value: number | string): string {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numValue) || numValue === 0) {
+    return '';
+  }
+  return new Intl.NumberFormat('ru-RU').format(numValue);
+}
+
 
 const isDetailedModeDisabled = computed(() => {
   if (selectedMaterial.value && selectedMaterial.value.length > 0) {
@@ -344,7 +379,7 @@ const onAddItem = () => {
 }
 
 .table-container {
-  padding: 20px;
+  padding: 0 20px 20px;
 }
 
 .switch-container {
