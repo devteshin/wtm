@@ -61,29 +61,50 @@
               </span>
             </div>
           </el-form-item>
-          <el-form-item label="Дополнительные параметры">
+          <el-form-item label="Показатели">
             <el-table :data="tableCondition" style="width: 100%" max-height="250">
-              <el-table-column
-                v-for="column in tableConditionColumns"
-                :key="column.prop"
-                :label="column.label"
-                :width="column.width"
-              />
-              <el-table-column fixed="right" label="" min-width="100">
+
+              <el-table-column prop="element" label="">
+                <template #default="scope">
+                  <el-select v-model="scope.row.element"  style="width: 90px"
+                  >
+                    <el-option
+                      v-for="item in store.materials_meta?.material_group_list
+                          .filter(item => (item.type == 0 || item.type == 1))"
+                      :key="item.code"
+                      :label="item.code"
+                      :value="item.code"
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column prop="min" label="min">
+                <template #default="scope">
+                  <el-input type="number" v-model.number="scope.row.min" placeholder=""
+                  ></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column prop="max" label="max">
+                <template #default="scope">
+                  <el-input type="number" v-model.number="scope.row.max" placeholder=""
+                  ></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column fixed="right" label="" width="40">
                 <template #default="scope">
                   <el-button
                     link
-                    type="primary"
+                    type="danger"
                     size="small"
                     @click.prevent="deleteRow(scope.$index)"
                   >
-                    Удалить
+                    <Delete style="width: 14px; height: 14px;" />
                   </el-button>
                 </template>
               </el-table-column>
             </el-table>
             <el-button class="mt-4" style="width: 100%" @click="onAddItem">
-              Add Item
+              Добавить
             </el-button>            
           </el-form-item>
           <el-button
@@ -120,7 +141,7 @@ import { onMounted } from "vue";
 import { ref, computed } from "vue";
 import useApplicationStore from "@/store";
 import { useRouter } from "vue-router";
-import { max } from "lodash-es";
+import { Delete } from '@element-plus/icons-vue';
 
 const props = defineProps({
     /** ID склада */
@@ -133,6 +154,7 @@ const store = useApplicationStore();
 
 onMounted(async () => {
     await store.fetchMaterialsMeta(props.stockID);
+    onAddItem();
 });
 
 
@@ -147,12 +169,6 @@ const isLoading = ref(false);
 
 let tableData = ref([{}]);
 let tableCondition = ref([{}]);
-
-let tableConditionColumns = ref([
-  { prop: 'element', label: '', width: '80' },
-  { prop: 'min', label: 'Мин.', width: '80' },
-  { prop: 'max', label: 'Макс.', width: '80' }
-]);
 
 
 const basicColumns = ref([
@@ -238,6 +254,8 @@ const onAddItem = () => {
     min: '',
     max: ''
   })
+
+  console.log(tableCondition.value);
 }
 
 </script>
