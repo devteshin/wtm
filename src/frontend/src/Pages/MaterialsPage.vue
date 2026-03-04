@@ -57,7 +57,7 @@
                 inactive-color="#ff4949"
               />
               <span class="switch-description">
-                {{ isOnlyNonZeroMode ? 'только ненулевые остатки' : 'выводить нулевые остатки' }}
+                {{ isOnlyNonZeroMode ? 'только материалы в наличие на складе' : 'все материалы (включая отсутствующие)' }}
               </span>
             </div>
           </el-form-item>
@@ -70,7 +70,7 @@
                   >
                     <el-option
                       v-for="item in store.materials_meta?.material_group_list
-                          .filter(item => (item.type == 0 || item.type == 1))"
+                          .filter(item => (item.type == 0 || item.type == 1) && !tableCondition.map(item => item.element).includes(item.code))"
                       :key="item.code"
                       :label="item.code"
                       :value="item.code"
@@ -98,7 +98,7 @@
                     size="small"
                     @click.prevent="deleteRow(scope.$index)"
                   >
-                    <Delete style="width: 14px; height: 14px;" />
+                    <Delete style="width: 16px; height: 16px;" />
                   </el-button>
                 </template>
               </el-table-column>
@@ -121,7 +121,8 @@
     <el-container>
       <el-main class="table-container">
         <el-table v-loading="isLoading" v-if="tableData" :data="formattedTableData" style="width: 100%;"
-        stripe border show-overflow-tooltip height="85vh" virtual-scroll>
+        stripe border show-overflow-tooltip height="85vh" virtual-scroll
+        >
           <el-table-column
             v-for="column in visibleColumns"
             :key="column.prop"
@@ -164,9 +165,6 @@ interface Column {
 const router = useRouter();
 const store = useApplicationStore();
 
-
-
-// Выбранные значения селектов
 const selectedStore = ref([]);
 const selectedMaterialGroup = ref([]);
 const selectedMaterial = ref([]);
@@ -175,8 +173,9 @@ const isDetailedMode = ref(false);
 const isOnlyNonZeroMode = ref(false);
 const isLoading = ref(false);
 
-let tableData = ref([{}]);
-let tableCondition = ref<TableConditionItem[]>([
+const tableData = ref([{}]);
+//const tableData = ref<frontend.IMaterialsData[]>([]);
+const tableCondition = ref<TableConditionItem[]>([
     {
       element: '',
       min: '',
@@ -220,6 +219,7 @@ onMounted(async () => {
   ];  
 });
 
+
 const formattedTableData = computed(() => {
   if (!tableData.value || !Array.isArray(tableData.value)) {
     return [];
@@ -234,14 +234,12 @@ const formattedTableData = computed(() => {
       'rest_gross_weight'
     ];
 
-    const keys = Object.keys(tableData.value[0]);
+    const keys = Object.keys(tableData.value[0] || {});
     keys.forEach(key => {
       if (key.includes('_percent')) {
         numericFields.push(key);
-      };
+      }
     });
-    
-    console.log(numericFields);
 
     numericFields.forEach(field => {
       if (formattedRow[field] !== undefined) {
@@ -339,15 +337,14 @@ const handleMakeReport = async () => {
 
     if (store.materials_data && Array.isArray(store.materials_data)) {
       tableData.value = store.materials_data;
+      console.log(tableData.value.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
     }
   } catch (error) {
     console.error('Ошибка при загрузке данных:', error);
     // Здесь можно добавить уведомление об ошибке для пользователя
   } finally {
-    isLoading.value = false; // Завершаем загрузку в любом случае
+    isLoading.value = false;
   }
-
-
 };
 
 const handleSwitchDetailedMode = (value) => {
@@ -356,7 +353,7 @@ const handleSwitchDetailedMode = (value) => {
 
 const deleteRow = (index: number) => {
   tableCondition.value.splice(index, 1)
-}
+};
 
 const onAddItem = () => {
   tableCondition.value.push({
@@ -364,9 +361,7 @@ const onAddItem = () => {
     min: '',
     max: ''
   })
-
-  console.log(tableCondition.value);
-}
+};
 
 </script>
 
