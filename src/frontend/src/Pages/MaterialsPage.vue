@@ -235,7 +235,14 @@ const formattedTableData = computed(() => {
     ];
 
     const keys = Object.keys(tableData.value[0]);
-    console.log(keys);
+    keys.forEach(key => {
+      if (key.includes('_percent')) {
+        numericFields.push(key);
+      };
+    });
+    
+    console.log(numericFields);
+
     numericFields.forEach(field => {
       if (formattedRow[field] !== undefined) {
         formattedRow[field] = formatNumber(formattedRow[field]);
