@@ -122,7 +122,7 @@
       <el-main class="table-container">
         <el-table v-loading="isLoading" v-if="tableData" :data="formattedTableData" style="width: 100%;"
         stripe border show-overflow-tooltip height="85vh" virtual-scroll
-        >
+        :row-class-name="getRowClassName">
           <el-table-column
             v-for="column in visibleColumns"
             :key="column.prop"
@@ -251,6 +251,16 @@ const formattedTableData = computed(() => {
   });
 });
 
+const isTotalRow = (row: any): boolean => {
+  return row.stock_name === 'Итого';
+};
+
+const getRowClassName = ({ row }: { row: any }): string => {
+  if (isTotalRow(row)) {
+    return 'total-row';
+  }
+  return '';
+};
 function formatNumber(value: number | string): string {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(numValue) || numValue === 0) {
@@ -275,6 +285,10 @@ const visibleColumns = computed(() => {
 const handleMakeReport = async () => {
   isLoading.value = true;
   tableData.value = [];
+  let total_rest_gross_weight = 0;
+  let total_rest_net_weight = 0;
+  let total_rest_tare_amount = 0;
+
   console.log('Выбранные фильтры:', {
     option1: selectedStore.value,
     option2: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
@@ -337,7 +351,23 @@ const handleMakeReport = async () => {
 
     if (store.materials_data && Array.isArray(store.materials_data)) {
       tableData.value = store.materials_data;
-      console.log(tableData.value.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
+      if (tableData.value.length > 1) {
+        total_rest_gross_weight = tableData.value.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        total_rest_net_weight = tableData.value.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        total_rest_tare_amount = tableData.value.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        tableData.value.push({
+          stock_name: 'Итого',
+          material: '',
+          tare_type: '',
+          tare_id: '',
+          tare_mark: '',
+          material_mark: '',
+          material_group: '',
+          rest_tare_amount: total_rest_tare_amount,
+          rest_net_weight: total_rest_net_weight,
+          rest_gross_weight: total_rest_gross_weight
+        });
+      };
     }
   } catch (error) {
     console.error('Ошибка при загрузке данных:', error);
@@ -402,6 +432,17 @@ const onAddItem = () => {
 
 .example-showcase .el-loading-mask {
   z-index: 9;
+}
+
+:deep(.total-row) {
+  background-color: #f0f9ff !important;
+  font-weight: bold !important;
+  color: #1d4ed8 !important;
+}
+
+:deep(.total-row td) {
+  border-bottom: 2px solid #3b82f6 !important;
+  background-color: #e0f2fe !important;
 }
 
 </style>
