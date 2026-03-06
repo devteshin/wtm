@@ -229,10 +229,11 @@ SELECT
     , ptd.planned_date
     , ptd.stock
     , ptd.technical_process
-    , ptd.operation
+    , o.name AS operation
     , (SELECT material FROM material WHERE id = %(material_id)s) AS material
 FROM
     production_task_doc ptd
+LEFT JOIN operations AS o ON o.id = ptd.operation    
 WHERE
     ptd.id = %(doc_id)s
     AND
