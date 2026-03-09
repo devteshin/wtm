@@ -27,8 +27,8 @@
 
         <el-form-item label="Материал">
           <el-select v-model="selectedMaterial" placeholder="Материал" clearable multiple filterable>
-            <el-option
-              v-for="item in store.materials_meta?.material_list"
+             <el-option
+              v-for="item in materialOptions"
               :key="item.id"
               :label="item.name"
               :value="item.id"
@@ -120,9 +120,10 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-        <el-table v-loading="isLoading" v-if="tableData" :data="formattedTableData" style="width: 100%;"
+         <el-table v-loading="isLoading" v-if="tableData" :data="formattedTableData" style="width: 100%;"
         stripe border show-overflow-tooltip height="85vh" virtual-scroll
         :row-class-name="getRowClassName">
+        <div v-if="!tableData?.length">Таблица пуста</div>
           <el-table-column
             v-for="column in visibleColumns"
             :key="column.prop"
@@ -138,52 +139,105 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { nextTick, onMounted } from "vue";
 import { ref, computed } from "vue";
 import useApplicationStore from "@/store";
+import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import { useRouter } from "vue-router";
 import { Delete } from '@element-plus/icons-vue';
+import { watch } from 'vue';
 
 const props = defineProps({
     /** ID склада */
     stockID: { type: Number, required: true },
 });
 
-interface TableConditionItem {
+/* interface TableConditionItem {
   element: string;
   min: string;
   max: string;
 };
-
+ */
 interface Column {
   prop: string;
   label: string;
   width: string;
   fixed?: string;
-}
+};
+
+interface MaterialOption {
+  id: number;
+  name: string;
+};
 
 const router = useRouter();
 const store = useApplicationStore();
+const reportStore = useMaterialsReportStore();
 
-const selectedStore = ref([]);
-const selectedMaterialGroup = ref([]);
-const selectedMaterial = ref([]);
+//const selectedStore = ref([]);
+const selectedStore = computed({
+  get: () => reportStore.selectedStore,
+  set: (value) => reportStore.setFilters({ selectedStore: value })
+});
+//const selectedMaterialGroup = ref([]);
+const selectedMaterialGroup = computed({
+  get: () => reportStore.selectedMaterialGroup,
+  set: (value) => reportStore.setFilters({ selectedMaterialGroup: value })
+});
+//const selectedMaterial = ref([]);
+const selectedMaterial = computed({
+  get: () => reportStore.selectedMaterial,
+  set: (value) => reportStore.setFilters({ selectedMaterial: value })
+});
 
-const isDetailedMode = ref(false);
-const isOnlyNonZeroMode = ref(false);
-const isLoading = ref(false);
+//const isDetailedMode = ref(false);
+const isDetailedMode = computed({
+  get: () => reportStore.isDetailedMode,
+  set: (value) => reportStore.setFilters({ isDetailedMode: value })
+});
+//const isOnlyNonZeroMode = ref(false);
+const isOnlyNonZeroMode = computed({
+  get: () => reportStore.isOnlyNonZeroMode,
+  set: (value) => reportStore.setFilters({ isOnlyNonZeroMode: value })
+});
 
-const tableData = ref([{}]);
-//const tableData = ref<frontend.IMaterialsData[]>([]);
-const tableCondition = ref<TableConditionItem[]>([
+/* const tableCondition = ref<TableConditionItem[]>([
     {
       element: '',
       min: '',
       max: ''
     }
 ]);
+ */
+const tableCondition = computed({
+  get: () => reportStore.tableCondition,
+  set: (value) => reportStore.setFilters({ tableCondition: value })
+});
 
+const isLoading = ref(false);
 
+const tableData = ref([{}]);
+
+const materialOptions = ref<MaterialOption[]>([]);
+const isOptionsLoaded = ref(false);
+
+ // Отслеживаем изменения всех фильтров и сохраняем в стор
+watch(
+  () => ({
+    selectedStore: selectedStore.value,
+    selectedMaterialGroup: selectedMaterialGroup.value,
+    selectedMaterial: selectedMaterial.value,
+    isDetailedMode: isDetailedMode.value,
+    isOnlyNonZeroMode: isOnlyNonZeroMode.value,
+    tableCondition: tableCondition.value
+  }),
+  (newValues) => {
+    reportStore.setFilters(newValues);
+    reportStore.saveToStorage();
+  },
+  { deep: true }
+);
+ 
 const basicColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
   { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
@@ -209,14 +263,33 @@ const detailedColumns = ref([
 ]);
 
 onMounted(async () => {
+//  await store.fetchMaterialsMeta(props.stockID);
+  console.log(!store.materials_meta);
+  console.time('fetchMaterialsMeta');
+  
+  if (!store.materials_meta) {
     await store.fetchMaterialsMeta(props.stockID);
-    tableCondition.value = [
-    {
-      element: '',
-      min: '',
-      max: ''
-    }
-  ];  
+  }
+  console.timeEnd('fetchMaterialsMeta');
+
+  console.time('reportStore.loadFromStorage()');
+  reportStore.loadFromStorage();  
+  console.timeEnd('reportStore.loadFromStorage()');
+
+ // Фоновая загрузка опций после отрисовки страницы
+  nextTick(() => {
+    setTimeout(() => {
+      console.time('loadMaterialOptions (background)');
+      if (store.materials_meta?.material_list && !isOptionsLoaded.value) {
+        materialOptions.value = [...store.materials_meta.material_list];
+        isOptionsLoaded.value = true;
+        console.timeEnd('loadMaterialOptions (background)');
+        console.log('Опции материалов загружены в фоне');
+      }
+    }, 500); // Задержка 500 мс после отрисовки
+  });
+
+
 });
 
 
@@ -341,7 +414,7 @@ const handleMakeReport = async () => {
   try {
     await store.fetchMaterialsData(props.stockID, {
       materials: selectedMaterial.value.toString(),
-      stocks: selectedStore.value.toString(),
+      stocks: reportStore.selectedStore.toString(),
       material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
       indicators: indicators_list,
       indicator_conditions: indicator_conditions_list,
@@ -368,7 +441,8 @@ const handleMakeReport = async () => {
           rest_gross_weight: total_rest_gross_weight
         });
       };
-    }
+    };
+    reportStore.saveToStorage();
   } catch (error) {
     console.error('Ошибка при загрузке данных:', error);
     // Здесь можно добавить уведомление об ошибке для пользователя
