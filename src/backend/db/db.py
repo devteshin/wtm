@@ -477,7 +477,8 @@ SELECT
 	, a.material AS material_id
 	, m.material AS material
 	, SUM(net_weight) AS net_weight
-	, SUM(tare_amount) AS tare_amount 
+	, SUM(tare_amount) AS tare_amount
+    , doc_date AS sorted_doc_date 
 FROM
 	arrival_doc AS doc
 LEFT JOIN  
@@ -496,7 +497,7 @@ GROUP BY
     , material_id
     , material
 ORDER BY 
-	doc_date DESC
+	sorted_doc_date DESC
 	, doc_number
     , material 
     """

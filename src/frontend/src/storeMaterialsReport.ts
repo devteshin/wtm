@@ -18,6 +18,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     { element: '', min: '', max: '' }
   ]);
 
+const tableData = ref<any[]>([]);  
 
   // Действия
 const setFilters = (filters: Partial<{
@@ -55,6 +56,7 @@ const setFilters = (filters: Partial<{
     isDetailedMode.value = false;
     isOnlyNonZeroMode.value = false;
     tableCondition.value = [{ element: '', min: '', max: '' }];
+    tableData.value = [];
   };
 
   const loadFromStorage = () => {
@@ -70,6 +72,9 @@ const setFilters = (filters: Partial<{
           isOnlyNonZeroMode: data.isOnlyNonZeroMode || false,
           tableCondition: data.tableCondition || [{ element: '', min: '', max: '' }]
         });
+        if (data.tableData) {
+          tableData.value = data.tableData;
+        }
       }
     } catch (error) {
       console.error('Ошибка загрузки из LocalStorage:', error);
@@ -84,10 +89,17 @@ const setFilters = (filters: Partial<{
       isDetailedMode: isDetailedMode.value,
       isOnlyNonZeroMode: isOnlyNonZeroMode.value,
       tableCondition: tableCondition.value,
+      tableData: tableData.value,
       timestamp: Date.now()
     };
     localStorage.setItem('materialsReportState', JSON.stringify(stateToSave));
   };
+
+  const setTableData = (data: any[]) => {
+    tableData.value = data;
+    saveToStorage(); // Автосохранение при обновлении данных
+  };
+
   return {
     // Экспортируем реактивные переменные (только настройки)
     selectedStore,
@@ -96,10 +108,12 @@ const setFilters = (filters: Partial<{
     isDetailedMode,
     isOnlyNonZeroMode,
     tableCondition,
+    tableData,
 
     // Экспортируем действия
     setFilters,
     resetFilters,
     loadFromStorage,
-    saveToStorage
+    saveToStorage,
+    setTableData 
   };});

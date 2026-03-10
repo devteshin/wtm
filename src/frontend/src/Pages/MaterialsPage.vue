@@ -120,10 +120,10 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-         <el-table v-loading="isLoading" v-if="tableData" :data="formattedTableData" style="width: 100%;"
+         <el-table v-loading="isLoading" v-if="reportStore.tableData" :data="formattedTableData" style="width: 100%;"
         stripe border show-overflow-tooltip height="85vh" virtual-scroll
         :row-class-name="getRowClassName">
-        <div v-if="!tableData?.length">Таблица пуста</div>
+        <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
           <el-table-column
             v-for="column in visibleColumns"
             :key="column.prop"
@@ -216,7 +216,8 @@ const tableCondition = computed({
 
 const isLoading = ref(false);
 
-const tableData = ref([{}]);
+//const tableData = ref([{}]);
+//const tableData = computed(() => reportStore.tableData);
 
 const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
@@ -294,11 +295,13 @@ onMounted(async () => {
 
 
 const formattedTableData = computed(() => {
-  if (!tableData.value || !Array.isArray(tableData.value)) {
+//  if (!tableData.value || !Array.isArray(tableData.value)) {
+  if (!reportStore.tableData || !Array.isArray(reportStore.tableData)) {
     return [];
   }
 
-  return tableData.value.map(row => {
+//  return tableData.value.map(row => {
+  return reportStore.tableData.map(row => {
     const formattedRow = { ...row };
 
     const numericFields = [
@@ -307,7 +310,8 @@ const formattedTableData = computed(() => {
       'rest_gross_weight'
     ];
 
-    const keys = Object.keys(tableData.value[0] || {});
+//    const keys = Object.keys(tableData.value[0] || {});
+    const keys = Object.keys(reportStore.tableData[0] || {});
     keys.forEach(key => {
       if (key.includes('_percent')) {
         numericFields.push(key);
@@ -357,7 +361,7 @@ const visibleColumns = computed(() => {
 
 const handleMakeReport = async () => {
   isLoading.value = true;
-  tableData.value = [];
+  reportStore.setTableData([]);
   let total_rest_gross_weight = 0;
   let total_rest_net_weight = 0;
   let total_rest_tare_amount = 0;
@@ -423,12 +427,18 @@ const handleMakeReport = async () => {
     });
 
     if (store.materials_data && Array.isArray(store.materials_data)) {
-      tableData.value = store.materials_data;
-      if (tableData.value.length > 1) {
-        total_rest_gross_weight = tableData.value.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        total_rest_net_weight = tableData.value.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        total_rest_tare_amount = tableData.value.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        tableData.value.push({
+      reportStore.tableData = store.materials_data;
+//      if (tableData.value.length > 1) {
+//        total_rest_gross_weight = tableData.value.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+//        total_rest_net_weight = tableData.value.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+//        total_rest_tare_amount = tableData.value.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+//        tableData.value.push({
+      if (reportStore.tableData.length > 1) {
+        total_rest_gross_weight = reportStore.tableData.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        total_rest_net_weight = reportStore.tableData.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        total_rest_tare_amount = reportStore.tableData.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+/*         reportStore.tableData.push({
           stock_name: 'Итого',
           material: '',
           tare_type: '',
@@ -440,6 +450,25 @@ const handleMakeReport = async () => {
           rest_net_weight: total_rest_net_weight,
           rest_gross_weight: total_rest_gross_weight
         });
+ */
+        // Добавляем итоговую строку
+        reportStore.setTableData([
+          ...reportStore.tableData,
+          {
+            stock_name: 'Итого',
+            material: '',
+            tare_type: '',
+            tare_id: '',
+            tare_mark: '',
+            material_mark: '',
+            material_group: '',
+            rest_tare_amount: total_rest_tare_amount,
+            rest_net_weight: total_rest_net_weight,
+            rest_gross_weight: total_rest_gross_weight
+          }
+        ]);
+
+
       };
     };
     reportStore.saveToStorage();
@@ -452,7 +481,8 @@ const handleMakeReport = async () => {
 };
 
 const handleSwitchDetailedMode = (value) => {
-  tableData.value = [];
+  reportStore.tableData = [];
+  
 };
 
 const deleteRow = (index: number) => {
