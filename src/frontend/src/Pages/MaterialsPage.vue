@@ -152,12 +152,6 @@ const props = defineProps({
     stockID: { type: Number, required: true },
 });
 
-/* interface TableConditionItem {
-  element: string;
-  min: string;
-  max: string;
-};
- */
 interface Column {
   prop: string;
   label: string;
@@ -201,14 +195,6 @@ const isOnlyNonZeroMode = computed({
   set: (value) => reportStore.setFilters({ isOnlyNonZeroMode: value })
 });
 
-/* const tableCondition = ref<TableConditionItem[]>([
-    {
-      element: '',
-      min: '',
-      max: ''
-    }
-]);
- */
 const tableCondition = computed({
   get: () => reportStore.tableCondition,
   set: (value) => reportStore.setFilters({ tableCondition: value })
@@ -217,7 +203,6 @@ const tableCondition = computed({
 const isLoading = ref(false);
 
 //const tableData = ref([{}]);
-//const tableData = computed(() => reportStore.tableData);
 
 const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
@@ -264,43 +249,29 @@ const detailedColumns = ref([
 ]);
 
 onMounted(async () => {
-//  await store.fetchMaterialsMeta(props.stockID);
-  console.log(!store.materials_meta);
-  console.time('fetchMaterialsMeta');
   
   if (!store.materials_meta) {
     await store.fetchMaterialsMeta(props.stockID);
   }
-  console.timeEnd('fetchMaterialsMeta');
-
-  console.time('reportStore.loadFromStorage()');
   reportStore.loadFromStorage();  
-  console.timeEnd('reportStore.loadFromStorage()');
 
  // Фоновая загрузка опций после отрисовки страницы
   nextTick(() => {
     setTimeout(() => {
-      console.time('loadMaterialOptions (background)');
       if (store.materials_meta?.material_list && !isOptionsLoaded.value) {
         materialOptions.value = [...store.materials_meta.material_list];
         isOptionsLoaded.value = true;
-        console.timeEnd('loadMaterialOptions (background)');
-        console.log('Опции материалов загружены в фоне');
       }
     }, 500); // Задержка 500 мс после отрисовки
   });
-
-
 });
 
 
 const formattedTableData = computed(() => {
-//  if (!tableData.value || !Array.isArray(tableData.value)) {
   if (!reportStore.tableData || !Array.isArray(reportStore.tableData)) {
     return [];
   }
 
-//  return tableData.value.map(row => {
   return reportStore.tableData.map(row => {
     const formattedRow = { ...row };
 
@@ -310,7 +281,6 @@ const formattedTableData = computed(() => {
       'rest_gross_weight'
     ];
 
-//    const keys = Object.keys(tableData.value[0] || {});
     const keys = Object.keys(reportStore.tableData[0] || {});
     keys.forEach(key => {
       if (key.includes('_percent')) {
@@ -428,30 +398,10 @@ const handleMakeReport = async () => {
 
     if (store.materials_data && Array.isArray(store.materials_data)) {
       reportStore.tableData = store.materials_data;
-//      if (tableData.value.length > 1) {
-//        total_rest_gross_weight = tableData.value.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-//        total_rest_net_weight = tableData.value.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-//        total_rest_tare_amount = tableData.value.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-//        tableData.value.push({
       if (reportStore.tableData.length > 1) {
         total_rest_gross_weight = reportStore.tableData.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
         total_rest_net_weight = reportStore.tableData.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
         total_rest_tare_amount = reportStore.tableData.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-
-/*         reportStore.tableData.push({
-          stock_name: 'Итого',
-          material: '',
-          tare_type: '',
-          tare_id: '',
-          tare_mark: '',
-          material_mark: '',
-          material_group: '',
-          rest_tare_amount: total_rest_tare_amount,
-          rest_net_weight: total_rest_net_weight,
-          rest_gross_weight: total_rest_gross_weight
-        });
- */
-        // Добавляем итоговую строку
         reportStore.setTableData([
           ...reportStore.tableData,
           {
@@ -547,6 +497,10 @@ const onAddItem = () => {
 :deep(.total-row td) {
   border-bottom: 2px solid #3b82f6 !important;
   background-color: #e0f2fe !important;
+}
+
+:deep(.el-table__body tr:hover) {
+  cursor: pointer;
 }
 
 </style>
