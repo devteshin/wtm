@@ -473,7 +473,7 @@ async def select_operation(conn: Connection, user_id: int, stock_id: int, operat
 SELECT
 	doc.id as doc_id 
 	, doc_number
-	, doc_date
+	, DATE_FORMAT(doc_date, '%d.%m.%Y') AS doc_date
 	, a.material AS material_id
 	, m.material AS material
 	, SUM(net_weight) AS net_weight
