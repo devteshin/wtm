@@ -476,7 +476,7 @@ SELECT
 	, DATE_FORMAT(doc_date, '%%d.%%m.%%Y') AS doc_date
 	, a.material AS material_id
 	, m.material AS material
-	, SUM(net_weight) AS net_weight
+	, ROUND(SUM(net_weight), 2) AS net_weight
 	, SUM(tare_amount) AS tare_amount
     , doc_date AS sorted_doc_date 
 FROM
