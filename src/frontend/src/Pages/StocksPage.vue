@@ -8,6 +8,7 @@
             :sm="10">
             <el-table
                 :data="store.stocks"
+                :row-style="{cursor: 'pointer'}"
                 :border="true"
                 style="width: 100%"
                 table-layout="auto"
