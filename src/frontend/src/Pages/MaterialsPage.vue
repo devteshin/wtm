@@ -122,7 +122,7 @@
       <el-main class="table-container">
          <el-table v-loading="isLoading" v-if="reportStore.tableData" :data="formattedTableData" style="width: 100%;"
         stripe border show-overflow-tooltip height="85vh" virtual-scroll
-        :row-class-name="getRowClassName">
+        :row-class-name="getRowClassName" @cell-dblclick="handleTableCellDblClick">
         <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
           <el-table-column
             v-for="column in visibleColumns"
@@ -250,21 +250,23 @@ const detailedColumns = ref([
 
 onMounted(async () => {
   
-  if (!store.materials_meta) {
-    await store.fetchMaterialsMeta(props.stockID);
-  }
-  reportStore.loadFromStorage();  
+     if (!store.materials_meta) {
+      await store.fetchMaterialsMeta(props.stockID);
+    }
+    reportStore.loadFromStorage();  
 
- // Фоновая загрузка опций после отрисовки страницы
-  nextTick(() => {
-    setTimeout(() => {
-      if (store.materials_meta?.material_list && !isOptionsLoaded.value) {
-        materialOptions.value = [...store.materials_meta.material_list];
-        isOptionsLoaded.value = true;
-      }
-    }, 500); // Задержка 500 мс после отрисовки
-  });
+  // Фоновая загрузка опций после отрисовки страницы
+    nextTick(() => {
+      setTimeout(() => {
+        if (store.materials_meta?.material_list && !isOptionsLoaded.value) {
+          materialOptions.value = [...store.materials_meta.material_list];
+          isOptionsLoaded.value = true;
+        }
+      }, 500); // Задержка 500 мс после отрисовки
+    });
+  
 });
+
 
 
 const formattedTableData = computed(() => {
@@ -336,13 +338,13 @@ const handleMakeReport = async () => {
   let total_rest_net_weight = 0;
   let total_rest_tare_amount = 0;
 
-  console.log('Выбранные фильтры:', {
+/*   console.log('Выбранные фильтры:', {
     option1: selectedStore.value,
     option2: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
     option3: selectedMaterial.value,
     isDetailedMode: isDetailedMode.value,
     tableCondition: tableCondition.value
-  });
+  }); */
 
   const percent_items: Column[] = [];
   for (const item of tableCondition.value) {
@@ -380,9 +382,6 @@ const handleMakeReport = async () => {
     };
     return;
   }).join('|');
-
-  console.log(indicators_list);
-  console.log(indicator_conditions_list);
 
 
   try {
@@ -423,7 +422,6 @@ const handleMakeReport = async () => {
     };
     reportStore.saveToStorage();
   } catch (error) {
-    console.error('Ошибка при загрузке данных:', error);
     // Здесь можно добавить уведомление об ошибке для пользователя
   } finally {
     isLoading.value = false;
@@ -446,6 +444,34 @@ const onAddItem = () => {
     max: ''
   })
 };
+
+// Функция поиска ID по названию
+const findMaterialIdByName = (name: string): number | undefined => {
+  if (!name) return undefined;
+
+  return store.materials_meta?.material_list?.find(item => item.name === name)?.id;
+};
+
+// Функция добавления материала в выборку
+const addMaterialToSelection = (materialId: number) => {
+  if (!selectedMaterial.value.includes(materialId)) {
+    selectedMaterial.value = [...selectedMaterial.value, materialId];
+  }
+};
+
+const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event: MouseEvent) => {
+  if (column.property !== 'material') return;
+
+  const materialName = row.material;
+  const materialId = findMaterialIdByName(materialName);
+
+  if (materialId) {
+    addMaterialToSelection(materialId);
+  }
+
+  
+};
+
 
 </script>
 
