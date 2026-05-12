@@ -10,7 +10,7 @@ RUN corepack enable
 
 # Копируем только lock‑файлы и package.json для установки зависимостей
 COPY src/frontend/package.json src/frontend/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --reporter=verbose
 
 # Копируем конфигурационные файлы
 COPY src/frontend/vite.config.ts ./
