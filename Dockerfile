@@ -1,18 +1,28 @@
-# build vue frontend static files
-FROM node:20-alpine AS frontend
+FROM node:22-alpine AS frontend
 WORKDIR /frontend
+
+# Кэширование зависимостей
+RUN mkdir -p /frontend/node_modules
+VOLUME /frontend/node_modules
+
 ENV PNPM_HOME="/pnpm" PATH+=":$PNPM_HOME"
 RUN corepack enable
+
+# Копируем только lock‑файлы и package.json для установки зависимостей
 COPY src/frontend/package.json src/frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-COPY src/frontend/vite.config.ts \
-    src/frontend/index.html \
-    src/frontend/tsconfig.json \
-    src/frontend/eslint.config.js ./
-RUN pnpm install
-COPY src/frontend/src src
-COPY src/frontend/public public
-#ENV NODE_OPTIONS='--max-old-space-size=512'
+
+# Копируем конфигурационные файлы
+COPY src/frontend/vite.config.ts ./
+COPY src/frontend/index.html ./
+COPY src/frontend/tsconfig.json ./
+COPY src/frontend/eslint.config.js ./
+
+# Копируем исходники
+COPY src/frontend/src ./src
+COPY src/frontend/public ./public
+
+# Сборка фронтенда
 RUN NODE_ENV=production pnpm build
 
 FROM python:3.12-slim-bookworm as aiohttp-backend
