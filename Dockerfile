@@ -1,16 +1,18 @@
 FROM node:22-alpine AS frontend
 WORKDIR /frontend
 
+
 # Фиксируем версию pnpm
 ENV PNPM_VERSION="10.14.0"
 
+# Явно добавляем путь, куда corepack помещает бинарные файлы
+ENV PATH="/usr/local/share/corepack:$PATH"
 
-# Установка pnpm через corepack с явным указанием пути в PATH
-RUN corepack prepare pnpm@$PNPM_VERSION --activate && \
-    # Добавляем путь, куда corepack помещает бинарники
-    export PATH="/usr/local/share/corepack:$PATH" && \
-    # Проверяем установку сразу в том же RUN
-    echo "Node.js version: $(node --version)" && \
+# Установка pnpm через corepack
+RUN corepack prepare pnpm@$PNPM_VERSION --activate
+
+# Проверка установки pnpm (теперь PATH задан глобально через ENV)
+RUN echo "Node.js version: $(node --version)" && \
     echo "pnpm version: $(pnpm --version)"
 
 # Копируем package.json и lock‑файл
@@ -53,6 +55,7 @@ RUN apt-get update && \
 COPY src/backend/requirements.txt .
 RUN pip --no-cache-dir install -U pip setuptools && \
     pip --no-cache-dir install -r requirements.txt
+
 
 # Копируем собранный фронтенд
 COPY --from=frontend /frontend/dist ./static
