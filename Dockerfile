@@ -1,20 +1,23 @@
 FROM node:22-alpine AS frontend
 WORKDIR /frontend
 
-# Фиксируем версию pnpm 10.14.0
+# Фиксируем версию pnpm
 ENV PNPM_VERSION="10.14.0"
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
-# Устанавливаем конкретную версию pnpm через corepack
+# Установка pnpm с проверкой
 RUN corepack prepare pnpm@$PNPM_VERSION --activate && \
-    # Проверяем установку pnpm
-    pnpm --version
+    echo "Node.js version: $(node --version)" && \
+    echo "pnpm version: $(pnpm --version)"
 
-# Копируем package.json и lock‑файл для установки зависимостей
+# Копируем package.json и lock‑файл
 COPY src/frontend/package.json src/frontend/pnpm-lock.yaml ./
 
-# Установка с подробным логом для диагностики
+# Проверка наличия файлов
+RUN ls -la
+
+# Установка зависимостей с подробным логом
 RUN pnpm install --frozen-lockfile --reporter=verbose
 
 # Копируем конфигурационные файлы
