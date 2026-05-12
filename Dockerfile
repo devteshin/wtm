@@ -1,15 +1,17 @@
 FROM node:22-alpine AS frontend
 WORKDIR /frontend
 
-# Кэширование зависимостей
-RUN mkdir -p /frontend/node_modules
-VOLUME /frontend/node_modules
+# Фиксируем версию pnpm 10.14.0 для совместимости с локальной средой
+ENV PNPM_VERSION="10.14.0"
+ENV PNPM_HOME="/pnpm" PATH="$PNPM_HOME:$PATH"
 
-ENV PNPM_HOME="/pnpm" PATH+=":$PNPM_HOME"
-RUN corepack enable
+# Устанавливаем конкретную версию pnpm
+RUN corepack prepare pnpm@$PNPM_VERSION --activate
 
-# Копируем только lock‑файлы и package.json для установки зависимостей
+# Копируем package.json и lock‑файл для установки зависимостей
 COPY src/frontend/package.json src/frontend/pnpm-lock.yaml ./
+
+# Установка с подробным логом для диагностики
 RUN pnpm install --frozen-lockfile --reporter=verbose
 
 # Копируем конфигурационные файлы
@@ -25,13 +27,32 @@ COPY src/frontend/public ./public
 # Сборка фронтенда
 RUN NODE_ENV=production pnpm build
 
-FROM python:3.12-slim-bookworm as aiohttp-backend
+FROM python:3.12-slim-bookworm AS aiohttp-backend
 WORKDIR /app
-RUN cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime && echo "Europe/Moscow" >/etc/timezone
-RUN apt-get update && apt-get upgrade -y && apt-get install ca-certificates build-essential libmagic-dev -y && apt-get clean
-RUN update-ca-certificates
+
+# Настройка часового пояса
+RUN cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime && \
+    echo "Europe/Moscow" > /etc/timezone
+
+# Исправление: build-essential → build-essential
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y \
+        ca-certificates \
+        build-essential \
+        libmagic-dev && \
+    apt-get clean && \
+    update-ca-certificates
+
+# Копируем requirements и устанавливаем Python‑зависимости
 COPY src/backend/requirements.txt .
-RUN pip --no-cache-dir install -U pip setuptools && pip --no-cache-dir install -r requirements.txt
-COPY --from=frontend frontend/dist ./static
+RUN pip --no-cache-dir install -U pip setuptools && \
+    pip --no-cache-dir install -r requirements.txt
+
+# Копируем собранный фронтенд
+COPY --from=frontend /frontend/dist ./static
+
+# Копируем код бэкенда
 COPY src/backend .
+
 ENTRYPOINT ["gunicorn", "-c", "gunicorn.config.py"]
