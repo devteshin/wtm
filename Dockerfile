@@ -1,24 +1,27 @@
 FROM node:22-alpine AS frontend
 WORKDIR /frontend
 
+
 # Фиксируем версию pnpm
 ENV PNPM_VERSION="10.14.0"
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
 
-# Установка pnpm с проверкой
-RUN corepack prepare pnpm@$PNPM_VERSION --activate && \
-    echo "Node.js version: $(node --version)" && \
+# Corepack размещает бинарники в /usr/local/share/corepack — добавляем этот путь в PATH
+ENV PATH="/usr/local/share/corepack:$PATH"
+
+# Установка pnpm через corepack
+RUN corepack prepare pnpm@$PNPM_VERSION --activate
+
+
+# Проверка установки pnpm
+RUN echo "Node.js version: $(node --version)" && \
     echo "pnpm version: $(pnpm --version)"
 
 # Копируем package.json и lock‑файл
 COPY src/frontend/package.json src/frontend/pnpm-lock.yaml ./
 
-# Проверка наличия файлов
-RUN ls -la
-
 # Установка зависимостей с подробным логом
 RUN pnpm install --frozen-lockfile --reporter=verbose
+
 
 # Копируем конфигурационные файлы
 COPY src/frontend/vite.config.ts ./
@@ -29,6 +32,7 @@ COPY src/frontend/eslint.config.js ./
 # Копируем исходники
 COPY src/frontend/src ./src
 COPY src/frontend/public ./public
+
 
 # Сборка фронтенда
 RUN NODE_ENV=production pnpm build
