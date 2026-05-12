@@ -1,12 +1,15 @@
 FROM node:22-alpine AS frontend
 WORKDIR /frontend
 
-# Фиксируем версию pnpm 10.14.0 для совместимости с локальной средой
+# Фиксируем версию pnpm 10.14.0
 ENV PNPM_VERSION="10.14.0"
-ENV PNPM_HOME="/pnpm" PATH="$PNPM_HOME:$PATH"
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
-# Устанавливаем конкретную версию pnpm
-RUN corepack prepare pnpm@$PNPM_VERSION --activate
+# Устанавливаем конкретную версию pnpm через corepack
+RUN corepack prepare pnpm@$PNPM_VERSION --activate && \
+    # Проверяем установку pnpm
+    pnpm --version
 
 # Копируем package.json и lock‑файл для установки зависимостей
 COPY src/frontend/package.json src/frontend/pnpm-lock.yaml ./
@@ -34,7 +37,7 @@ WORKDIR /app
 RUN cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime && \
     echo "Europe/Moscow" > /etc/timezone
 
-# Исправление: build-essential → build-essential
+# Установка системных зависимостей
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
