@@ -5,11 +5,8 @@ WORKDIR /frontend
 # Фиксируем версию pnpm
 ENV PNPM_VERSION="10.14.0"
 
-# Явно добавляем путь, куда corepack помещает бинарные файлы
-ENV PATH="/usr/local/share/corepack:$PATH"
-
-# Установка pnpm через corepack
-RUN corepack prepare pnpm@$PNPM_VERSION --activate
+# Установка pnpm через npm (надёжнее, чем corepack в Docker)
+RUN npm install -g pnpm@$PNPM_VERSION
 
 # Проверка установки pnpm (теперь PATH задан глобально через ENV)
 RUN echo "Node.js version: $(node --version)" && \
