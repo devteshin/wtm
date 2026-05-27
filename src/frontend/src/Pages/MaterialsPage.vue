@@ -120,26 +120,42 @@
     <!-- Правый блок: контейнер с таблицей -->
     <el-container>
       <el-main class="table-container">
-         <el-table v-loading="isLoading" v-if="reportStore.tableData" :data="formattedTableData" style="width: 100%;"
-        stripe border show-overflow-tooltip height="85vh" virtual-scroll
-        :row-class-name="getRowClassName" @cell-dblclick="handleTableCellDblClick">
-        <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
-          <el-table-column
-            v-for="column in visibleColumns"
-            :key="column.prop"
-            :prop="column.prop"
-            :label="column.label"
-            :width="column.width"
-            :fixed="column.fixed"
-          />
-        </el-table>
+        <!-- Скелетон при инициализации и формировании отчёта -->
+        <el-skeleton v-if="isSkeletonLoading" animated />
+
+        <!-- Таблица с данными -->
+        <template v-else>
+          <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
+          <el-table
+            v-else
+            ref="tableRef"
+            :data="formattedTableData"
+            style="width: 100%;"
+            stripe
+            border
+            show-overflow-tooltip
+            height="85vh"
+            virtual-scroll
+            :row-class-name="getRowClassName"
+            @cell-dblclick="handleTableCellDblClick"
+          >
+            <el-table-column
+              v-for="column in visibleColumns"
+              :key="column.prop"
+              :prop="column.prop"
+              :label="column.label"
+              :width="column.width"
+              :fixed="column.fixed"
+            />
+          </el-table>
+        </template>
       </el-main>
     </el-container>
   </el-container>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted } from "vue";
+import { nextTick, onMounted, onUnmounted } from "vue";
 import { ref, computed } from "vue";
 import useApplicationStore from "@/store";
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
@@ -168,28 +184,23 @@ const router = useRouter();
 const store = useApplicationStore();
 const reportStore = useMaterialsReportStore();
 
-//const selectedStore = ref([]);
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
   set: (value) => reportStore.setFilters({ selectedStore: value })
 });
-//const selectedMaterialGroup = ref([]);
 const selectedMaterialGroup = computed({
   get: () => reportStore.selectedMaterialGroup,
   set: (value) => reportStore.setFilters({ selectedMaterialGroup: value })
 });
-//const selectedMaterial = ref([]);
 const selectedMaterial = computed({
   get: () => reportStore.selectedMaterial,
   set: (value) => reportStore.setFilters({ selectedMaterial: value })
 });
 
-//const isDetailedMode = ref(false);
 const isDetailedMode = computed({
   get: () => reportStore.isDetailedMode,
   set: (value) => reportStore.setFilters({ isDetailedMode: value })
 });
-//const isOnlyNonZeroMode = ref(false);
 const isOnlyNonZeroMode = computed({
   get: () => reportStore.isOnlyNonZeroMode,
   set: (value) => reportStore.setFilters({ isOnlyNonZeroMode: value })
@@ -200,9 +211,6 @@ const tableCondition = computed({
   set: (value) => reportStore.setFilters({ tableCondition: value })
 });
 
-const isLoading = ref(false);
-
-//const tableData = ref([{}]);
 
 const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
@@ -248,26 +256,75 @@ const detailedColumns = ref([
   { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
 ]);
 
+const isSkeletonLoading = ref(true); // Для скелетона при инициализации
+let loadingTimeout: NodeJS.Timeout | null = null;
+let stopDataWatcher: (() => void) | null = null;
+
+const startLoading = () => {
+  if (loadingTimeout) {
+    clearTimeout(loadingTimeout);
+  }
+  if (stopDataWatcher) {
+    stopDataWatcher();
+  }
+
+  isSkeletonLoading.value = true; // Включаем скелетон
+
+  loadingTimeout = setTimeout(() => {
+    console.warn('Таймаут загрузки: скрываем скелетон принудительно');
+    isSkeletonLoading.value = false;
+  }, 5000);
+
+  stopDataWatcher = watch(
+    () => reportStore.tableData,
+    (data) => {
+      if (data && data.length > 0) {
+        setTimeout(() => {
+          isSkeletonLoading.value = false;
+          if (loadingTimeout) clearTimeout(loadingTimeout);
+          if (stopDataWatcher) stopDataWatcher();
+        }, 200);
+      } else if (data && data.length === 0) {
+        isSkeletonLoading.value = false;
+        if (loadingTimeout) clearTimeout(loadingTimeout);
+        if (stopDataWatcher) stopDataWatcher();
+      }
+    },
+    { immediate: true }
+  );
+};
 onMounted(async () => {
-  
-     if (!store.materials_meta) {
+  startLoading();
+
+  store.loading = true;
+  try {
+    if (!store.materials_meta) {
       await store.fetchMaterialsMeta(props.stockID);
     }
-    reportStore.loadFromStorage();  
+    reportStore.loadFromStorage();
+  } finally {
+    store.loading = false;
+  }
 
-  // Фоновая загрузка опций после отрисовки страницы
-    nextTick(() => {
-      setTimeout(() => {
-        if (store.materials_meta?.material_list && !isOptionsLoaded.value) {
-          materialOptions.value = [...store.materials_meta.material_list];
-          isOptionsLoaded.value = true;
-        }
-      }, 500); // Задержка 500 мс после отрисовки
-    });
-  
+  nextTick(() => {
+    setTimeout(() => {
+      if (store.materials_meta?.material_list && !isOptionsLoaded.value) {
+        materialOptions.value = [...store.materials_meta.material_list];
+        isOptionsLoaded.value = true;
+      }
+    }, 500);
+  });
 });
 
-
+onUnmounted(() => {
+  // Очистка ресурсов
+  if (loadingTimeout) {
+    clearTimeout(loadingTimeout);
+  }
+  if (stopDataWatcher) {
+    stopDataWatcher();
+  }
+});
 
 const formattedTableData = computed(() => {
   if (!reportStore.tableData || !Array.isArray(reportStore.tableData)) {
@@ -332,19 +389,14 @@ const visibleColumns = computed(() => {
 });
 
 const handleMakeReport = async () => {
-  isLoading.value = true;
+  isSkeletonLoading.value = true; // Включаем скелетон при формировании отчёта
+
+  store.loading = true;
   reportStore.setTableData([]);
   let total_rest_gross_weight = 0;
   let total_rest_net_weight = 0;
   let total_rest_tare_amount = 0;
 
-/*   console.log('Выбранные фильтры:', {
-    option1: selectedStore.value,
-    option2: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
-    option3: selectedMaterial.value,
-    isDetailedMode: isDetailedMode.value,
-    tableCondition: tableCondition.value
-  }); */
 
   const percent_items: Column[] = [];
   for (const item of tableCondition.value) {
@@ -424,7 +476,8 @@ const handleMakeReport = async () => {
   } catch (error) {
     // Здесь можно добавить уведомление об ошибке для пользователя
   } finally {
-    isLoading.value = false;
+    store.loading = false;
+    isSkeletonLoading.value = false; // Выключаем скелетон после завершения
   }
 };
 
@@ -510,10 +563,6 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.example-showcase .el-loading-mask {
-  z-index: 9;
-}
-
 :deep(.total-row) {
   background-color: #f0f9ff !important;
   font-weight: bold !important;
@@ -527,6 +576,11 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 
 :deep(.el-table__body tr:hover) {
   cursor: pointer;
+}
+
+.apply-button {
+  margin-top: 20px;
+  width: 100%;
 }
 
 </style>
