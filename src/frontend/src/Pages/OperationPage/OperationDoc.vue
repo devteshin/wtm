@@ -134,7 +134,6 @@ const saveDoc = async () =>  {
   if (doc_number.value == '' ||  doc_date.value == '' || doc_items.value.map(item => item.material).find(item => item === "")) {
     return
   };
-
    
   const docParams = {
       stockID: props.stockID,
@@ -150,7 +149,7 @@ try {
     doc_changed = false;
     isNewDoc = false;
   } else {
-    console.error('Сохранение не удалось (success=false)');
+    console.error('Сохранение не удалось');
   }
 } catch (error) {
   console.error('Ошибка API:', error);

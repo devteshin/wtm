@@ -653,6 +653,10 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     if material_id_dict is None:
         raise MaterialError(f"Ошибка при формировании кода материала.")
 
+    q_get_org_id = """
+        select organization_id from stock where id = %(stock_id)s
+    """
+    
     q_insert_doc_tmp = """
         insert into arrival_doc_tmp 
         (
@@ -677,10 +681,15 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         await cur.execute("CREATE TEMPORARY TABLE arrival_tmp AS SELECT * FROM arrival LIMIT 0")
         await cur.execute("START TRANSACTION;")
         try:
+            await cur.execute(q_get_org_id, {"stock_id": stock_id})
+            org_id = await cur.fetchone()
+            if org_id is None:
+                print("Не установлена организация")    
             await cur.execute(q_insert_doc_tmp, {"doc_number": doc_number, "doc_date": doc_date, "doc_id": doc_id})
             if values_string:
                 await cur.execute(q_insert_arrival_tmp)
             await cur.callproc("action_arrival_write", [doc_id, 0])
+            await cur.callproc("action_arrival_util_ind_transmit", [org_id, doc_id])
 
         except Exception as e:
             await cur.execute("ROLLBACK;")
