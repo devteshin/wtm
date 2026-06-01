@@ -682,9 +682,11 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         await cur.execute("START TRANSACTION;")
         try:
             await cur.execute(q_get_org_id, {"stock_id": stock_id})
-            org_id = await cur.fetchone()
-            if org_id is None:
+            result = await cur.fetchone()
+            if result is None:
                 print("Не установлена организация")    
+            org_id = result.get("organization_id", 1)
+            print(f"организация {org_id}")
             await cur.execute(q_insert_doc_tmp, {"doc_number": doc_number, "doc_date": doc_date, "doc_id": doc_id})
             if values_string:
                 await cur.execute(q_insert_arrival_tmp)
