@@ -18,36 +18,37 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     { element: '', min: '', max: '' }
   ]);
 
-const tableData = ref<any[]>([]);  
+  const tableData = ref<any[]>([]);
+  const selectedTableData = ref<any[]>([]);
 
   // Действия
-const setFilters = (filters: Partial<{
-  selectedStore: number[];
-  selectedMaterialGroup: string[];
-  selectedMaterial: number[];
-  isDetailedMode: boolean;
-  isOnlyNonZeroMode: boolean;
-  tableCondition: TableConditionItem[];
-}>) => {
-  if (filters.selectedStore !== undefined) {
-    selectedStore.value = filters.selectedStore;
-  }
-  if (filters.selectedMaterialGroup !== undefined) {
-    selectedMaterialGroup.value = filters.selectedMaterialGroup;
-  }
-  if (filters.selectedMaterial !== undefined) {
-    selectedMaterial.value = filters.selectedMaterial;
-  }
-  if (filters.isDetailedMode !== undefined) {
-    isDetailedMode.value = filters.isDetailedMode;
-  }
-  if (filters.isOnlyNonZeroMode !== undefined) {
-    isOnlyNonZeroMode.value = filters.isOnlyNonZeroMode;
-  }
-  if (filters.tableCondition !== undefined) {
-    tableCondition.value = filters.tableCondition;
-  }
-};
+  const setFilters = (filters: Partial<{
+    selectedStore: number[];
+    selectedMaterialGroup: string[];
+    selectedMaterial: number[];
+    isDetailedMode: boolean;
+    isOnlyNonZeroMode: boolean;
+    tableCondition: TableConditionItem[];
+  }>) => {
+    if (filters.selectedStore !== undefined) {
+      selectedStore.value = filters.selectedStore;
+    }
+    if (filters.selectedMaterialGroup !== undefined) {
+      selectedMaterialGroup.value = filters.selectedMaterialGroup;
+    }
+    if (filters.selectedMaterial !== undefined) {
+      selectedMaterial.value = filters.selectedMaterial;
+    }
+    if (filters.isDetailedMode !== undefined) {
+      isDetailedMode.value = filters.isDetailedMode;
+    }
+    if (filters.isOnlyNonZeroMode !== undefined) {
+      isOnlyNonZeroMode.value = filters.isOnlyNonZeroMode;
+    }
+    if (filters.tableCondition !== undefined) {
+      tableCondition.value = filters.tableCondition;
+    }
+  };
 
   const resetFilters = () => {
     selectedStore.value = [];
@@ -57,6 +58,7 @@ const setFilters = (filters: Partial<{
     isOnlyNonZeroMode.value = false;
     tableCondition.value = [{ element: '', min: '', max: '' }];
     tableData.value = [];
+    selectedTableData.value = [];
   };
 
   const loadFromStorage = () => {
@@ -75,6 +77,9 @@ const setFilters = (filters: Partial<{
         if (data.tableData) {
           tableData.value = data.tableData;
         }
+        if (data.selectedTableData) {
+          selectedTableData.value = data.selectedTableData;
+        }
       }
     } catch (error) {
       console.error('Ошибка загрузки из LocalStorage:', error);
@@ -90,6 +95,7 @@ const setFilters = (filters: Partial<{
       isOnlyNonZeroMode: isOnlyNonZeroMode.value,
       tableCondition: tableCondition.value,
       tableData: tableData.value,
+      selectedTableData: selectedTableData.value,
       timestamp: Date.now()
     };
     localStorage.setItem('materialsReportState', JSON.stringify(stateToSave));
@@ -98,6 +104,11 @@ const setFilters = (filters: Partial<{
   const setTableData = (data: any[]) => {
     tableData.value = data;
     saveToStorage(); // Автосохранение при обновлении данных
+  };
+
+  const setSelectedTableData = (data: any[]) => {
+    selectedTableData.value = data;
+    saveToStorage(); // Автосохранение при обновлении выбранных данных
   };
 
   return {
@@ -109,11 +120,14 @@ const setFilters = (filters: Partial<{
     isOnlyNonZeroMode,
     tableCondition,
     tableData,
+    selectedTableData,
 
     // Экспортируем действия
     setFilters,
     resetFilters,
     loadFromStorage,
     saveToStorage,
-    setTableData 
-  };});
+    setTableData,
+    setSelectedTableData
+  };
+});

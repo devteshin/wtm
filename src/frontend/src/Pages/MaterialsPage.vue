@@ -130,6 +130,8 @@
             v-else
             ref="tableRef"
             :data="formattedTableData"
+            reserve-selection
+            :row-key="getRowKey"
             style="width: 100%;"
             stripe
             border
@@ -138,7 +140,13 @@
             virtual-scroll
             :row-class-name="getRowClassName"
             @cell-dblclick="handleTableCellDblClick"
+            @selection-change="handleSelectionChange"
           >
+            <el-table-column
+              type="selection"
+              width="55"
+              :selectable="isRowSelectable"
+            />
             <el-table-column
               v-for="column in visibleColumns"
               :key="column.prop"
@@ -181,8 +189,13 @@ interface MaterialOption {
 };
 
 const router = useRouter();
-const store = useApplicationStore();
-const reportStore = useMaterialsReportStore();
+const store = useApplicationStore()
+const reportStore = useMaterialsReportStore()
+
+const handleSelectionChange = (selection: any[]) => {
+    reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
+    console.log('Selected table data:', reportStore.selectedTableData);
+};
 
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
@@ -314,6 +327,8 @@ onMounted(async () => {
       }
     }, 500);
   });
+
+  console.log('Selected table data:', reportStore.selectedTableData);
 });
 
 onUnmounted(() => {
@@ -325,6 +340,59 @@ onUnmounted(() => {
     stopDataWatcher();
   }
 });
+
+
+const getRowKey = (row: any): string => {
+  const stockName = row.stock_name || 'unknown';
+  const material = row.material || 'unknown';
+  const tareType = row.tare_type || 'unknown';
+  const tareId = row.tare_id || 'unknown';
+
+  return `${stockName}_${material}_${tareType}_${tareId}`;
+};
+
+const isRowSelectable = (row: any): boolean => {
+  return row.stock_name !== 'Итого';
+};
+
+const tableRef = ref<any>(null);
+
+const restoreSelection = () => {
+  console.log('Attempting to restore selection...');
+  console.log('tableRef mounted:', !!tableRef.value);
+  console.log('Table data rows:', formattedTableData.value?.length);
+  console.log('Selected data count:', reportStore.selectedTableData?.length);
+
+  // Полная проверка готовности
+  if (!tableRef.value) {
+    console.warn('Table not mounted yet, skipping restoreSelection');
+    return;
+  }
+  if (!formattedTableData.value || formattedTableData.value.length === 0) {
+    console.warn('No table data available, skipping restoreSelection');
+    return;
+  }
+  if (!reportStore.selectedTableData?.length) {
+    console.log('No selected data to restore');
+    return;
+  }
+
+  console.log('Proceeding with selection restoration...');
+
+  tableRef.value.clearSelection();
+
+  const selectedKeys = new Set(
+    reportStore.selectedTableData.map(row => getRowKey(row))
+  );
+
+  formattedTableData.value.forEach((row) => {
+    if (row.stock_name !== 'Итого' && selectedKeys.has(getRowKey(row))) {
+      tableRef.value.toggleRowSelection(row, true);
+    }
+  });
+
+  console.log('Selection restored successfully');
+};
 
 const formattedTableData = computed(() => {
   if (!reportStore.tableData || !Array.isArray(reportStore.tableData)) {
@@ -367,6 +435,7 @@ const getRowClassName = ({ row }: { row: any }): string => {
   }
   return '';
 };
+
 function formatNumber(value: number | string): string {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(numValue) || numValue === 0) {
@@ -386,6 +455,24 @@ const isDetailedModeDisabled = computed(() => {
 
 const visibleColumns = computed(() => {
   return isDetailedMode.value ? detailedColumns.value : basicColumns.value;
+});
+
+watch(formattedTableData, (newData) => {
+  console.log('formattedTableData changed, new data length:', newData?.length);
+  if (newData && newData.length > 0 && tableRef.value) {
+    nextTick(() => {
+      restoreSelection();
+    });
+  }
+}, { deep: true });
+
+watch(() => tableRef.value, (tableInstance) => {
+  if (tableInstance && formattedTableData.value?.length > 0) {
+    console.log('Table mounted, restoring selection...');
+    nextTick(() => {
+      restoreSelection();
+    });
+  }
 });
 
 const handleMakeReport = async () => {
@@ -468,9 +555,10 @@ const handleMakeReport = async () => {
             rest_gross_weight: total_rest_gross_weight
           }
         ]);
-
-
       };
+      nextTick(() => {
+        restoreSelection();
+      });
     };
     reportStore.saveToStorage();
   } catch (error) {
