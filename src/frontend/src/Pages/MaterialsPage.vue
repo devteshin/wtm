@@ -379,10 +379,9 @@ onUnmounted(() => {
 const getRowKey = (row: any): string => {
   const stockName = row.stock_name || 'unknown';
   const material = row.material || 'unknown';
-  const tareType = row.tare_type || 'unknown';
   const tareId = row.tare_id || 'unknown';
 
-  return `${stockName}_${material}_${tareType}_${tareId}`;
+  return `${stockName}_${material}_${tareId}`;
 };
 
 const isRowSelectable = (row: any): boolean => {
