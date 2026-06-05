@@ -61,6 +61,19 @@
               </span>
             </div>
           </el-form-item>
+          <el-form-item>
+            <div class="switch-container">
+              <el-switch 
+                v-model="isSelectionEnabled"
+                :disabled="isSelectionModeDisabled"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              />
+              <span class="switch-description">
+                {{ isSelectionEnabled ? 'подбор материалов доступен' : 'подбор материалов отключен' }}
+              </span>
+            </div>
+          </el-form-item>
           <el-form-item label="Показатели">
             <el-table :data="tableCondition" style="width: 100%" max-height="250">
 
@@ -142,19 +155,24 @@
             @cell-dblclick="handleTableCellDblClick"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column
-              type="selection"
-              width="55"
-              :selectable="isRowSelectable"
-            />
-            <el-table-column
-              v-for="column in visibleColumns"
-              :key="column.prop"
-              :prop="column.prop"
-              :label="column.label"
-              :width="column.width"
-              :fixed="column.fixed"
-            />
+          <!-- Колонка выбора (если включена) -->
+          <el-table-column
+            v-for="column in selectionColumn"
+            :key="column.type"
+            :type="column.type"
+            :width="column.width"
+            :selectable="column.selectable"
+          />
+
+          <!-- Остальные колонки -->
+          <el-table-column
+            v-for="column in dataColumns"
+            :key="column.prop"
+            :prop="column.prop"
+            :label="column.label"
+            :width="column.width"
+            :fixed="column.fixed"
+          />
           </el-table>
         </template>
       </el-main>
@@ -219,6 +237,11 @@ const isOnlyNonZeroMode = computed({
   set: (value) => reportStore.setFilters({ isOnlyNonZeroMode: value })
 });
 
+const isSelectionEnabled = computed({
+  get: () => reportStore.isSelectionEnabled,
+  set: (value) => reportStore.setFilters({ isSelectionEnabled: value })
+});
+
 const tableCondition = computed({
   get: () => reportStore.tableCondition,
   set: (value) => reportStore.setFilters({ tableCondition: value })
@@ -236,6 +259,7 @@ watch(
     selectedMaterial: selectedMaterial.value,
     isDetailedMode: isDetailedMode.value,
     isOnlyNonZeroMode: isOnlyNonZeroMode.value,
+    isSelectionEnabled: isSelectionEnabled.value,
     tableCondition: tableCondition.value
   }),
   (newValues) => {
@@ -244,7 +268,17 @@ watch(
   },
   { deep: true }
 );
- 
+
+watch(isSelectionEnabled, (newValue) => {
+  console.log('Selection mode changed:', newValue ? 'enabled' : 'disabled');
+  
+  // При отключении выбора — очищаем текущий выбор
+  if (!newValue && tableRef.value) {
+    tableRef.value.clearSelection();
+    reportStore.setSelectedTableData([]);
+  }
+});
+
 const basicColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
   { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
@@ -358,10 +392,11 @@ const isRowSelectable = (row: any): boolean => {
 const tableRef = ref<any>(null);
 
 const restoreSelection = () => {
-  console.log('Attempting to restore selection...');
-  console.log('tableRef mounted:', !!tableRef.value);
-  console.log('Table data rows:', formattedTableData.value?.length);
-  console.log('Selected data count:', reportStore.selectedTableData?.length);
+    // Проверка доступности выбора
+  if (!isSelectionEnabled.value) {
+    console.log('Selection is disabled, skipping restore');
+    return;
+  }
 
   // Полная проверка готовности
   if (!tableRef.value) {
@@ -453,9 +488,27 @@ const isDetailedModeDisabled = computed(() => {
   return true;
 });
 
-const visibleColumns = computed(() => {
-  return isDetailedMode.value ? detailedColumns.value : basicColumns.value;
+const isSelectionModeDisabled = computed(() => {
+  if (isDetailedMode.value) {
+    return false;
+  };
+  isSelectionEnabled.value = false;
+  return true;
 });
+
+const selectionColumn = computed(() =>
+  isSelectionEnabled.value
+    ? [{
+        type: 'selection',
+        width: '55',
+        selectable: isRowSelectable
+      }]
+    : []
+);
+
+const dataColumns = computed(() =>
+  isDetailedMode.value ? detailedColumns.value : basicColumns.value);
+
 
 watch(formattedTableData, (newData) => {
   console.log('formattedTableData changed, new data length:', newData?.length);
