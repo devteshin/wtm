@@ -181,11 +181,10 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted } from "vue";
+import { nextTick, onMounted, onUnmounted, Ref } from "vue";
 import { ref, computed } from "vue";
 import useApplicationStore from "@/store";
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
-import { useRouter } from "vue-router";
 import { Delete } from '@element-plus/icons-vue';
 import { watch } from 'vue';
 
@@ -206,13 +205,64 @@ interface MaterialOption {
   name: string;
 };
 
-const router = useRouter();
 const store = useApplicationStore()
 const reportStore = useMaterialsReportStore()
 
+const isAutoSelectionUpdate = ref(false);
+
+const updateSelectionData = () => {
+  const selectionToAdd: typeof reportStore.tableData[number][] = [];
+  const selectionToRemove: typeof reportStore.tableData[number][] = [];
+  let rowInSelection = false;
+  let rowInSelected = false;
+
+  const selectedKeys = new Set(
+    reportStore.selectedTableData.map(row => getRowKey(row))
+  );
+  const selectionKeys = new Set(
+    reportStore.selectionData.map(row => getRowKey(row))
+  );
+
+  reportStore.tableData.forEach((row) => {
+    rowInSelection = selectionKeys.has(getRowKey(row));
+    rowInSelected = selectedKeys.has(getRowKey(row));
+    if (rowInSelected && !rowInSelection) {
+        selectionToAdd.push(row);
+      }
+      else if (!rowInSelected && rowInSelection) {
+        selectionToRemove.push(row);
+      }
+    });
+
+  // Добавление новых выбранных строк
+  if (selectionToAdd.length > 0) {
+    const currentSelection = reportStore.selectionData;
+    reportStore.setSelectionData([
+      ...currentSelection,
+      ...selectionToAdd
+    ]);
+  }
+
+  // Удаление строк, которые больше не выбраны
+  if (selectionToRemove.length > 0) {
+    const currentSelection = reportStore.selectionData;
+    const keysToRemove = new Set(selectionToRemove.map(row => getRowKey(row)));
+    const updatedSelectionData = currentSelection.filter(
+      row => !keysToRemove.has(getRowKey(row))
+    );
+    reportStore.setSelectionData(updatedSelectionData);
+  }
+
+};  
+
 const handleSelectionChange = (selection: any[]) => {
-    reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
-    console.log('Selected table data:', reportStore.selectedTableData);
+  reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
+  console.log('Selected table data:', reportStore.selectedTableData);
+    if (!isAutoSelectionUpdate.value) {
+      console.log('updateSelectionData');
+      updateSelectionData();
+    };
+    console.log('Selection data:', reportStore.selectionData);
 };
 
 const selectedStore = computed({
@@ -269,7 +319,7 @@ watch(
   { deep: true }
 );
 
-watch(isSelectionEnabled, (newValue) => {
+/* watch(isSelectionEnabled, (newValue) => {
   console.log('Selection mode changed:', newValue ? 'enabled' : 'disabled');
   
   // При отключении выбора — очищаем текущий выбор
@@ -278,7 +328,7 @@ watch(isSelectionEnabled, (newValue) => {
     reportStore.setSelectedTableData([]);
   }
 });
-
+ */
 const basicColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
   { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
@@ -340,6 +390,7 @@ const startLoading = () => {
     { immediate: true }
   );
 };
+
 onMounted(async () => {
   startLoading();
 
@@ -411,21 +462,33 @@ const restoreSelection = () => {
     return;
   }
 
-  console.log('Proceeding with selection restoration...');
+  isAutoSelectionUpdate.value = true; // Блокируем обновление
 
+  console.log('Proceeding with selection restoration...');
   tableRef.value.clearSelection();
 
-  const selectedKeys = new Set(
-    reportStore.selectedTableData.map(row => getRowKey(row))
-  );
+  //const selectedKeys = new Set(
+  //  reportStore.selectedTableData.map(row => getRowKey(row))
+  //);
+  const selectionKeys = new Set(
+    reportStore.selectionData.map(row => getRowKey(row))
+    );
 
   formattedTableData.value.forEach((row) => {
-    if (row.stock_name !== 'Итого' && selectedKeys.has(getRowKey(row))) {
+//    if (row.stock_name !== 'Итого' && selectedKeys.has(getRowKey(row))) {
+//     tableRef.value.toggleRowSelection(row, true);
+//    }
+    if (row.stock_name !== 'Итого' && selectionKeys.has(getRowKey(row))) {
       tableRef.value.toggleRowSelection(row, true);
     }
   });
 
+  nextTick(() => {
+    isAutoSelectionUpdate.value = false; // Снимаем блокировку после завершения
+  });
+
   console.log('Selection restored successfully');
+  console.log(reportStore.selectedTableData);  
 };
 
 const formattedTableData = computed(() => {
@@ -608,9 +671,6 @@ const handleMakeReport = async () => {
           }
         ]);
       };
-      nextTick(() => {
-        restoreSelection();
-      });
     };
     reportStore.saveToStorage();
   } catch (error) {
@@ -638,11 +698,18 @@ const onAddItem = () => {
   })
 };
 
-// Функция поиска ID по названию
+// Функция поиска ID материала по названию
 const findMaterialIdByName = (name: string): number | undefined => {
   if (!name) return undefined;
 
   return store.materials_meta?.material_list?.find(item => item.name === name)?.id;
+};
+
+// Функция поиска ID склада по названию
+const findStockIdByName = (name: string): number | undefined => {
+  if (!name) return undefined;
+
+  return store.materials_meta?.stock_list?.find(item => item.name === name)?.id;
 };
 
 // Функция добавления материала в выборку

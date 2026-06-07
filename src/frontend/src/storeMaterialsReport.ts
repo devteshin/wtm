@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from "vue";
+import { ref, Ref } from 'vue';
 
 interface TableConditionItem {
   element: string;
@@ -7,6 +7,18 @@ interface TableConditionItem {
   max: string;
 };
 
+interface MaterialsReportState {
+  selectedStore: Ref<number[]>;
+  selectedMaterialGroup: Ref<string[]>;
+  selectedMaterial: Ref<number[]>;
+  isDetailedMode: Ref<boolean>;
+  isOnlyNonZeroMode: Ref<boolean>;
+  isSelectionEnabled: Ref<boolean>;
+  tableCondition: Ref<TableConditionItem[]>;
+  tableData: Ref<any[]>;
+  selectedTableData: Ref<any[]>;
+  selectionData: Ref<any[]>;
+}
 
 export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const selectedStore = ref<number[]>([]);
@@ -21,6 +33,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
 
   const tableData = ref<any[]>([]);
   const selectedTableData = ref<any[]>([]);
+  const selectionData = ref<any[]>([]);
 
   // Действия
   const setFilters = (filters: Partial<{
@@ -65,6 +78,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     tableCondition.value = [{ element: '', min: '', max: '' }];
     tableData.value = [];
     selectedTableData.value = [];
+    selectionData.value = [];
   };
 
   const loadFromStorage = () => {
@@ -87,6 +101,9 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         if (data.selectedTableData) {
           selectedTableData.value = data.selectedTableData;
         }
+        if(data.selectionData) {
+          selectionData.value = data.selectionData;
+        }
       }
     } catch (error) {
       console.error('Ошибка загрузки из LocalStorage:', error);
@@ -104,6 +121,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
       tableCondition: tableCondition.value,
       tableData: tableData.value,
       selectedTableData: selectedTableData.value,
+      selectionData: selectionData.value,
       timestamp: Date.now()
     };
     localStorage.setItem('materialsReportState', JSON.stringify(stateToSave));
@@ -119,6 +137,11 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     saveToStorage(); // Автосохранение при обновлении выбранных данных
   };
 
+  const setSelectionData = (data: any[]) => {
+    selectionData.value = data;
+    saveToStorage(); // Автосохранение при обновлении выбранных данных
+  };
+
   return {
     // Экспортируем реактивные переменные (только настройки)
     selectedStore,
@@ -130,13 +153,15 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     tableCondition,
     tableData,
     selectedTableData,
-
+    selectionData,
     // Экспортируем действия
     setFilters,
     resetFilters,
     loadFromStorage,
     saveToStorage,
     setTableData,
-    setSelectedTableData
+    setSelectedTableData,
+    setSelectionData
   };
 });
+
