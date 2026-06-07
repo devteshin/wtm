@@ -319,16 +319,6 @@ watch(
   { deep: true }
 );
 
-/* watch(isSelectionEnabled, (newValue) => {
-  console.log('Selection mode changed:', newValue ? 'enabled' : 'disabled');
-  
-  // При отключении выбора — очищаем текущий выбор
-  if (!newValue && tableRef.value) {
-    tableRef.value.clearSelection();
-    reportStore.setSelectedTableData([]);
-  }
-});
- */
 const basicColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
   { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
@@ -467,17 +457,11 @@ const restoreSelection = () => {
   console.log('Proceeding with selection restoration...');
   tableRef.value.clearSelection();
 
-  //const selectedKeys = new Set(
-  //  reportStore.selectedTableData.map(row => getRowKey(row))
-  //);
   const selectionKeys = new Set(
     reportStore.selectionData.map(row => getRowKey(row))
     );
 
   formattedTableData.value.forEach((row) => {
-//    if (row.stock_name !== 'Итого' && selectedKeys.has(getRowKey(row))) {
-//     tableRef.value.toggleRowSelection(row, true);
-//    }
     if (row.stock_name !== 'Итого' && selectionKeys.has(getRowKey(row))) {
       tableRef.value.toggleRowSelection(row, true);
     }
@@ -681,7 +665,7 @@ const handleMakeReport = async () => {
   }
 };
 
-const handleSwitchDetailedMode = (value) => {
+const handleSwitchDetailedMode = () => {
   reportStore.tableData = [];
   
 };
@@ -713,7 +697,7 @@ const findStockIdByName = (name: string): number | undefined => {
 };
 
 // Функция добавления материала в выборку
-const addMaterialToSelection = (materialId: number) => {
+const addMaterialToselectedMaterial = (materialId: number) => {
   if (!selectedMaterial.value.includes(materialId)) {
     selectedMaterial.value = [...selectedMaterial.value, materialId];
   }
@@ -726,7 +710,7 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
   const materialId = findMaterialIdByName(materialName);
 
   if (materialId) {
-    addMaterialToSelection(materialId);
+    addMaterialToselectedMaterial(materialId);
   }
 
   
