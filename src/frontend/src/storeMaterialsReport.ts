@@ -7,7 +7,7 @@ interface TableConditionItem {
   max: string;
 };
 
-interface MaterialsReportState {
+/* interface MaterialsReportState {
   selectedStore: Ref<number[]>;
   selectedMaterialGroup: Ref<string[]>;
   selectedMaterial: Ref<number[]>;
@@ -19,7 +19,7 @@ interface MaterialsReportState {
   selectedTableData: Ref<any[]>;
   selectionData: Ref<any[]>;
 }
-
+ */
 export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const selectedStore = ref<number[]>([]);
   const selectedMaterialGroup = ref<string[]>([]);

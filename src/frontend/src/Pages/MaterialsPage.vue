@@ -127,6 +127,12 @@
           >
             Сформировать
           </el-button>        
+          <el-button
+            type="primary"
+            @click="handleClearSelectionData"
+          >
+            Очистить
+          </el-button>        
       </el-form>
     </el-aside>
 
@@ -222,61 +228,6 @@ const reportStore = useMaterialsReportStore()
 const isAutoSelectionUpdate = ref(false);
 const hasFooter = computed(() => isSelectionEnabled.value);
 
-const updateSelectionData = () => {
-  const selectionToAdd: typeof reportStore.tableData[number][] = [];
-  const selectionToRemove: typeof reportStore.tableData[number][] = [];
-  let rowInSelection = false;
-  let rowInSelected = false;
-
-  const selectedKeys = new Set(
-    reportStore.selectedTableData.map(row => getRowKey(row))
-  );
-  const selectionKeys = new Set(
-    reportStore.selectionData.map(row => getRowKey(row))
-  );
-
-  reportStore.tableData.forEach((row) => {
-    rowInSelection = selectionKeys.has(getRowKey(row));
-    rowInSelected = selectedKeys.has(getRowKey(row));
-    if (rowInSelected && !rowInSelection) {
-        selectionToAdd.push(row);
-      }
-      else if (!rowInSelected && rowInSelection) {
-        selectionToRemove.push(row);
-      }
-    });
-
-  // Добавление новых выбранных строк
-  if (selectionToAdd.length > 0) {
-    const currentSelection = reportStore.selectionData;
-    reportStore.setSelectionData([
-      ...currentSelection,
-      ...selectionToAdd
-    ]);
-  }
-
-  // Удаление строк, которые больше не выбраны
-  if (selectionToRemove.length > 0) {
-    const currentSelection = reportStore.selectionData;
-    const keysToRemove = new Set(selectionToRemove.map(row => getRowKey(row)));
-    const updatedSelectionData = currentSelection.filter(
-      row => !keysToRemove.has(getRowKey(row))
-    );
-    reportStore.setSelectionData(updatedSelectionData);
-  }
-
-};  
-
-const handleSelectionChange = (selection: any[]) => {
-  reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
-  console.log('Selected table data:', reportStore.selectedTableData);
-    if (!isAutoSelectionUpdate.value) {
-      console.log('updateSelectionData');
-      updateSelectionData();
-    };
-    console.log('Selection data:', reportStore.selectionData);
-};
-
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
   set: (value) => reportStore.setFilters({ selectedStore: value })
@@ -312,6 +263,88 @@ const tableCondition = computed({
 
 const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
+
+const prepareSelectionToAdd = (selectionToAdd: typeof reportStore.tableData[number][]) => {
+  const elements: string[] = reportStore.tableCondition.map(item => item.element);
+
+  return selectionToAdd.map((row) => {
+    const newRow = { ...row }; // Клонируем строку
+
+
+    elements.forEach((element) => {
+      const percentFieldName = `${element}_percent`;
+      const weightFieldName = `${element}_weight`;
+
+      const percent = Number(row[percentFieldName]) ?? 0;
+      const restWeight = Number(row.rest_net_weight) ?? 0;
+
+      if (!isNaN(percent) && !isNaN(restWeight) && restWeight !== 0) {
+        newRow[weightFieldName] = percent * restWeight / 100;
+      } else {
+        newRow[weightFieldName] = 0;
+      }
+    });
+
+    return newRow;
+  });
+};
+
+const updateSelectionData = () => {
+  const selectionToAdd: typeof reportStore.tableData[number][] = [];
+  const selectionToRemove: typeof reportStore.tableData[number][] = [];
+  let rowInSelection = false;
+  let rowInSelected = false;
+
+  const selectedKeys = new Set(
+    reportStore.selectedTableData.map(row => getRowKey(row))
+  );
+  const selectionKeys = new Set(
+    reportStore.selectionData.map(row => getRowKey(row))
+  );
+
+  reportStore.tableData.forEach((row) => {
+    rowInSelection = selectionKeys.has(getRowKey(row));
+    rowInSelected = selectedKeys.has(getRowKey(row));
+    if (rowInSelected && !rowInSelection) {
+        selectionToAdd.push(row);
+      }
+      else if (!rowInSelected && rowInSelection) {
+        selectionToRemove.push(row);
+      }
+    });
+
+  // Добавление новых выбранных строк
+  if (selectionToAdd.length > 0) {
+    const processedSelection = prepareSelectionToAdd(selectionToAdd); // Подготовка данных для добавления
+    const currentSelection = reportStore.selectionData;
+    reportStore.setSelectionData([
+      ...currentSelection,
+      ...processedSelection
+    ]);
+  }
+
+  // Удаление строк, которые больше не выбраны
+  if (selectionToRemove.length > 0) {
+    const currentSelection = reportStore.selectionData;
+    const keysToRemove = new Set(selectionToRemove.map(row => getRowKey(row)));
+    const updatedSelectionData = currentSelection.filter(
+      row => !keysToRemove.has(getRowKey(row))
+    );
+    reportStore.setSelectionData(updatedSelectionData);
+  }
+
+};  
+
+const handleSelectionChange = (selection: any[]) => {
+  reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
+  console.log('Selected table data:', reportStore.selectedTableData);
+    if (!isAutoSelectionUpdate.value) {
+      console.log('updateSelectionData');
+      updateSelectionData();
+    };
+    console.log('Selection data:', reportStore.selectionData);
+};
+
 
  // Отслеживаем изменения всех фильтров и сохраняем в стор
 watch(
@@ -586,6 +619,10 @@ watch(() => tableRef.value, (tableInstance) => {
   }
 });
 
+const handleClearSelectionData = () => {
+  reportStore.setSelectionData([]);
+};
+
 const handleMakeReport = async () => {
   isSkeletonLoading.value = true; // Включаем скелетон при формировании отчёта
 
@@ -733,7 +770,7 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 
 <style scoped>
 .page-container {
-  height: calc(100vh - 120px); /* Занимает всю высоту экрана минус отступы */
+  height: calc(100vh - 120px); /* Занимает всю высоту экрана минус меню */
   display: flex;
 }
 
@@ -746,9 +783,9 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
   overflow: auto;
 }
 
-/* Таблица занимает 80% высоты, если футер виден, иначе 100% */
+/* Таблица занимает 70% высоты, если футер виден, иначе 100% */
 .table-container {
-  flex: 0 0 80%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 80% */
+  flex: 0 0 70%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 80% */
   padding: 0 20px 20px;
   box-sizing: border-box;
   position: relative; /* Для корректной работы абсолютного позиционирования внутри */
@@ -770,9 +807,9 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
   border-radius: 4px;
 }
 
-/* Футер занимает 20% высоты правого контейнера */
+/* Футер занимает 30% высоты правого контейнера */
 .footer-container {
-  flex: 0 0 20%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 20% */
+  flex: 0 0 30%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 20% */
   padding: 15px;
   background-color: #f9f9f9;
   border-top: 1px solid #e6e9ef;
