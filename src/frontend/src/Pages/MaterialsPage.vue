@@ -131,51 +131,62 @@
     </el-aside>
 
     <!-- Правый блок: контейнер с таблицей -->
-    <el-container>
+    <el-container  class="right-container" :class="{ 'has-footer': hasFooter }" direction="vertical">
       <el-main class="table-container">
         <!-- Скелетон при инициализации и формировании отчёта -->
         <el-skeleton v-if="isSkeletonLoading" animated />
 
         <!-- Таблица с данными -->
         <template v-else>
-          <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
-          <el-table
-            v-else
-            ref="tableRef"
-            :data="formattedTableData"
-            reserve-selection
-            :row-key="getRowKey"
-            style="width: 100%;"
-            stripe
-            border
-            show-overflow-tooltip
-            height="85vh"
-            virtual-scroll
-            :row-class-name="getRowClassName"
-            @cell-dblclick="handleTableCellDblClick"
-            @selection-change="handleSelectionChange"
-          >
-          <!-- Колонка выбора (если включена) -->
-          <el-table-column
-            v-for="column in selectionColumn"
-            :key="column.type"
-            :type="column.type"
-            :width="column.width"
-            :selectable="column.selectable"
-          />
+            <div class="table-wrapper">
+              <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
+              <el-table
+                v-else
+                ref="tableRef"
+                :data="formattedTableData"
+                reserve-selection
+                :row-key="getRowKey"
+                style="width: 100%; height: 100%;"
+                stripe
+                border
+                show-overflow-tooltip
+                virtual-scroll
+                :row-class-name="getRowClassName"
+                @cell-dblclick="handleTableCellDblClick"
+                @selection-change="handleSelectionChange"
+              >
+              <!-- Колонка выбора (если включена) -->
+              <el-table-column
+                v-for="column in selectionColumn"
+                :key="column.type"
+                :type="column.type"
+                :width="column.width"
+                :selectable="column.selectable"
+              />
 
-          <!-- Остальные колонки -->
-          <el-table-column
-            v-for="column in dataColumns"
-            :key="column.prop"
-            :prop="column.prop"
-            :label="column.label"
-            :width="column.width"
-            :fixed="column.fixed"
-          />
-          </el-table>
-        </template>
-      </el-main>
+              <!-- Остальные колонки -->
+              <el-table-column
+                v-for="column in dataColumns"
+                :key="column.prop"
+                :prop="column.prop"
+                :label="column.label"
+                :width="column.width"
+                :fixed="column.fixed"
+              />
+              </el-table>
+            </div>
+            </template>
+          </el-main>
+      <el-footer v-if="isSelectionEnabled" class="footer-container">
+        <div class="footer-content">
+          <!-- Здесь разместите содержимое футера -->
+          <p>Футер отчёта — дополнительная информация и статистика</p>
+          <!-- Примеры элементов для футера: -->
+          <!-- <el-button type="primary" @click="exportToExcel">Экспорт в Excel</el-button> -->
+          <!-- <span>Всего записей: {{ formattedTableData.length }}</span> -->
+        </div>
+      </el-footer>
+
     </el-container>
   </el-container>
 </template>
@@ -209,6 +220,7 @@ const store = useApplicationStore()
 const reportStore = useMaterialsReportStore()
 
 const isAutoSelectionUpdate = ref(false);
+const hasFooter = computed(() => isSelectionEnabled.value);
 
 const updateSelectionData = () => {
   const selectionToAdd: typeof reportStore.tableData[number][] = [];
@@ -721,21 +733,63 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 
 <style scoped>
 .page-container {
-  height: 85vh; 
+  height: calc(100vh - 120px); /* Занимает всю высоту экрана минус отступы */
+  display: flex;
 }
 
 .sidebar {
   background-color: #f5f7fa;
   padding: 20px;
   border-right: 1px solid #e6e9ef;
+  flex-shrink: 0;
+  width: 400px;
+  overflow: auto;
 }
 
-.filter-form :deep(.el-form-item) {
-  margin-bottom: 20px;
-}
-
+/* Таблица занимает 80% высоты, если футер виден, иначе 100% */
 .table-container {
+  flex: 0 0 80%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 80% */
   padding: 0 20px 20px;
+  box-sizing: border-box;
+  position: relative; /* Для корректной работы абсолютного позиционирования внутри */
+}
+
+/* Если футер скрыт, таблица занимает 100% высоты */
+.right-container:not(.has-footer) .table-container {
+  flex: 0 0 100%;
+}
+
+/* Обертка для таблицы с прокруткой */
+.table-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto; /* Прокрутка внутри обёртки */
+  border-radius: 4px;
+}
+
+/* Футер занимает 20% высоты правого контейнера */
+.footer-container {
+  flex: 0 0 20%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 20% */
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-top: 1px solid #e6e9ef;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  /* На мобильных соотношение 70/30, если футер виден */
+  .right-container .table-container {
+    flex: 0 0 70%;
+  }
+  .right-container:not(.has-footer) .table-container {
+    flex: 0 0 100%;
+  }
+  .footer-container {
+    flex: 0 0 30%;
+  }
 }
 
 .switch-container {
