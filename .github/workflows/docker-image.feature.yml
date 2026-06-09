@@ -1,8 +1,8 @@
 name: Build docker image [feature/material-page-selectable]
 
 on:
-  #push:
-  #  branches: [ "feature/material-page-selectable" ]
+  push:
+    branches: [ "feature/material-page-selectable" ]
   workflow_dispatch:
 
 jobs:
