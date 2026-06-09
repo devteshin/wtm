@@ -7,19 +7,6 @@ interface TableConditionItem {
   max: string;
 };
 
-/* interface MaterialsReportState {
-  selectedStore: Ref<number[]>;
-  selectedMaterialGroup: Ref<string[]>;
-  selectedMaterial: Ref<number[]>;
-  isDetailedMode: Ref<boolean>;
-  isOnlyNonZeroMode: Ref<boolean>;
-  isSelectionEnabled: Ref<boolean>;
-  tableCondition: Ref<TableConditionItem[]>;
-  tableData: Ref<any[]>;
-  selectedTableData: Ref<any[]>;
-  selectionData: Ref<any[]>;
-}
- */
 export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const selectedStore = ref<number[]>([]);
   const selectedMaterialGroup = ref<string[]>([]);
@@ -32,6 +19,8 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
   ]);
 
   const tableData = ref<any[]>([]);
+  const basicColumns = ref<any[]>([]);
+  const detailedColumns = ref<any[]>([]);
   const selectedTableData = ref<any[]>([]);
   const selectionData = ref<any[]>([]);
 
@@ -104,6 +93,8 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         if(data.selectionData) {
           selectionData.value = data.selectionData;
         }
+        basicColumns.value = data.basicColumns || [];
+        detailedColumns.value = data.detailedColumns || [];
       }
     } catch (error) {
       console.error('Ошибка загрузки из LocalStorage:', error);
@@ -120,6 +111,8 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
       isSelectionEnabled: isSelectionEnabled.value,
       tableCondition: tableCondition.value,
       tableData: tableData.value,
+      basicColumns: basicColumns.value,
+      detailedColumns: detailedColumns.value,
       selectedTableData: selectedTableData.value,
       selectionData: selectionData.value,
       timestamp: Date.now()
@@ -154,6 +147,8 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     tableData,
     selectedTableData,
     selectionData,
+    basicColumns,
+    detailedColumns,
     // Экспортируем действия
     setFilters,
     resetFilters,

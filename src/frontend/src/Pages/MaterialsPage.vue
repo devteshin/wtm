@@ -357,7 +357,9 @@ watch(
     isDetailedMode: isDetailedMode.value,
     isOnlyNonZeroMode: isOnlyNonZeroMode.value,
     isSelectionEnabled: isSelectionEnabled.value,
-    tableCondition: tableCondition.value
+    tableCondition: tableCondition.value,
+    basicColumns: reportStore.basicColumns,
+    detailedColumns: reportStore.detailedColumns
   }),
   (newValues) => {
     reportStore.setFilters(newValues);
@@ -437,6 +439,16 @@ onMounted(async () => {
       await store.fetchMaterialsMeta(props.stockID);
     }
     reportStore.loadFromStorage();
+
+    // Инициализируем колонки, если они не загружены
+    if (!reportStore.basicColumns.length) {
+      reportStore.basicColumns = [...basicColumns.value];
+    }
+    if (!reportStore.detailedColumns.length) {
+      reportStore.detailedColumns = [...detailedColumns.value];
+    }
+
+    
   } finally {
     store.loading = false;
   }
@@ -599,7 +611,8 @@ const selectionColumn = computed(() =>
 );
 
 const dataColumns = computed(() =>
-  isDetailedMode.value ? detailedColumns.value : basicColumns.value);
+//  isDetailedMode.value ? detailedColumns.value : basicColumns.value);
+  isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns);  
 
 
 watch(formattedTableData, (newData) => {
@@ -633,6 +646,14 @@ const handleMakeReport = async () => {
   let total_rest_net_weight = 0;
   let total_rest_tare_amount = 0;
 
+  // Удаляем старые колонки с процентами перед добавлением новых
+  const percentColumns = reportStore.basicColumns.filter(col => col.prop.includes('_percent'));
+
+  if (isDetailedMode.value) {
+    reportStore.detailedColumns = reportStore.detailedColumns.filter(col => !col.prop.includes('_percent'));
+  } else {
+    reportStore.basicColumns = reportStore.basicColumns.filter(col => !col.prop.includes('_percent'));
+  };
 
   const percent_items: Column[] = [];
   for (const item of tableCondition.value) {
@@ -646,14 +667,22 @@ const handleMakeReport = async () => {
         );
     }
   }
+
   if (isDetailedMode.value) {
+    reportStore.detailedColumns.push(...percent_items);
+  } else {
+    reportStore.basicColumns.push(...percent_items);
+  }
+
+
+/*   if (isDetailedMode.value) {
     detailedColumns.value = [...detailedColumns.value.slice(0, 10)];
     detailedColumns.value = [...detailedColumns.value, ...percent_items];
   } else {
     basicColumns.value = [...basicColumns.value.slice(0, 8)];
     basicColumns.value = [...basicColumns.value, ...percent_items];
   }
-
+ */
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
   const indicator_conditions_list = tableCondition.value.map((item) => {
     if (item.element != '') {
