@@ -284,6 +284,8 @@ const prepareSelectionToAdd = (selectionToAdd: typeof reportStore.tableData[numb
         newRow[weightFieldName] = 0;
       }
     });
+    newRow['key_material'] = `${findMaterialIdByName(newRow.material)}_${newRow.tare_id}`;
+    newRow['stock_id'] = findStockIdByName(newRow.stock_name);
 
     return newRow;
   });
@@ -448,7 +450,6 @@ onMounted(async () => {
     }, 500);
   });
 
-  console.log('Selected table data:', reportStore.selectedTableData);
 });
 
 onUnmounted(() => {
