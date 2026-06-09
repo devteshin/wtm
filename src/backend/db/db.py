@@ -50,28 +50,36 @@ async def select_materials_data(
 
     async with conn.cursor() as cur:
 
-        try:
-            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, only_non_zero_mode_int, None])
-        except Exception as e:
-            print(f"ERROR callproc \"query_material_stock_report\": {e}")
-            return report_result    
-        try:
-            # Получение сформированного SQL
-            await cur.execute("SELECT @_query_material_stock_report_7 AS q_report")
-            result = await cur.fetchone()
-            if result:
-                q_report = result["q_report"]
-                print("Полученный SQL:", q_report)
+#        try:
+#            await cur.callproc("query_material_stock_report", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, only_non_zero_mode_int, #None])
+#        except Exception as e:
+#            print(f"ERROR callproc \"query_material_stock_report\": {e}")
+#            return report_result    
+#        try:
+#            # Получение сформированного SQL
+#            await cur.execute("SELECT @_query_material_stock_report_7 AS q_report")
+#            result = await cur.fetchone()
+#            if result:
+#                q_report = result["q_report"]
+#                print("Полученный SQL:", q_report)
+#
+#                async with conn.cursor() as new_cur:
+#                    await new_cur.execute(q_report)
+#                    report_result = await new_cur.fetchall()
+#            else:
+#                print("Не получен SQL-запрос из хранимой процедуры")
+#        except Exception as e:
+#            print(f"ERROR выполнения динамического SQL: {e}")
+#            print(f"Попытка выполнить: {q_report}")
+#            return report_result
 
-                async with conn.cursor() as new_cur:
-                    await new_cur.execute(q_report)
-                    report_result = await new_cur.fetchall()
-            else:
-                print("Не получен SQL-запрос из хранимой процедуры")
+        try:
+            await cur.callproc("report_material_stock", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, only_non_zero_mode_int, ''])
         except Exception as e:
-            print(f"ERROR выполнения динамического SQL: {e}")
-            print(f"Попытка выполнить: {q_report}")
+            print(f"ERROR callproc \"report_material_stock\": {e}")
             return report_result
+        report_result = await cur.fetchall()
+
 
     return report_result
 
