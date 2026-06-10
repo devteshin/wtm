@@ -185,14 +185,16 @@
           </el-main>
       <el-footer v-if="isSelectionEnabled" class="footer-container">
         <div class="footer-content">
-          <!-- Здесь разместите содержимое футера -->
-          <p>Футер отчёта — дополнительная информация и статистика</p>
-          <!-- Примеры элементов для футера: -->
-          <!-- <el-button type="primary" @click="exportToExcel">Экспорт в Excel</el-button> -->
-          <!-- <span>Всего записей: {{ formattedTableData.length }}</span> -->
+          <el-container class="footer-layout">
+            <el-aside width="10%" class="footer-block footer-block-1">
+            </el-aside>
+            <el-main class="footer-block footer-block-2">
+            </el-main>
+            <el-aside width="30%" class="footer-block footer-block-3">
+            </el-aside>
+          </el-container>
         </div>
       </el-footer>
-
     </el-container>
   </el-container>
 </template>
@@ -334,6 +336,7 @@ const updateSelectionData = () => {
     );
     reportStore.setSelectionData(updatedSelectionData);
   }
+
 
 };  
 
@@ -839,23 +842,75 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 
 /* Футер занимает 30% высоты правого контейнера */
 .footer-container {
-  flex: 0 0 30%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 20% */
+  flex: 0 0 30%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 30% */
   padding: 15px;
-  background-color: #f9f9f9;
-  border-top: 1px solid #e6e9ef;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
   flex-shrink: 0;
+  height: 100%;
+}
+
+.footer-content {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.footer-layout {
+  height: 100%;
+  flex: 1;
+  border-spacing: 0;
+}
+
+.footer-block {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-right: 1px solid #e9ecef;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.footer-block-1 {
+  background-color: #f0f7ff;
+}
+
+.footer-block-2 {
+  background-color: #fafafa;
+}
+
+.footer-block-3 {
+  background-color: #fff9f3;
+  border-right: none;
 }
 
 @media (max-width: 768px) {
-  /* На мобильных соотношение 70/30, если футер виден */
+  /* На мобильных соотношение 60/40, если футер виден */
   .right-container .table-container {
-    flex: 0 0 70%;
+    flex: 0 0 60%;
   }
   .right-container:not(.has-footer) .table-container {
     flex: 0 0 100%;
   }
-  .footer-container {
-    flex: 0 0 30%;
+  .footer-layout {
+    flex-direction: column;
+  }
+  .el-aside,
+  .el-main {
+    width: 100% !important;
+    border-right: none !important; /* Убираем вертикальные границы */
+    border-bottom: 1px solid #e9ecef; /* Добавляем горизонтальные границы */
+  }
+  /* Убираем нижнюю границу у последнего блока на мобильных */
+  .el-aside:last-child,
+  .el-main:last-child {
+    border-bottom: none;
   }
 }
 
