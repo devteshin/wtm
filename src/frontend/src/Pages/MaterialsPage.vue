@@ -792,7 +792,7 @@ const makeMaterialReport = async () => {
 const handleMakeReport = async () => {
   configuringReportTables();
   makeMaterialReport();
-  makeSelectionReport();
+  //makeSelectionReport();
 };
 
 const handleSwitchDetailedMode = () => {

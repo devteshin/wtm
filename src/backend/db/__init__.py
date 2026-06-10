@@ -6,7 +6,7 @@ from aiomysql import DictCursor, Pool, create_pool
 from .db import (
     check_user, select_task, select_tasks, change_password, select_stocks, select_operations, select_operation, select_arrival, select_max_tare_id, 
     update_job_status, check_can_login, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, 
-    select_materials_meta, select_materials_data, 
+    select_materials_meta, select_materials_data, select_selection_data,
     check_material_item, select_dnm_doc_number, DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
 )
 
@@ -32,6 +32,7 @@ __all__ = (
     "change_password",
     "select_materials_meta",
     "select_materials_data",
+    "select_selection_data",
     "select_stocks",
     "select_operations",
     "select_dnm_doc_number",
