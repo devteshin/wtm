@@ -683,11 +683,20 @@ function configuringReportTables() {
 
 const makeSelectionReport = async () => {
   reportStore.setSelectionTableData([]);
+
+  if (reportStore.selectionData.length == 0) {
+    return;
+  };
   let total_rest_net_weight = 0;
 
+  console.log('Формируем отчёт');
+  console.log(reportStore.selectionData);
+
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
-  const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join(',');
-  const key_material_list = reportStore.selectionData.map(item => item.key_material).join(',');
+  const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].map(id => `'${id}''`).join('|');
+  const key_material_list = reportStore.selectionData.map(item => item.key_material).join('|');
+
+  console.log({indicators_list, stock_list, key_material_list});
 
   try {
     await store.fetchSelectionData({
@@ -715,6 +724,8 @@ const makeSelectionReport = async () => {
     console.error('Ошибка при формировании отчёта:', error);
   } finally {
   }
+  console.log('Отчёт сформирован');
+  console.log(store.selection_data);
 };
 
 const makeMaterialReport = async () => {
@@ -792,7 +803,7 @@ const makeMaterialReport = async () => {
 const handleMakeReport = async () => {
   configuringReportTables();
   makeMaterialReport();
-  //makeSelectionReport();
+  makeSelectionReport();
 };
 
 const handleSwitchDetailedMode = () => {
