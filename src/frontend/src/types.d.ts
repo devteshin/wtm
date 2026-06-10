@@ -39,6 +39,12 @@ declare namespace frontend {
         [key: string]: number;
     }    
 
+    export type ISelectionData = {
+        stock_name: string
+        material: string
+        rest_net_weight: number
+        [key: string]: number;
+    }    
 
     export type IMaterialsQueryParams = {
         materials?: string;
@@ -49,6 +55,13 @@ declare namespace frontend {
         detailed_mode?: string;
         only_non_zero_mode?: boolean;
     }
+
+    export type ISelectionQueryParams = {
+        stock_list?: string;
+        indicators?: string;
+        key_material_list?: string;
+    }
+
 
     /** Операции */
     export type IOperations = {

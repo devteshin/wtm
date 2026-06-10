@@ -19,8 +19,10 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
   ]);
 
   const tableData = ref<any[]>([]);
+  const selectionTableData = ref<any[]>([]);
   const basicColumns = ref<any[]>([]);
   const detailedColumns = ref<any[]>([]);
+  const selectionColumns = ref<any[]>([]);
   const selectedTableData = ref<any[]>([]);
   const selectionData = ref<any[]>([]);
 
@@ -66,6 +68,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     isSelectionEnabled.value = false;
     tableCondition.value = [{ element: '', min: '', max: '' }];
     tableData.value = [];
+    selectionTableData.value = [];
     selectedTableData.value = [];
     selectionData.value = [];
   };
@@ -87,6 +90,9 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         if (data.tableData) {
           tableData.value = data.tableData;
         }
+        if (data.selectionTableData) {
+          selectionTableData.value = data.selectionTableData;
+        }
         if (data.selectedTableData) {
           selectedTableData.value = data.selectedTableData;
         }
@@ -95,6 +101,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         }
         basicColumns.value = data.basicColumns || [];
         detailedColumns.value = data.detailedColumns || [];
+        selectionColumns.value = data.selectionColumns || [];
       }
     } catch (error) {
       console.error('Ошибка загрузки из LocalStorage:', error);
@@ -111,8 +118,10 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
       isSelectionEnabled: isSelectionEnabled.value,
       tableCondition: tableCondition.value,
       tableData: tableData.value,
+      selectionTableData: selectionTableData.value,
       basicColumns: basicColumns.value,
       detailedColumns: detailedColumns.value,
+      selectionColumns: selectionColumns.value,
       selectedTableData: selectedTableData.value,
       selectionData: selectionData.value,
       timestamp: Date.now()
@@ -122,6 +131,11 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
 
   const setTableData = (data: any[]) => {
     tableData.value = data;
+    saveToStorage(); // Автосохранение при обновлении данных
+  };
+
+  const setSelectionTableData = (data: any[]) => {
+    selectionTableData.value = data;
     saveToStorage(); // Автосохранение при обновлении данных
   };
 
@@ -145,16 +159,19 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     isSelectionEnabled,
     tableCondition,
     tableData,
+    selectionTableData,
     selectedTableData,
     selectionData,
     basicColumns,
     detailedColumns,
+    selectionColumns,
     // Экспортируем действия
     setFilters,
     resetFilters,
     loadFromStorage,
     saveToStorage,
     setTableData,
+    setSelectionTableData,
     setSelectedTableData,
     setSelectionData
   };

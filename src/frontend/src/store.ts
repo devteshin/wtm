@@ -25,6 +25,8 @@ export default defineStore("app_store", () => {
     const materials_meta = ref<frontend.IMaterialsMeta | null>(null);
     /** остатки материалов для отчета по остаткам */
     const materials_data = ref<frontend.IMaterialsData | null>(null);
+    /** подбор материалов */
+    const selection_data = ref<frontend.ISelectionData | null>(null);
     /** список складов */
     const stocks = shallowRef<Array<frontend.IStock>>([]);
     /** список заданий */
@@ -40,6 +42,10 @@ export default defineStore("app_store", () => {
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsData = (stockID: number, params?: frontend.IMaterialsQueryParams) => {
         return api.fetchMaterialsData(stockID, params).then(body => materials_data.value = body).finally(() => loading.value = false);
+    };
+    /** запрос к API для получения данных по остаткам материалов подбора */
+    const fetchSelectionData = (params?: frontend.ISelectionQueryParams) => {
+        return api.fetchSelectionData(params).then(body => selection_data.value = body).finally(() => loading.value = false);
     };
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsMeta = (stockID: number) => {
@@ -187,6 +193,7 @@ export default defineStore("app_store", () => {
         fetchStocks,
         fetchMaterialsMeta,
         fetchMaterialsData,
+        fetchSelectionData,
         fetchOperations,
         fetchOperation,
         fetchDNMDocNumber,
@@ -206,6 +213,7 @@ export default defineStore("app_store", () => {
         operation,
         materials_meta,
         materials_data,
+        selection_data,
         tasks,
         tasks_progress,
         task,

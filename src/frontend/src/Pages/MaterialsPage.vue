@@ -362,7 +362,8 @@ watch(
     isSelectionEnabled: isSelectionEnabled.value,
     tableCondition: tableCondition.value,
     basicColumns: reportStore.basicColumns,
-    detailedColumns: reportStore.detailedColumns
+    detailedColumns: reportStore.detailedColumns,
+    selectionColumns: reportStore.selectionColumns
   }),
   (newValues) => {
     reportStore.setFilters(newValues);
@@ -394,6 +395,13 @@ const detailedColumns = ref([
   { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
   { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
 ]);
+
+const selectionColumns = ref([
+  { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
+  { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
+]);
+
 
 const isSkeletonLoading = ref(true); // Для скелетона при инициализации
 let loadingTimeout: NodeJS.Timeout | null = null;
@@ -449,6 +457,9 @@ onMounted(async () => {
     }
     if (!reportStore.detailedColumns.length) {
       reportStore.detailedColumns = [...detailedColumns.value];
+    }
+    if (!reportStore.selectionColumns.length) {
+      reportStore.selectionColumns = [...selectionColumns.value];
     }
 
     
@@ -614,7 +625,6 @@ const selectionColumn = computed(() =>
 );
 
 const dataColumns = computed(() =>
-//  isDetailedMode.value ? detailedColumns.value : basicColumns.value);
   isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns);  
 
 
@@ -640,23 +650,14 @@ const handleClearSelectionData = () => {
   reportStore.setSelectionData([]);
 };
 
-const handleMakeReport = async () => {
-  isSkeletonLoading.value = true; // Включаем скелетон при формировании отчёта
-
-  store.loading = true;
-  reportStore.setTableData([]);
-  let total_rest_gross_weight = 0;
-  let total_rest_net_weight = 0;
-  let total_rest_tare_amount = 0;
-
+function configuringReportTables() {
   // Удаляем старые колонки с процентами перед добавлением новых
-  const percentColumns = reportStore.basicColumns.filter(col => col.prop.includes('_percent'));
-
   if (isDetailedMode.value) {
     reportStore.detailedColumns = reportStore.detailedColumns.filter(col => !col.prop.includes('_percent'));
   } else {
     reportStore.basicColumns = reportStore.basicColumns.filter(col => !col.prop.includes('_percent'));
   };
+  reportStore.selectionColumns = reportStore.selectionColumns.filter(col => !col.prop.includes('_percent'));
 
   const percent_items: Column[] = [];
   for (const item of tableCondition.value) {
@@ -676,16 +677,57 @@ const handleMakeReport = async () => {
   } else {
     reportStore.basicColumns.push(...percent_items);
   }
+  reportStore.selectionColumns.push(...percent_items);
 
+};
 
-/*   if (isDetailedMode.value) {
-    detailedColumns.value = [...detailedColumns.value.slice(0, 10)];
-    detailedColumns.value = [...detailedColumns.value, ...percent_items];
-  } else {
-    basicColumns.value = [...basicColumns.value.slice(0, 8)];
-    basicColumns.value = [...basicColumns.value, ...percent_items];
+const makeSelectionReport = async () => {
+  reportStore.setSelectionTableData([]);
+  let total_rest_net_weight = 0;
+
+  const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
+  const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join(',');
+  const key_material_list = reportStore.selectionData.map(item => item.key_material).join(',');
+
+  try {
+    await store.fetchSelectionData({
+      stock_list: stock_list,
+      indicators: indicators_list,
+      key_material_list: key_material_list
+    });
+
+    if (store.selection_data && Array.isArray(store.selection_data)) {
+      reportStore.selectionData = store.selection_data;
+      if (reportStore.selectionData.length > 1) {
+        total_rest_net_weight = reportStore.selectionData.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        reportStore.setSelectionData([
+          ...reportStore.selectionData,
+          {
+            stock_name: 'Итого',
+            material: '',
+            rest_net_weight: total_rest_net_weight,
+          }
+        ]);
+      };
+    };
+    reportStore.saveToStorage();
+  } catch (error) {
+    console.error('Ошибка при формировании отчёта:', error);
+  } finally {
   }
- */
+};
+
+const makeMaterialReport = async () => {
+  isSkeletonLoading.value = true; // Включаем скелетон при формировании отчёта
+
+  store.loading = true;
+  reportStore.setTableData([]);
+  let total_rest_gross_weight = 0;
+  let total_rest_net_weight = 0;
+  let total_rest_tare_amount = 0;
+
+  
+
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
   const indicator_conditions_list = tableCondition.value.map((item) => {
     if (item.element != '') {
@@ -740,11 +782,17 @@ const handleMakeReport = async () => {
     };
     reportStore.saveToStorage();
   } catch (error) {
-    // Здесь можно добавить уведомление об ошибке для пользователя
+    console.error('Ошибка при формировании отчёта:', error);
   } finally {
     store.loading = false;
     isSkeletonLoading.value = false; // Выключаем скелетон после завершения
   }
+};
+
+const handleMakeReport = async () => {
+  configuringReportTables();
+  makeMaterialReport();
+  makeSelectionReport();
 };
 
 const handleSwitchDetailedMode = () => {
