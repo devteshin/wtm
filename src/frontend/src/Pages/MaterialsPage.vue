@@ -681,6 +681,36 @@ function configuringReportTables() {
 
 };
 
+const makeSelectionIndReport = async () => {
+  reportStore.setSelectionIndTableData([]);
+
+  if (reportStore.selectionData.length == 0) {
+    return;
+  };
+
+  const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
+  const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
+  const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
+
+  try {
+    await store.fetchSelectionData({
+      stock_list: stock_list,
+      indicators: indicators_list,
+      key_material_list: key_material_list,
+      query_type: 'selection_indicators'
+    });
+
+    if (store.selection_ind_data && Array.isArray(store.selection_ind_data)) {
+      reportStore.selectionIndTableData = store.selection_ind_data;
+    };
+  } catch (error) {
+    console.error('Ошибка при формировании отчёта:', error);
+  } finally {
+  }
+  console.log(reportStore.selectionIndTableData);
+};
+
+
 const makeSelectionReport = async () => {
   reportStore.setSelectionTableData([]);
 
@@ -689,20 +719,16 @@ const makeSelectionReport = async () => {
   };
   let total_rest_net_weight = 0;
 
-  console.log('Формируем отчёт');
-  console.log(reportStore.selectionData);
-
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
   const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
   const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
-
-  console.log({indicators_list, stock_list, key_material_list});
 
   try {
     await store.fetchSelectionData({
       stock_list: stock_list,
       indicators: indicators_list,
-      key_material_list: key_material_list
+      key_material_list: key_material_list,
+      query_type: 'selection'
     });
 
     if (store.selection_data && Array.isArray(store.selection_data)) {
@@ -719,14 +745,10 @@ const makeSelectionReport = async () => {
         ]);
       };
     };
-    //reportStore.saveToStorage();
   } catch (error) {
     console.error('Ошибка при формировании отчёта:', error);
   } finally {
   }
-  console.log('Отчёт сформирован');
-  console.log(store.selection_data);
-  console.log(reportStore.selectionTableData);
 };
 
 const makeMaterialReport = async () => {
@@ -792,7 +814,6 @@ const makeMaterialReport = async () => {
         ]);
       };
     };
-    //reportStore.saveToStorage();
   } catch (error) {
     console.error('Ошибка при формировании отчёта:', error);
   } finally {
@@ -804,7 +825,6 @@ const makeMaterialReport = async () => {
 const handleMakeReport = async () => {
   try {
     configuringReportTables();
-    console.log('Колонки настроены успешно');
   } catch (error) {
     console.error('Ошибка при настройке колонок:', error);
     return;
@@ -812,18 +832,23 @@ const handleMakeReport = async () => {
 
   try {
     await makeMaterialReport();
-    console.log('Материальный отчёт сформирован успешно');
   } catch (error) {
-    console.error('Ошибка при формировании материального отчёта:', error);
+    console.error('Ошибка при формировании таблицы материалов:', error);
     return;
   }
 
   try {
     await makeSelectionReport();
-    console.log('Отчёт по выборке сформирован успешно');
   } catch (error) {
-    console.error('Ошибка при формировании отчёта по выборке:', error);
+    console.error('Ошибка при формировании подбора:', error);
   }
+
+  try {
+    await makeSelectionIndReport();
+  } catch (error) {
+    console.error('Ошибка при формировании показателей подбора:', error);
+  }
+
 
   reportStore.saveToStorage();
 };

@@ -46,6 +46,10 @@ declare namespace frontend {
         [key: string]: number;
     }    
 
+    export type ISelectionIndData = {
+        [key: string]: number;
+    }    
+
     export type IMaterialsQueryParams = {
         materials?: string;
         stocks?: string;
@@ -60,8 +64,8 @@ declare namespace frontend {
         stock_list?: string;
         indicators?: string;
         key_material_list?: string;
+        query_type?: string;
     }
-
 
     /** Операции */
     export type IOperations = {

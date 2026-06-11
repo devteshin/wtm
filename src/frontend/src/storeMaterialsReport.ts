@@ -18,14 +18,15 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     { element: '', min: '', max: '' }
   ]);
 
-  const tableData = ref<any[]>([]);
-  const selectionTableData = ref<any[]>([]);
+  const tableData = ref<any[]>([]); // таблица материалов
+  const selectionTableData = ref<any[]>([]); // таблица подбора 
+  const selectionIndTableData = ref<any[]>([]); // таблица показателей подбора 
   const basicColumns = ref<any[]>([]);
   const detailedColumns = ref<any[]>([]);
   const selectionColumns = ref<any[]>([]);
-  const selectedTableData = ref<any[]>([]);
-  const selectionData = ref<any[]>([]);
-
+  const selectedTableData = ref<any[]>([]); // выбранные строки текущей таблицы материалов
+  const selectionData = ref<any[]>([]); // хранит выбранные строки в формате таблицы материалов (tableData) 
+  
   // Действия
   const setFilters = (filters: Partial<{
     selectedStore: number[];
@@ -69,6 +70,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     tableCondition.value = [{ element: '', min: '', max: '' }];
     tableData.value = [];
     selectionTableData.value = [];
+    selectionIndTableData.value = [];
     selectedTableData.value = [];
     selectionData.value = [];
   };
@@ -92,6 +94,9 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         }
         if (data.selectionTableData) {
           selectionTableData.value = data.selectionTableData;
+        }
+        if (data.selectionIndTableData) {
+          selectionIndTableData.value = data.selectionIndTableData;
         }
         if (data.selectedTableData) {
           selectedTableData.value = data.selectedTableData;
@@ -119,6 +124,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
       tableCondition: tableCondition.value,
       tableData: tableData.value,
       selectionTableData: selectionTableData.value,
+      selectionIndTableData: selectionIndTableData.value,
       basicColumns: basicColumns.value,
       detailedColumns: detailedColumns.value,
       selectionColumns: selectionColumns.value,
@@ -136,6 +142,11 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
 
   const setSelectionTableData = (data: any[]) => {
     selectionTableData.value = data;
+    saveToStorage(); // Автосохранение при обновлении данных
+  };
+
+  const setSelectionIndTableData = (data: any[]) => {
+    selectionIndTableData.value = data;
     saveToStorage(); // Автосохранение при обновлении данных
   };
 
@@ -160,6 +171,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     tableCondition,
     tableData,
     selectionTableData,
+    selectionIndTableData,
     selectedTableData,
     selectionData,
     basicColumns,
@@ -172,6 +184,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     saveToStorage,
     setTableData,
     setSelectionTableData,
+    setSelectionIndTableData,
     setSelectedTableData,
     setSelectionData
   };

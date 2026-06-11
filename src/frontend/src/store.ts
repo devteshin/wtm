@@ -27,6 +27,8 @@ export default defineStore("app_store", () => {
     const materials_data = ref<frontend.IMaterialsData | null>(null);
     /** подбор материалов */
     const selection_data = ref<frontend.ISelectionData | null>(null);
+    /** подбор материалов - значения показателей подбора */
+    const selection_ind_data = ref<frontend.ISelectionIndData | null>(null);
     /** список складов */
     const stocks = shallowRef<Array<frontend.IStock>>([]);
     /** список заданий */
@@ -45,7 +47,11 @@ export default defineStore("app_store", () => {
     };
     /** запрос к API для получения данных по остаткам материалов подбора */
     const fetchSelectionData = (params?: frontend.ISelectionQueryParams) => {
-        return api.fetchSelectionData(params).then(body => selection_data.value = body).finally(() => loading.value = false);
+        if (params?.query_type === "selection") {
+            return api.fetchSelectionData(params).then(body => selection_data.value = body).finally(() => loading.value = false);
+        } else {
+            return api.fetchSelectionData(params).then(body => selection_ind_data.value = body).finally(() => loading.value = false);
+        };
     };
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsMeta = (stockID: number) => {
@@ -214,6 +220,7 @@ export default defineStore("app_store", () => {
         materials_meta,
         materials_data,
         selection_data,
+        selection_ind_data,
         tasks,
         tasks_progress,
         task,
