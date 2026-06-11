@@ -144,51 +144,68 @@
 
         <!-- Таблица с данными -->
         <template v-else>
-            <div class="table-wrapper">
-              <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
-              <el-table
-                v-else
-                ref="tableRef"
-                :data="formattedTableData"
-                reserve-selection
-                :row-key="getRowKey"
-                style="width: 100%; height: 100%;"
-                stripe
-                border
-                show-overflow-tooltip
-                virtual-scroll
-                :row-class-name="getRowClassName"
-                @cell-dblclick="handleTableCellDblClick"
-                @selection-change="handleSelectionChange"
-              >
-              <!-- Колонка выбора (если включена) -->
-              <el-table-column
-                v-for="column in selectionColumn"
-                :key="column.type"
-                :type="column.type"
-                :width="column.width"
-                :selectable="column.selectable"
-              />
+          <div class="table-wrapper">
+            <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
+            <el-table
+              v-else
+              ref="tableRef"
+              :data="formattedTableData"
+              reserve-selection
+              :row-key="getRowKey"
+              style="width: 100%; height: 100%;"
+              stripe
+              border
+              show-overflow-tooltip
+              virtual-scroll
+              :row-class-name="getRowClassName"
+              @cell-dblclick="handleTableCellDblClick"
+              @selection-change="handleSelectionChange"
+            >
+            <!-- Колонка выбора (если включена) -->
+            <el-table-column
+              v-for="column in selectionColumn"
+              :key="column.type"
+              :type="column.type"
+              :width="column.width"
+              :selectable="column.selectable"
+            />
 
-              <!-- Остальные колонки -->
-              <el-table-column
-                v-for="column in dataColumns"
-                :key="column.prop"
-                :prop="column.prop"
-                :label="column.label"
-                :width="column.width"
-                :fixed="column.fixed"
-              />
-              </el-table>
-            </div>
-            </template>
-          </el-main>
+            <!-- Остальные колонки -->
+            <el-table-column
+              v-for="column in dataColumns"
+              :key="column.prop"
+              :prop="column.prop"
+              :label="column.label"
+              :width="column.width"
+              :fixed="column.fixed"
+            />
+            </el-table>
+          </div>
+        </template>
+      </el-main>
       <el-footer v-if="isSelectionEnabled" class="footer-container">
         <div class="footer-content">
           <el-container class="footer-layout">
             <el-aside width="10%" class="footer-block footer-block-1">
             </el-aside>
             <el-main class="footer-block footer-block-2">
+                <div v-if="!reportStore.selectionTableData?.length"></div>
+                <el-table
+                  :data="reportStore.selectionTableData"
+                  style="width: 100%; height: 100%;"
+                  stripe
+                  border
+                  show-overflow-tooltip
+                >
+                <el-table-column
+                  v-for="column in reportStore.selectionColumns"
+                  :key="column.prop"
+                  :prop="column.prop"
+                  :label="column.label"
+                  :width="column.width"
+                  :fixed="column.fixed"
+                />
+                </el-table>
             </el-main>
             <el-aside width="30%" class="footer-block footer-block-3">
             </el-aside>
