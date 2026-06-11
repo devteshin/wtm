@@ -71,7 +71,7 @@ async def select_selection_data(
     async with conn.cursor() as cur:
 
         try:
-            await cur.callproc("report_material_stock", ['', '', stock_list, indicators, '', 'summary', 1, key_material_list])
+            await cur.callproc("report_material_stock", ['', '', stock_list, indicators, '', 'selection', 1, key_material_list])
         except Exception as e:
             print(f"ERROR callproc \"report_material_stock\": {e}")
             return report_result
