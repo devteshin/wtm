@@ -693,8 +693,8 @@ const makeSelectionReport = async () => {
   console.log(reportStore.selectionData);
 
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
-  const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].map(id => `'${id}''`).join('|');
-  const key_material_list = reportStore.selectionData.map(item => item.key_material).join('|');
+  const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].map(item => `'${item}''`).join('|');
+  const stock_list = reportStore.selectionData.map(item => item.stock_id).join('|');
 
   console.log({indicators_list, stock_list, key_material_list});
 
