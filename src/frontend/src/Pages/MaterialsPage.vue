@@ -726,7 +726,7 @@ const makeSelectionReport = async () => {
   }
   console.log('Отчёт сформирован');
   console.log(store.selection_data);
-  console.log(store.fetchSelectionData);
+  console.log(reportStore.selectionTableData);
 };
 
 const makeMaterialReport = async () => {
