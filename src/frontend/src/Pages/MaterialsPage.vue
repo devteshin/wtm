@@ -186,10 +186,25 @@
       <el-footer v-if="isSelectionEnabled" class="footer-container">
         <div class="footer-content">
           <el-container class="footer-layout">
-            <el-aside width="10%" class="footer-block footer-block-1">
+            <el-aside width="15%" class="footer-block footer-block-1">
+                <el-table
+                  :data="reportStore.selectionIndTableData"
+                  style="width: 100%; height: 100%;"
+                  stripe
+                  border
+                  show-overflow-tooltip
+                >
+                <el-table-column
+                  v-for="column in selectionIndColumns"
+                  :key="column.prop"
+                  :prop="column.prop"
+                  :label="column.label"
+                  :width="column.width"
+                />
+                </el-table>
+
             </el-aside>
             <el-main class="footer-block footer-block-2">
-                <div v-if="!reportStore.selectionTableData?.length"></div>
                 <el-table
                   :data="reportStore.selectionTableData"
                   style="width: 100%; height: 100%;"
@@ -239,6 +254,11 @@ interface Column {
 interface MaterialOption {
   id: number;
   name: string;
+};
+
+interface SelectionIndicator {
+  ind: string;
+  percent: number;
 };
 
 const store = useApplicationStore()
@@ -359,12 +379,21 @@ const updateSelectionData = () => {
 
 const handleSelectionChange = (selection: any[]) => {
   reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
-  console.log('Selected table data:', reportStore.selectedTableData);
     if (!isAutoSelectionUpdate.value) {
-      console.log('updateSelectionData');
       updateSelectionData();
-    };
-    console.log('Selection data:', reportStore.selectionData);
+    try {
+        makeSelectionReport();
+      } catch (error) {
+        console.error('Ошибка при формировании подбора:', error);
+      }
+
+      try {
+        makeSelectionIndReport();
+      } catch (error) {
+        console.error('Ошибка при формировании показателей подбора:', error);
+      }
+
+  };
 };
 
 
@@ -414,10 +443,15 @@ const detailedColumns = ref([
 ]);
 
 const selectionColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
-  { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
+  { prop: 'stock_name', label: 'Склад', width: '80' },
+  { prop: 'material', label: 'Материал', width: '300' },
   { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
 ]);
+
+const selectionIndColumns = [
+  { prop: 'ind', label: 'Ind', width: '80', },
+  { prop: 'percent', label: '%', width: '80' },
+];
 
 
 const isSkeletonLoading = ref(true); // Для скелетона при инициализации
@@ -523,7 +557,7 @@ const tableRef = ref<any>(null);
 const restoreSelection = () => {
     // Проверка доступности выбора
   if (!isSelectionEnabled.value) {
-    console.log('Selection is disabled, skipping restore');
+    //console.log('Selection is disabled, skipping restore');
     return;
   }
 
@@ -543,7 +577,7 @@ const restoreSelection = () => {
 
   isAutoSelectionUpdate.value = true; // Блокируем обновление
 
-  console.log('Proceeding with selection restoration...');
+  //console.log('Proceeding with selection restoration...');
   tableRef.value.clearSelection();
 
   const selectionKeys = new Set(
@@ -560,8 +594,8 @@ const restoreSelection = () => {
     isAutoSelectionUpdate.value = false; // Снимаем блокировку после завершения
   });
 
-  console.log('Selection restored successfully');
-  console.log(reportStore.selectedTableData);  
+  //console.log('Selection restored successfully');
+  //console.log(reportStore.selectedTableData);  
 };
 
 const formattedTableData = computed(() => {
@@ -646,7 +680,6 @@ const dataColumns = computed(() =>
 
 
 watch(formattedTableData, (newData) => {
-  console.log('formattedTableData changed, new data length:', newData?.length);
   if (newData && newData.length > 0 && tableRef.value) {
     nextTick(() => {
       restoreSelection();
@@ -656,7 +689,6 @@ watch(formattedTableData, (newData) => {
 
 watch(() => tableRef.value, (tableInstance) => {
   if (tableInstance && formattedTableData.value?.length > 0) {
-    console.log('Table mounted, restoring selection...');
     nextTick(() => {
       restoreSelection();
     });
@@ -718,7 +750,12 @@ const makeSelectionIndReport = async () => {
     });
 
     if (store.selection_ind_data && Array.isArray(store.selection_ind_data)) {
-      reportStore.selectionIndTableData = store.selection_ind_data;
+      const transformed_selection_ind_data: SelectionIndicator[] = Object.entries(store.selection_ind_data[0])
+        .map(([key, value]) => ({
+          ind: key,
+          percent: value as number
+        }));
+      reportStore.selectionIndTableData = [ ...transformed_selection_ind_data ];
     };
   } catch (error) {
     console.error('Ошибка при формировании отчёта:', error);
@@ -866,8 +903,7 @@ const handleMakeReport = async () => {
     console.error('Ошибка при формировании показателей подбора:', error);
   }
 
-
-  reportStore.saveToStorage();
+  //reportStore.saveToStorage();
 };
 
 const handleSwitchDetailedMode = () => {
