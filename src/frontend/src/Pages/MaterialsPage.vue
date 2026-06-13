@@ -184,9 +184,9 @@
         </template>
       </el-main>
       <el-footer v-if="isSelectionEnabled" class="footer-container">
-        <div class="footer-content">
           <el-container class="footer-layout">
             <el-aside width="15%" class="footer-block footer-block-1">
+              <div class="table-wrapper">
                 <el-table
                   :data="reportStore.selectionIndTableData"
                   style="width: 100%; height: 100%;"
@@ -202,9 +202,10 @@
                   :width="column.width"
                 />
                 </el-table>
-
+              </div>
             </el-aside>
             <el-main class="footer-block footer-block-2">
+              <div class="table-wrapper">
                 <el-table
                   :data="reportStore.selectionTableData"
                   style="width: 100%; height: 100%;"
@@ -221,11 +222,11 @@
                   :fixed="column.fixed"
                 />
                 </el-table>
+              </div>
             </el-main>
             <el-aside width="30%" class="footer-block footer-block-3">
             </el-aside>
           </el-container>
-        </div>
       </el-footer>
     </el-container>
   </el-container>
@@ -1001,21 +1002,11 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 /* Футер занимает 30% высоты правого контейнера */
 .footer-container {
   flex: 0 0 30%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 30% */
-  padding: 15px;
+  padding: 0px;
   background-color: #f8f9fa;
   border-top: 1px solid #e9ecef;
   flex-shrink: 0;
   height: 100%;
-}
-
-.footer-content {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  overflow: hidden;
 }
 
 .footer-layout {
@@ -1027,12 +1018,13 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 .footer-block {
   height: 100%;
   box-sizing: border-box;
-  padding: 10px;
+  padding: 0px;
   border-right: 1px solid #e9ecef;
   overflow: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  position: relative;
 }
 
 .footer-block-1 {
