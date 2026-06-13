@@ -755,13 +755,12 @@ const makeSelectionIndReport = async () => {
           ind: key,
           percent: value as number
         }));
-      reportStore.selectionIndTableData = [ ...transformed_selection_ind_data ];
+      reportStore.setSelectionIndTableData([ ...transformed_selection_ind_data ]);
     };
   } catch (error) {
     console.error('Ошибка при формировании отчёта:', error);
   } finally {
   }
-  console.log(reportStore.selectionIndTableData);
 };
 
 
