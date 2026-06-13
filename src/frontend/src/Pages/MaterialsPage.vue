@@ -1011,6 +1011,7 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 .footer-container {
   flex: 0 0 30%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 30% */
   padding: 0px;
+  margin-top: 10px;
   background-color: #f8f9fa;
   border-top: 1px solid #e9ecef;
   flex-shrink: 0;
