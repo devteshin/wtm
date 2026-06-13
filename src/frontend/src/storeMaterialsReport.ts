@@ -14,6 +14,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const isDetailedMode = ref(false);
   const isOnlyNonZeroMode = ref(false);
   const isSelectionEnabled = ref(false);
+  const isSelectionControlEnabled = ref(false);
   const tableCondition = ref<TableConditionItem[]>([
     { element: '', min: '', max: '' }
   ]);
@@ -35,6 +36,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     isDetailedMode: boolean;
     isOnlyNonZeroMode: boolean;
     isSelectionEnabled: boolean;
+    isSelectionControlEnabled: boolean;
     tableCondition: TableConditionItem[];
   }>) => {
     if (filters.selectedStore !== undefined) {
@@ -55,6 +57,9 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     if (filters.isSelectionEnabled !== undefined) {
       isSelectionEnabled.value = filters.isSelectionEnabled;
     }
+    if (filters.isSelectionControlEnabled !== undefined) {
+      isSelectionControlEnabled.value = filters.isSelectionControlEnabled;
+    }
     if (filters.tableCondition !== undefined) {
       tableCondition.value = filters.tableCondition;
     }
@@ -67,6 +72,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     isDetailedMode.value = false;
     isOnlyNonZeroMode.value = false;
     isSelectionEnabled.value = false;
+    isSelectionControlEnabled.value = false;
     tableCondition.value = [{ element: '', min: '', max: '' }];
     tableData.value = [];
     selectionTableData.value = [];
@@ -87,6 +93,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
           isDetailedMode: data.isDetailedMode || false,
           isOnlyNonZeroMode: data.isOnlyNonZeroMode || false,
           isSelectionEnabled: data.isSelectionEnabled || false,
+          isSelectionControlEnabled: data.isSelectionControlEnabled || false,
           tableCondition: data.tableCondition || [{ element: '', min: '', max: '' }]
         });
         if (data.tableData) {
@@ -121,6 +128,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
       isDetailedMode: isDetailedMode.value,
       isOnlyNonZeroMode: isOnlyNonZeroMode.value,
       isSelectionEnabled: isSelectionEnabled.value,
+      isSelectionControlEnabled: isSelectionControlEnabled.value,
       tableCondition: tableCondition.value,
       tableData: tableData.value,
       selectionTableData: selectionTableData.value,
@@ -168,6 +176,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     isDetailedMode,
     isOnlyNonZeroMode,
     isSelectionEnabled,
+    isSelectionControlEnabled,
     tableCondition,
     tableData,
     selectionTableData,

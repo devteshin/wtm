@@ -70,7 +70,7 @@
                 inactive-color="#ff4949"
               />
               <span class="switch-description">
-                {{ isSelectionEnabled ? 'подбор материалов доступен' : 'подбор материалов отключен' }}
+                {{ isSelectionEnabled ? 'выбор материалов доступен' : 'выбор материалов отключен' }}
               </span>
             </div>
           </el-form-item>
@@ -126,13 +126,19 @@
             class="apply-button"
           >
             Сформировать
-          </el-button>        
-          <el-button
-            type="primary"
-            @click="handleClearSelectionData"
-          >
-            Очистить
-          </el-button>        
+          </el-button>
+          <el-form-item>
+            <div class="switch-container">
+              <el-switch 
+                v-model="isSelectionControlEnabled"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              />
+              <span class="switch-description">
+                {{ isSelectionControlEnabled ? 'подбор материалов открыт' : 'подбор материалов скрыт' }}
+              </span>
+            </div>
+          </el-form-item>
       </el-form>
     </el-aside>
 
@@ -183,7 +189,7 @@
           </div>
         </template>
       </el-main>
-      <el-footer v-if="isSelectionEnabled" class="footer-container">
+      <el-footer v-if="isSelectionControlEnabled" class="footer-container">
           <el-container class="footer-layout">
             <el-aside width="15%" class="footer-block footer-block-1">
               <div class="table-wrapper">
@@ -266,7 +272,7 @@ const store = useApplicationStore()
 const reportStore = useMaterialsReportStore()
 
 const isAutoSelectionUpdate = ref(false);
-const hasFooter = computed(() => isSelectionEnabled.value);
+const hasFooter = computed(() => isSelectionControlEnabled.value);
 
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
@@ -293,6 +299,11 @@ const isOnlyNonZeroMode = computed({
 const isSelectionEnabled = computed({
   get: () => reportStore.isSelectionEnabled,
   set: (value) => reportStore.setFilters({ isSelectionEnabled: value })
+});
+
+const isSelectionControlEnabled = computed({
+  get: () => reportStore.isSelectionControlEnabled,
+  set: (value) => reportStore.setFilters({ isSelectionControlEnabled: value })
 });
 
 const tableCondition = computed({
@@ -407,6 +418,7 @@ watch(
     isDetailedMode: isDetailedMode.value,
     isOnlyNonZeroMode: isOnlyNonZeroMode.value,
     isSelectionEnabled: isSelectionEnabled.value,
+    isSelectionControlEnabled: isSelectionControlEnabled.value,
     tableCondition: tableCondition.value,
     basicColumns: reportStore.basicColumns,
     detailedColumns: reportStore.detailedColumns,
@@ -695,10 +707,6 @@ watch(() => tableRef.value, (tableInstance) => {
     });
   }
 });
-
-const handleClearSelectionData = () => {
-  reportStore.setSelectionData([]);
-};
 
 function configuringReportTables() {
   // Удаляем старые колонки с процентами перед добавлением новых
@@ -1097,6 +1105,7 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 
 .apply-button {
   margin-top: 20px;
+  margin-bottom: 20px;
   width: 100%;
 }
 
