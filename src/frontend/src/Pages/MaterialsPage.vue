@@ -219,14 +219,30 @@
                   border
                   show-overflow-tooltip
                 >
-                <el-table-column
-                  v-for="column in reportStore.selectionColumns"
-                  :key="column.prop"
-                  :prop="column.prop"
-                  :label="column.label"
-                  :width="column.width"
-                  :fixed="column.fixed"
-                />
+                  <el-table-column
+                    v-for="column in reportStore.selectionColumns"
+                    :key="column.prop"
+                    :prop="column.prop"
+                    :label="column.label"
+                    :width="column.width"
+                    :fixed="column.fixed"
+                  />
+                  <el-table-column
+                    label=""
+                    width="50"
+                    fixed="right"
+                  >
+                    <template #default="scope">
+                      <el-button
+                        link
+                        type="danger"
+                        size="small"
+                        @click="handleDeleteSelectionTableRow(scope.row)"
+                      >
+                        <Delete style="width: 14px; height: 14px;" />
+                      </el-button>
+                    </template>
+                  </el-table-column>
                 </el-table>
               </div>
             </el-main>
@@ -245,6 +261,7 @@ import useApplicationStore from "@/store";
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import { Delete } from '@element-plus/icons-vue';
 import { watch } from 'vue';
+import { ElMessageBox } from "element-plus";
 
 const props = defineProps({
     /** ID склада */
@@ -389,6 +406,49 @@ const updateSelectionData = () => {
 
 };  
 
+const handleDeleteSelectionTableRow = async (row: any) => {
+  if (reportStore.selectionData.length === 0) {  
+    return;
+  }
+
+  try {
+    if (row.material === '') {
+      await ElMessageBox.confirm(
+        "Подбор будет очищен",
+        {
+          message: "Удалить все материалы из подбора?",
+          cancelButtonText: "Нет",
+          confirmButtonText: "Да",
+          type: "warning"
+        }
+      );
+      reportStore.setSelectionData([]);
+    } else {
+      reportStore.selectionData = reportStore.selectionData.filter(
+        (item) => item.material !== row.material
+      );
+    }
+
+    restoreSelection();
+
+    try {
+      await makeSelectionReport();
+    } catch (error) {
+      console.error('Ошибка при формировании подбора:', error);
+    }
+
+    try {
+      await makeSelectionIndReport();
+    } catch (error) {
+      console.error('Ошибка при формировании показателей подбора:', error);
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('Неожиданная ошибка:', error);
+    }
+  }
+};
+
 const handleSelectionChange = (selection: any[]) => {
   reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
     if (!isAutoSelectionUpdate.value) {
@@ -458,7 +518,7 @@ const detailedColumns = ref([
 const selectionColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80' },
   { prop: 'material', label: 'Материал', width: '300' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100' }
 ]);
 
 const selectionIndColumns = [
