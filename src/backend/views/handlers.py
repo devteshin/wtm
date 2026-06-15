@@ -147,7 +147,7 @@ async def get_selection_data(request: Request):
             stock_list=stock_list,
             indicators=indicators,
             key_material_list=key_material_list,
-            query_type=query_type
+            query_type=query_type,
             element_order=element_order
         )
 
