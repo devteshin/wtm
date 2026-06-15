@@ -58,6 +58,7 @@ declare namespace frontend {
         indicator_conditions?: string;
         detailed_mode?: string;
         only_non_zero_mode?: boolean;
+        element_order?: string;
     }
 
     export type ISelectionQueryParams = {

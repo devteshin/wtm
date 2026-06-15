@@ -29,7 +29,8 @@ async def select_materials_data(
     indicators: str = '',
     indicator_conditions: str = '',
     detailed_mode: str = '',
-    only_non_zero_mode: bool | str = False
+    only_non_zero_mode: bool | str = False,
+    element_order: str = ''
     ):
 
     print(materials)
@@ -48,7 +49,7 @@ async def select_materials_data(
     async with conn.cursor() as cur:
 
         try:
-            await cur.callproc("report_material_stock", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, only_non_zero_mode_int, ''])
+            await cur.callproc("report_material_stock", [materials, material_groups, stocks, indicators, indicator_conditions, detailed_mode, only_non_zero_mode_int, '', element_order])
         except Exception as e:
             print(f"ERROR callproc \"report_material_stock\": {e}")
             return report_result

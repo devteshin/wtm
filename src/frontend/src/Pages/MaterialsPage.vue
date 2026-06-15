@@ -912,7 +912,8 @@ const makeMaterialReport = async () => {
       indicators: indicators_list,
       indicator_conditions: indicator_conditions_list,
       detailed_mode: isDetailedMode.value ? "detailed" : "summary",
-      only_non_zero_mode: isOnlyNonZeroMode.value
+      only_non_zero_mode: isOnlyNonZeroMode.value,
+      element_order: ''
     });
 
     if (store.materials_data && Array.isArray(store.materials_data)) {
