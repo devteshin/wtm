@@ -61,19 +61,6 @@
               </span>
             </div>
           </el-form-item>
-          <el-form-item>
-            <div class="switch-container">
-              <el-switch 
-                v-model="isSelectionEnabled"
-                :disabled="isSelectionModeDisabled"
-                active-color="#13ce66"
-                inactive-color="#ff4949"
-              />
-              <span class="switch-description">
-                {{ isSelectionEnabled ? 'выбор материалов доступен' : 'выбор материалов отключен' }}
-              </span>
-            </div>
-          </el-form-item>
           <el-form-item label="Показатели">
             <el-table :data="tableCondition" style="width: 100%" max-height="250">
 
@@ -120,6 +107,19 @@
               Добавить
             </el-button>            
           </el-form-item>
+          <el-form-item>
+            <div class="switch-container">
+              <el-switch 
+                v-model="isElementOrderMode"
+                :disabled="isElementOrderModeDisabled"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              />
+              <span class="switch-description">
+                {{ isElementOrderMode ? 'сортировка по первому показателю' : 'сортировка по материалам' }}
+              </span>
+            </div>
+          </el-form-item>
           <el-button
             type="primary"
             @click="handleMakeReport"
@@ -127,6 +127,19 @@
           >
             Сформировать
           </el-button>
+          <el-form-item>
+            <div class="switch-container">
+              <el-switch 
+                v-model="isSelectionEnabled"
+                :disabled="isSelectionModeDisabled"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              />
+              <span class="switch-description">
+                {{ isSelectionEnabled ? 'выбор материалов доступен' : 'выбор материалов отключен' }}
+              </span>
+            </div>
+          </el-form-item>
           <el-form-item>
             <div class="switch-container">
               <el-switch 
@@ -313,6 +326,12 @@ const isOnlyNonZeroMode = computed({
   set: (value) => reportStore.setFilters({ isOnlyNonZeroMode: value })
 });
 
+const isElementOrderMode = computed({
+  get: () => reportStore.isElementOrderMode,
+  set: (value) => reportStore.setFilters({ isElementOrderMode: value })
+});
+
+
 const isSelectionEnabled = computed({
   get: () => reportStore.isSelectionEnabled,
   set: (value) => reportStore.setFilters({ isSelectionEnabled: value })
@@ -449,22 +468,21 @@ const handleDeleteSelectionTableRow = async (row: any) => {
   }
 };
 
-const handleSelectionChange = (selection: any[]) => {
+const handleSelectionChange = async (selection: any[]) => {
   reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
     if (!isAutoSelectionUpdate.value) {
       updateSelectionData();
-    try {
-        makeSelectionReport();
-      } catch (error) {
-        console.error('Ошибка при формировании подбора:', error);
-      }
+      try {
+          await makeSelectionReport();
+        } catch (error) {
+          console.error('Ошибка при формировании подбора:', error);
+        }
 
       try {
-        makeSelectionIndReport();
-      } catch (error) {
-        console.error('Ошибка при формировании показателей подбора:', error);
-      }
-
+          await makeSelectionIndReport();
+        } catch (error) {
+          console.error('Ошибка при формировании показателей подбора:', error);
+        }
   };
 };
 
@@ -477,6 +495,7 @@ watch(
     selectedMaterial: selectedMaterial.value,
     isDetailedMode: isDetailedMode.value,
     isOnlyNonZeroMode: isOnlyNonZeroMode.value,
+    isElementOrderMode: isElementOrderMode.value,
     isSelectionEnabled: isSelectionEnabled.value,
     isSelectionControlEnabled: isSelectionControlEnabled.value,
     tableCondition: tableCondition.value,
@@ -738,6 +757,20 @@ const isSelectionModeDisabled = computed(() => {
   return true;
 });
 
+const isElementOrderModeDisabled = computed(() => {
+  if (reportStore.tableCondition.length > 0 ) {
+    return false;
+  };
+  return true;
+});
+
+const elementOrder = ():string => {
+  if (reportStore.tableCondition.length > 0 && isElementOrderMode.value ) {
+    return reportStore.tableCondition[0].element;
+  };
+  return '';
+};  
+
 const selectionColumn = computed(() =>
   isSelectionEnabled.value
     ? [{
@@ -847,12 +880,13 @@ const makeSelectionReport = async () => {
   const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
 
   try {
+    console.log(elementOrder());
     await store.fetchSelectionData({
       stock_list: stock_list,
       indicators: indicators_list,
       key_material_list: key_material_list,
       query_type: 'selection',
-      element_order: ''
+      element_order: elementOrder()
     });
 
     if (store.selection_data && Array.isArray(store.selection_data)) {
@@ -913,7 +947,7 @@ const makeMaterialReport = async () => {
       indicator_conditions: indicator_conditions_list,
       detailed_mode: isDetailedMode.value ? "detailed" : "summary",
       only_non_zero_mode: isOnlyNonZeroMode.value,
-      element_order: ''
+      element_order: elementOrder()
     });
 
     if (store.materials_data && Array.isArray(store.materials_data)) {
