@@ -65,6 +65,7 @@ declare namespace frontend {
         indicators?: string;
         key_material_list?: string;
         query_type?: string;
+        element_order?: string;
     }
 
     /** Операции */

@@ -815,7 +815,8 @@ const makeSelectionIndReport = async () => {
       stock_list: stock_list,
       indicators: indicators_list,
       key_material_list: key_material_list,
-      query_type: 'selection_indicators'
+      query_type: 'selection_indicators',
+      element_order: ''
     });
 
     if (store.selection_ind_data && Array.isArray(store.selection_ind_data)) {
@@ -850,7 +851,8 @@ const makeSelectionReport = async () => {
       stock_list: stock_list,
       indicators: indicators_list,
       key_material_list: key_material_list,
-      query_type: 'selection'
+      query_type: 'selection',
+      element_order: ''
     });
 
     if (store.selection_data && Array.isArray(store.selection_data)) {

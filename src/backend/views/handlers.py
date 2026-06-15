@@ -138,6 +138,7 @@ async def get_selection_data(request: Request):
     indicators = request.query.get("indicators")
     key_material_list = request.query.get("key_material_list")
     query_type = request.query.get("query_type")
+    element_order = request.query.get("element_order")
 
     selection_data = []
     async with request.app["db"].acquire() as conn:
@@ -147,6 +148,7 @@ async def get_selection_data(request: Request):
             indicators=indicators,
             key_material_list=key_material_list,
             query_type=query_type
+            element_order=element_order
         )
 
     return await jsonify(selection_data, request)
