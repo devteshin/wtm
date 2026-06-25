@@ -76,12 +76,12 @@ const routes = computed(() => {
     ];
     if (route.params.stockID) {
         menuRoutes.push({
-            label: "Список задач",
+            label: "Задачи",
             path: `/stock/${route.params.stockID as string}`,
             icon: "MessageBox"
         });
         menuRoutes.push({
-            label: "Список операций",
+            label: "Операции",
             path: `/stock/${route.params.stockID as string}/operations`,
             icon: "MessageBox"
         });

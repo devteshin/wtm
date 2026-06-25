@@ -216,7 +216,7 @@ function addMaterial() {
                 <el-button type="danger" plain @click="deleteDoc()">Удалить</el-button>
               </div>
               <div class="button-row">
-                <el-button type="success" plain @click="addMaterial()">Добавить материал</el-button>
+                <el-button type="success" plain @click="addMaterial()">Добавить продукт</el-button>
               </div>
             </el-main>
           </el-container>

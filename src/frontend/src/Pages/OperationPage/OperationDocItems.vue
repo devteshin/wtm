@@ -198,7 +198,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
       <el-container>
         <el-header height="10%" >
           <div class="form-row">
-            Материал:
+            Продукт:
             <el-input disabled
               v-model="material" 
               style="max-width: 345px"
