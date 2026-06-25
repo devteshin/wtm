@@ -173,93 +173,96 @@ function addMaterial() {
 </script>
 
 <template v-if="store.isAuth">
-    <el-row :gutter="0">
-      <el-col 
-        :span="8"
-        :xs="{ span: 24 }"
-        :sm="{ span: 12 }"
-        :md="{ span: 8 }"      
-      ><div class="grid-content ep-bg-purple" />
-
-        <div class="common-layout">
-          <el-container>
-            <el-header height="20%">
-              <div class="form-row-doc">
-                Документ:
-                <el-input clearable
-                  v-model="doc_number"
-                  style="max-width: 300px"
-                  placeholder="Номер документа"
-                >
-                </el-input>
-                <el-input
-                  type="date"
-                  v-model="doc_date"
-                  style="max-width: 150px"
-                >
-                </el-input>
-              </div>  
-              <div class="form-row-doc">
-                Операция:
-                <el-input disabled
-                  v-model="doc_operation"
-                  style="max-width: 300px"
-                  placeholder="Операция"
-                >
-                </el-input>
-              </div>  
-            </el-header>
-            <el-main>
-              <div class="button-row" style="margin-bottom: 20px">
-                <el-button type="success" plain @click="saveDoc()">Сохранить</el-button>
-                <el-button type="success" plain @click="closeDoc()">Закрыть</el-button>
-                <el-button type="danger" plain @click="deleteDoc()">Удалить</el-button>
-              </div>
-              <div class="button-row">
-                <el-button type="success" plain @click="addMaterial()">Добавить продукт</el-button>
-              </div>
-            </el-main>
-          </el-container>
+  <div class="main-container">
+    <!-- Левый блок: форма -->
+    <div class="left-block">
+      <div class="form-wrapper">
+        <div class="form-row-doc">
+          Документ:
+          <el-input
+            clearable
+            v-model="doc_number"
+            style="max-width: 300px"
+            placeholder="Номер документа"
+          />
+          <el-input
+            type="date"
+            v-model="doc_date"
+            style="max-width: 150px"
+          />
         </div>
-      </el-col>
-      <el-col 
-        :span="16"
-        :xs="{ span: 24 }"
-        :sm="{ span: 12 }"
-        :md="{ span: 16 }"
-        class="table-container"
-      ><div class="grid-content ep-bg-purple" />
-        <div v-for="material in doc_material_list" :key="material" >
-          <OperationDocItems :material="material" :operation="doc_operation" :operation_material="doc_operation_material"
-          v-model:material_list="doc_material_list" 
-          v-model:items="doc_items" 
-          :table-width="'100%'"></OperationDocItems>
+        <div class="form-row-doc">
+          Операция:
+          <el-input
+            disabled
+            v-model="doc_operation"
+            style="max-width: 300px"
+            placeholder="Операция"
+          />
         </div>
-      </el-col>
 
-    </el-row>
+        <div class="button-row" style="margin-bottom: 20px">
+          <el-button type="success" plain @click="saveDoc()">Сохранить</el-button>
+          <el-button type="success" plain @click="closeDoc()">Закрыть</el-button>
+          <el-button type="danger" plain @click="deleteDoc()">Удалить</el-button>
+          <el-button type="success" plain @click="addMaterial()">Добавить продукт</el-button>
+        </div>
 
+      </div>
+    </div>
 
+    <!-- Правый блок: список материалов -->
+    <div class="right-block">
+      <div
+        v-for="material in doc_material_list"
+        :key="material"
+        class="material-item"
+      >
+        <OperationDocItems
+          :material="material"
+          :operation="doc_operation"
+          :operation_material="doc_operation_material"
+          v-model:material_list="doc_material_list"
+          v-model:items="doc_items"
+          :table-width="'100%'"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.main-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.left-block {
+  flex: 1;
+  min-width: 0;
+  padding-right: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-block {
+  flex: 2;
+  min-width: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+}
+
 .form-row-doc {
   margin-bottom: 10px;
-}
-
-.el-row {
-  margin-bottom: 20px;
-}
-.el-row:last-child {
-  margin-bottom: 0;
-}
-.el-col {
-  border-radius: 4px;
-}
-
-.grid-content {
-  border-radius: 4px;
-  min-height: 36px;
 }
 
 .button-row {
@@ -269,19 +272,16 @@ function addMaterial() {
   align-items: center;
 }
 
-.table-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 0 8px;
-  box-sizing: border-box;
-}
+/* Адаптив: на мобильных — блоки друг под другом */
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+  }
 
-.table-container .el-table {
-  flex: 1;
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
+  .left-block,
+  .right-block {
+    width: 100%;
+    padding: 0;
+  }
 }
-
 </style>
