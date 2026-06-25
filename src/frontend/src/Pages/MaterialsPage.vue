@@ -839,6 +839,10 @@ const makeSelectionIndReport = async () => {
     return;
   };
 
+  if (reportStore.tableCondition.length == 0) {
+    return;
+  };
+
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
   const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
   const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
