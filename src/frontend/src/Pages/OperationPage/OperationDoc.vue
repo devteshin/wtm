@@ -174,40 +174,50 @@ function addMaterial() {
 
 <template v-if="store.isAuth">
   <div class="main-container">
-    <!-- Левый блок: форма -->
+    <!-- Левый блок -->
     <div class="left-block">
-      <div class="form-wrapper">
-        <div class="form-row-doc">
-          Документ:
-          <el-input
-            clearable
-            v-model="doc_number"
-            style="max-width: 300px"
-            placeholder="Номер документа"
-          />
-          <el-input
-            type="date"
-            v-model="doc_date"
-            style="max-width: 150px"
-          />
-        </div>
-        <div class="form-row-doc">
-          Операция:
-          <el-input
-            disabled
-            v-model="doc_operation"
-            style="max-width: 300px"
-            placeholder="Операция"
-          />
+      <div class="left-vertical-splitter">
+        <!-- Верхняя часть: текущая форма -->
+        <div class="top-form-section">
+          <div class="form-wrapper">
+            <div class="form-row-doc">
+              Документ:
+              <el-input
+                clearable
+                v-model="doc_number"
+                style="max-width: 300px"
+                placeholder="Номер документа"
+              />
+              <el-input
+                type="date"
+                v-model="doc_date"
+                style="max-width: 150px"
+              />
+            </div>
+            <div class="form-row-doc">
+              Операция:
+              <el-input
+                disabled
+                v-model="doc_operation"
+                style="max-width: 300px"
+                placeholder="Операция"
+              />
+            </div>
+
+            <div class="button-row" style="margin-bottom: 20px">
+              <el-button type="success" plain @click="saveDoc()">Сохранить</el-button>
+              <el-button type="success" plain @click="closeDoc()">Закрыть</el-button>
+              <el-button type="danger" plain @click="deleteDoc()">Удалить</el-button>
+              <el-button type="success" plain @click="addMaterial()">Добавить продукт</el-button>
+            </div>
+
+          </div>
         </div>
 
-        <div class="button-row" style="margin-bottom: 20px">
-          <el-button type="success" plain @click="saveDoc()">Сохранить</el-button>
-          <el-button type="success" plain @click="closeDoc()">Закрыть</el-button>
-          <el-button type="danger" plain @click="deleteDoc()">Удалить</el-button>
-          <el-button type="success" plain @click="addMaterial()">Добавить продукт</el-button>
+        <!-- Нижняя часть:  -->
+        <div class="bottom-component-section">
+          <MyNewComponent />
         </div>
-
       </div>
     </div>
 
@@ -236,6 +246,7 @@ function addMaterial() {
   display: flex;
   height: 100%;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .left-block {
@@ -254,11 +265,37 @@ function addMaterial() {
   flex-direction: column;
 }
 
+.left-vertical-splitter {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* Верхняя секция — форма */
+.top-form-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid #e4e7ed; /* визуальное разделение */
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
 .form-wrapper {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow-y: auto;
+}
+
+/* Нижняя секция — новый компонент */
+.bottom-component-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-row-doc {
@@ -282,6 +319,7 @@ function addMaterial() {
   .right-block {
     width: 100%;
     padding: 0;
+    margin-bottom: 16px;
   }
 }
 </style>
