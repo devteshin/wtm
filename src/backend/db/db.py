@@ -670,10 +670,10 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     q_insert_doc_tmp = """
         insert into arrival_doc_tmp 
         (
-        doc_number, doc_date, supplier, operation, car_number, car_brand, car_driver, stock, stock_from
+        doc_number, doc_date, operation, car_number, car_brand, car_driver, stock, stock_from
         )
         select 
-        %(doc_number)s, %(doc_date)s, supplier, operation, car_number, car_brand, car_driver, stock, stock_from 
+        %(doc_number)s, %(doc_date)s, operation, car_number, car_brand, car_driver, stock, stock_from 
         from arrival_doc where id = %(doc_id)s
     """
 
