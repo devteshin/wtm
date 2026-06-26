@@ -198,9 +198,16 @@ declare namespace frontend {
         tare_type_id: number
     }
 
-    export type IPrevMaterial = {
+    export type IBaseRawMaterial = {
         material: string
         material_id: number
+    }
+
+    export type IRawMaterial = {
+        material_id: number
+        material: string
+        tare_id: number
+        net_weight
     }
 
     export type IArrival = {
@@ -208,7 +215,8 @@ declare namespace frontend {
         doc_date: string
         operation: string
         operation_material: string
-        prev_material: Array<IPrevMaterial>
+        raw_materials: Array<IRawMaterial>
+        base_raw_materials: Array<IBaseRawMaterial>
         items: Array<IArrivalItems>
         tare_options: Array<ITareOptions>
     }

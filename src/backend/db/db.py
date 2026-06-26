@@ -566,9 +566,13 @@ WHERE
 
     arrival["tare_options"] = await select_tare_options(conn)
 
-    print(arrival["operation"])
-    arrival["prev_material"] = await select_prev_material(conn, arrival["operation"])
-    print(arrival["prev_material"])
+    # получаем материалы - продукты предыдущих этапов из схемы производства
+    arrival["base_raw_materials"] = await select_base_raw_material(conn, arrival["operation"])
+
+    # получаем материалы (позиции документа) списанные на операцию текущего документа прихода из производства по ссылке из этого документа
+    # на документ production_doc 
+    arrival["raw_materials"] = await select_raw_materials_to_arrival_doc_operation(conn, doc_id)
+
     return arrival
 
 async def select_tare_options(conn: Connection):
@@ -609,7 +613,7 @@ WHERE
         arrival_meta = await cur.fetchone()
     return arrival_meta
 
-async def select_prev_material(conn: Connection, operation: str):
+async def select_base_raw_material(conn: Connection, operation: str):
     q = """
         SELECT DISTINCT sd.material AS material_id, m.material AS material FROM stock_data AS sd
         INNER JOIN arrival_doc AS doc ON doc.id = sd.doc_id 
@@ -624,12 +628,27 @@ async def select_prev_material(conn: Connection, operation: str):
         LEFT JOIN material AS m ON m.id = sd.material
         WHERE sd.doc_type = 0
     """
-    prev_material = []
+    base_raw_material = []
     async with conn.cursor() as cur:
         await cur.execute(q, {"operation": operation})
-        prev_material = await cur.fetchall()
+        base_raw_material = await cur.fetchall()
 
-    return prev_material
+    return base_raw_material
+
+async def select_raw_materials_to_arrival_doc_operation(conn: Connection, arrival_doc_id: int):
+    # материалы списанные на операцию документа прихода из производства
+    q = """
+        SELECT p.material AS material_id, m.material, tare_id, net_weight FROM production AS p
+        INNER JOIN production_doc AS doc ON p.doc_id = doc.id 
+            AND doc.id = (SELECT pr_doc_id FROM arrival_doc WHERE id = %(arrival_doc_id)s)
+        LEFT JOIN material AS m ON m.id = p.material
+    """
+    raw_materials = []
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"arrival_doc_id": arrival_doc_id})
+        raw_materials = await cur.fetchall()
+
+    return raw_materials
 
 
 async def select_stocks(conn: Connection, user_id: int):
