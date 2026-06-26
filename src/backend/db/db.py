@@ -626,7 +626,7 @@ async def select_prev_material(conn: Connection, operation: str):
     """
     prev_material = []
     async with conn.cursor() as cur:
-        await cur.execute(q)
+        await cur.execute(q, {"operation": operation})
         prev_material = await cur.fetchall()
 
     return prev_material
