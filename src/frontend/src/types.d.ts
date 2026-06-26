@@ -198,11 +198,17 @@ declare namespace frontend {
         tare_type_id: number
     }
 
+    export type IPrevMaterial = {
+        material: string
+        material_id: number
+    }
+
     export type IArrival = {
         doc_number: string
         doc_date: string
         operation: string
         operation_material: string
+        prev_material: Array<IPrevMaterial>
         items: Array<IArrivalItems>
         tare_options: Array<ITareOptions>
     }

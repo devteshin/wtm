@@ -566,6 +566,9 @@ WHERE
 
     arrival["tare_options"] = await select_tare_options(conn)
 
+    print(arrival["operation"])
+    arrival["prev_material"] = await select_prev_material(conn, arrival["operation"])
+    print(arrival["prev_material"])
     return arrival
 
 async def select_tare_options(conn: Connection):
@@ -605,6 +608,28 @@ WHERE
         await cur.execute(q, {"doc_id": doc_id})
         arrival_meta = await cur.fetchone()
     return arrival_meta
+
+async def select_prev_material(conn: Connection, operation: str):
+    q = """
+        SELECT DISTINCT sd.material AS material_id, m.material AS material FROM stock_data AS sd
+        INNER JOIN arrival_doc AS doc ON doc.id = sd.doc_id 
+        AND doc.operation = (
+            SELECT operation FROM production_sequence_items AS psi
+            INNER JOIN
+            (
+                SELECT ps_id, stage - 1 AS stage FROM production_sequence_items AS psi
+                INNER JOIN operations AS o ON o.id = psi.operation AND o.name = '%(operation)s'
+            ) prev_psi ON prev_psi.ps_id = psi.ps_id AND prev_psi.stage = psi.stage
+        )
+        LEFT JOIN material AS m ON m.id = sd.material
+        WHERE sd.doc_type = 0
+    """
+    prev_material = []
+    async with conn.cursor() as cur:
+        await cur.execute(q)
+        prev_material = await cur.fetchall()
+
+    return prev_material
 
 
 async def select_stocks(conn: Connection, user_id: int):

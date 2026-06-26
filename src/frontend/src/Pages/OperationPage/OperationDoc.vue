@@ -22,6 +22,7 @@ const doc_operation = ref('');
 const doc_operation_material = ref('');
 const doc_material_list = ref(['']);
 const doc_items = ref([<frontend.IArrivalItems>{}]);
+const doc_prev_material = ref([<frontend.IPrevMaterial>{}]);
 let isNewDoc = false;  
 let doc_id = 0;
 let operation_id = 0;   
@@ -67,9 +68,12 @@ let doc_changed: boolean;
         doc_date.value = store.arrival.doc_date;
         doc_operation.value = store.arrival.operation;
         doc_operation_material.value = store.arrival.operation_material;
+        doc_prev_material.value = store.arrival.prev_material;
         doc_items.value = store.arrival.items;
         doc_material_list.value = doc_items.value.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})
     };
+
+    console.log(store.arrival);
 
     doc_changed = false
 

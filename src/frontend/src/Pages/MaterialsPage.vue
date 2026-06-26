@@ -606,7 +606,6 @@ onMounted(async () => {
       reportStore.selectionColumns = [...selectionColumns.value];
     }
 
-    
   } finally {
     store.loading = false;
   }
@@ -830,7 +829,7 @@ function configuringReportTables() {
     reportStore.basicColumns.push(...percent_items);
   }
   reportStore.selectionColumns.push(...percent_items);
-
+  console.log(reportStore.selectionColumns);
 };
 
 const makeSelectionIndReport = async () => {
