@@ -537,6 +537,7 @@ const detailedColumns = ref([
 const selectionColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80' },
   { prop: 'material', label: 'Материал', width: '300' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
   { prop: 'rest_net_weight', label: 'Нетто', width: '100' }
 ]);
 
@@ -878,6 +879,7 @@ const makeSelectionReport = async () => {
     return;
   };
   let total_rest_net_weight = 0;
+  let total_rest_tare_amount = 0;
 
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
   const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
@@ -897,11 +899,13 @@ const makeSelectionReport = async () => {
       reportStore.selectionTableData = store.selection_data;
       if (reportStore.selectionTableData.length > 1) {
         total_rest_net_weight = reportStore.selectionTableData.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        total_rest_tare_amount = reportStore.selectionTableData.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
         reportStore.setSelectionTableData([
           ...reportStore.selectionTableData,
           {
             stock_name: 'Итого',
             material: '',
+            rest_tare_weight: total_rest_tare_amount,
             rest_net_weight: total_rest_net_weight,
           }
         ]);

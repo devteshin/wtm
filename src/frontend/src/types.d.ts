@@ -42,6 +42,7 @@ declare namespace frontend {
     export type ISelectionData = {
         stock_name: string
         material: string
+        rest_tare_amount: number
         rest_net_weight: number
         [key: string]: number;
     }    
