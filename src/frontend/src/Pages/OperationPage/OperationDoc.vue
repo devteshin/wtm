@@ -5,6 +5,7 @@ import useApplicationStore from "@/store";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
+import { Delete } from '@element-plus/icons-vue';
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -27,8 +28,14 @@ const doc_raw_materials = ref([<frontend.IRawMaterial>{}]);
 let isNewDoc = false;  
 let doc_id = 0;
 let operation_id = 0;   
-
 let doc_changed: boolean;
+
+// Колонки таблицы сырья
+const RawMaterialsColumns = [
+    { prop: 'material', label: 'Материал', width: '200' },
+    { prop: 'tare_id', label: 'Номер', width: '100' },
+    { prop: 'net_weight', label: 'Нетто', width: '100' },
+] as const;
 
  onMounted(async () => {
 
@@ -74,8 +81,6 @@ let doc_changed: boolean;
         doc_items.value = store.arrival.items;
         doc_material_list.value = doc_items.value.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})
     };
-
-    console.log(store.arrival);
 
     doc_changed = false
 
@@ -175,6 +180,16 @@ function addMaterial() {
 
 };
 
+const handleDeleteRow = (row: frontend.IRawMaterial) => {
+    ElMessageBox.confirm(`Удалить строку: ${row.material} , номер: ${row.tare_id}?`, 'Подтверждение', {
+        confirmButtonText: 'Да',
+        cancelButtonText: 'Нет',
+        type: 'warning'
+    }).then(() => {
+        doc_raw_materials.value = doc_raw_materials.value.filter(r => r !== row);
+        // Если нужно удаление на бэкенд — запрос здесь
+    });
+};
 
 </script>
 
@@ -222,7 +237,40 @@ function addMaterial() {
 
         <!-- Нижняя часть:  -->
         <div class="bottom-component-section">
-          <MyNewComponent />
+            <div class="table-container">
+                <el-table
+                    :data="doc_raw_materials"
+                    style="width: 100%"
+                    border
+                >
+                    <el-table-column
+                        v-for="col in RawMaterialsColumns"
+                        :key="col.prop"
+                        :prop="col.prop"
+                        :label="col.label"
+                        :width="col.width"
+                    />
+
+                    <!-- Колонка с кнопкой удаления -->
+
+                    <el-table-column
+                      label=""
+                      width="50"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <el-button
+                          link
+                          type="danger"
+                          size="small"
+                          @click="handleDeleteRow(scope.row)"
+                        >
+                          <Delete style="width: 14px; height: 14px;" />
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                </el-table>
+            </div>
         </div>
       </div>
     </div>
@@ -249,83 +297,90 @@ function addMaterial() {
 
 <style scoped>
 .main-container {
-  display: flex;
-  height: 100%;
-  width: 100%;
-  box-sizing: border-box;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .left-block {
-  flex: 1;
-  min-width: 0;
-  padding-right: 16px;
-  display: flex;
-  flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
 }
 
 .right-block {
-  flex: 2;
-  min-width: 0;
-  padding-left: 16px;
-  display: flex;
-  flex-direction: column;
+    flex: 2;
+    min-width: 0;
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
 }
 
 .left-vertical-splitter {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
 }
 
 /* Верхняя секция — форма */
 .top-form-section {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  border-bottom: 1px solid #e4e7ed; /* визуальное разделение */
-  padding-bottom: 12px;
-  margin-bottom: 12px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid #e4e7ed;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
 }
 
 .form-wrapper {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
 }
 
-/* Нижняя секция — новый компонент */
+/* Нижняя секция — таблица */
 .bottom-component-section {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Обёртка таблицы: фиксированная высота и скролл */
+.table-container {
+    width: 100%;
+    height: 100%; /* занимает всё доступное место в bottom-component-section */
+    overflow-y: auto; /* вертикальный скролл при необходимости */
+    border: 1px solid #e4e7ed;
 }
 
 .form-row-doc {
-  margin-bottom: 10px;
+    margin-bottom: 10px;
 }
 
 .button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
 }
 
-/* Адаптив: на мобильных — блоки друг под другом */
 @media (max-width: 768px) {
-  .main-container {
-    flex-direction: column;
-  }
+    .main-container {
+        flex-direction: column;
+    }
 
-  .left-block,
-  .right-block {
-    width: 100%;
-    padding: 0;
-    margin-bottom: 16px;
-  }
+    .left-block,
+    .right-block {
+        width: 100%;
+        padding: 0;
+        margin-bottom: 16px;
+    }
 }
 </style>
