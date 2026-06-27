@@ -181,7 +181,7 @@ function addMaterial() {
 };
 
 const handleDeleteRow = (row: frontend.IRawMaterial) => {
-    ElMessageBox.confirm(`Удалить строку: ${row.material} , номер: ${row.tare_id}?`, 'Подтверждение', {
+    ElMessageBox.confirm(`Удалить материал: ${row.material} , номер: ${row.tare_id}?`, 'Подтверждение', {
         confirmButtonText: 'Да',
         cancelButtonText: 'Нет',
         type: 'warning'
@@ -194,170 +194,140 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
 </script>
 
 <template v-if="store.isAuth">
-  <div class="main-container">
-    <!-- Левый блок -->
-    <div class="left-block">
-      <div class="left-vertical-splitter">
-        <!-- Верхняя часть: текущая форма -->
-        <div class="top-form-section">
-          <div class="form-wrapper">
-            <div class="form-row-doc">
-              Документ:
-              <el-input
-                clearable
-                v-model="doc_number"
-                style="max-width: 300px"
-                placeholder="Номер документа"
-              />
-              <el-input
-                type="date"
-                v-model="doc_date"
-                style="max-width: 150px"
-              />
-            </div>
-            <div class="form-row-doc">
-              Операция:
-              <el-input
-                disabled
-                v-model="doc_operation"
-                style="max-width: 300px"
-                placeholder="Операция"
-              />
-            </div>
+    <el-container class="page-container">
+        <!-- Левый блок -->
+        <el-aside width="600px" class="sidebar">
+            <div class="left-content">
+                <!-- Форма и кнопки (не растягиваются на весь блок) -->
+                <div class="form-area">
+                    <div class="form-row-doc">
+                        Документ:
+                        <el-input
+                            clearable
+                            v-model="doc_number"
+                            style="max-width: 300px"
+                            placeholder="Номер документа"
+                        />
+                        <el-input
+                            type="date"
+                            v-model="doc_date"
+                            style="max-width: 150px"
+                        />
+                    </div>
+                    <div class="form-row-doc">
+                        Операция:
+                        <el-input
+                            disabled
+                            v-model="doc_operation"
+                            style="max-width: 300px"
+                            placeholder="Операция"
+                        />
+                    </div>
 
-            <div class="button-row" style="margin-bottom: 20px">
-              <el-button type="success" plain @click="saveDoc()">Сохранить</el-button>
-              <el-button type="success" plain @click="closeDoc()">Закрыть</el-button>
-              <el-button type="danger" plain @click="deleteDoc()">Удалить</el-button>
-              <el-button type="success" plain @click="addMaterial()">Добавить продукт</el-button>
-            </div>
+                    <div class="button-row">
+                        <el-button type="success" plain @click="saveDoc">Сохранить</el-button>
+                        <el-button type="success" plain @click="closeDoc">Закрыть</el-button>
+                        <el-button type="danger" plain @click="deleteDoc">Удалить</el-button>
+                        <el-button type="success" plain @click="addMaterial">Добавить продукт</el-button>
+                    </div>
+                </div>
 
-          </div>
-        </div>
+                <!-- Отступ после кнопок -->
+                <div class="buttons-spacer"></div>
 
-        <!-- Нижняя часть:  -->
-        <div class="bottom-component-section">
-            <div class="table-container">
-                <el-table
-                    :data="doc_raw_materials"
-                    style="width: 100%"
-                    border
-                >
-                    <el-table-column
-                        v-for="col in RawMaterialsColumns"
-                        :key="col.prop"
-                        :prop="col.prop"
-                        :label="col.label"
-                        :width="col.width"
-                    />
+                <!-- Разделитель -->
+                <div class="divider"></div>
 
-                    <!-- Колонка с кнопкой удаления -->
+                <!-- Текст заголовка таблицы -->
+                <div class="table-title-wrapper">
+                    <el-text class="table-title">Материалы списанные на операцию</el-text>
+                </div>
 
-                    <el-table-column
-                      label=""
-                      width="50"
-                      fixed="right"
-                    >
-                      <template #default="scope">
-                        <el-button
-                          link
-                          type="danger"
-                          size="small"
-                          @click="handleDeleteRow(scope.row)"
+                <!-- Таблица (занимает всё оставшееся место) -->
+                <div class="table-area">
+                    <div class="table-wrapper">
+                        <el-table
+                            :data="doc_raw_materials"
+                            style="width: 100%"
+                            border
                         >
-                          <Delete style="width: 14px; height: 14px;" />
-                        </el-button>
-                      </template>
-                    </el-table-column>
-                </el-table>
-            </div>
-        </div>
-      </div>
-    </div>
+                            <el-table-column
+                                v-for="col in RawMaterialsColumns"
+                                :key="col.prop"
+                                :prop="col.prop"
+                                :label="col.label"
+                                :width="col.width"
+                            />
 
-    <!-- Правый блок: список материалов -->
-    <div class="right-block">
-      <div
-        v-for="material in doc_material_list"
-        :key="material"
-        class="material-item"
-      >
-        <OperationDocItems
-          :material="material"
-          :operation="doc_operation"
-          :operation_material="doc_operation_material"
-          v-model:material_list="doc_material_list"
-          v-model:items="doc_items"
-          :table-width="'100%'"
-        />
-      </div>
-    </div>
-  </div>
+                            <el-table-column label="" width="50" fixed="right">
+                                <template #default="scope">
+                                    <el-button
+                                        link
+                                        type="danger"
+                                        size="small"
+                                        @click="handleDeleteRow(scope.row)"
+                                    >
+                                        <Delete style="width: 14px; height: 14px;" />
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </div>
+            </div>
+        </el-aside>
+
+        <!-- Правый блок -->
+        <el-main class="right-block">
+            <div class="table-wrapper right-wrapper">
+                <div v-for="material in doc_material_list" :key="material" class="material-item">
+                    <OperationDocItems
+                        :material="material"
+                        :operation="doc_operation"
+                        :operation_material="doc_operation_material"
+                        v-model:material_list="doc_material_list"
+                        v-model:items="doc_items"
+                        :table-width="'100%'"
+                    />
+                </div>
+            </div>
+        </el-main>
+    </el-container>
 </template>
 
 <style scoped>
-.main-container {
+.page-container {
+    height: calc(100vh - 120px);
     display: flex;
-    height: 100%;
-    width: 100%;
     box-sizing: border-box;
 }
 
-.left-block {
-    flex: 1;
-    min-width: 0;
-    padding-right: 16px;
+.sidebar {
+    background-color: #f5f7fa;
+    padding: 20px;
+    border-right: 1px solid #e6e9ef;
+    flex-shrink: 0;
+    width: 600px;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
-.right-block {
-    flex: 2;
-    min-width: 0;
-    padding-left: 16px;
-    display: flex;
-    flex-direction: column;
-}
-
-.left-vertical-splitter {
+.left-content {
     display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
+    /* Важно: здесь flex-элементы будут идти по порядку, без лишнего растяжения */
 }
 
-/* Верхняя секция — форма */
-.top-form-section {
-    flex: 1;
+/* Форма и кнопки: НЕ растягиваются на всё место */
+.form-area {
+    /* flex: 1 убран — теперь блок занимает только свой контент */
     min-height: 0;
     display: flex;
     flex-direction: column;
-    border-bottom: 1px solid #e4e7ed;
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-}
-
-.form-wrapper {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow-y: auto;
-}
-
-/* Нижняя секция — таблица */
-.bottom-component-section {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Обёртка таблицы: фиксированная высота и скролл */
-.table-container {
-    width: 100%;
-    height: 100%; /* занимает всё доступное место в bottom-component-section */
-    overflow-y: auto; /* вертикальный скролл при необходимости */
-    border: 1px solid #e4e7ed;
 }
 
 .form-row-doc {
@@ -369,18 +339,85 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
     flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
+    margin-top: 16px;
+}
+
+/* Отступ между кнопками и таблицей — ровно 12px */
+.buttons-spacer {
+    height: 12px;
+    flex-shrink: 0;
+}
+
+/* Разделитель */
+.divider {
+    height: 1px;
+    background-color: #e4e7ed;
+    margin: 0; /* margin лучше убрать, чтобы он не добавлял лишнего */
+    flex-shrink: 0;
+}
+
+.table-title-wrapper {
+    width: 100%;
+    margin-top: 12px;
+    flex-shrink: 0; /* чтобы не сжимался */
+}
+
+/* Сам текст — выравнивание по левому краю */
+.table-title {
+    display: inline-block;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Таблица: занимает всё оставшееся место */
+.table-area {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    height: 100%;
+    margin-top: 16px;
+}
+
+.right-block {
+    padding: 0 20px 20px;
+    box-sizing: border-box;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Универсальная обёртка для скролла */
+.table-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
+    border-radius: 4px;
+}
+
+.right-wrapper {
+    padding: 16px 0;
 }
 
 @media (max-width: 768px) {
-    .main-container {
+    .page-container {
         flex-direction: column;
     }
-
-    .left-block,
-    .right-block {
+    
+    .sidebar {
         width: 100%;
-        padding: 0;
-        margin-bottom: 16px;
+        height: auto;
+        min-height: 300px;
+        border-right: none;
+        border-bottom: 1px solid #e6e9ef;
+    }
+
+    .right-block {
+        height: calc(100vh - 120px - 300px);
+        min-height: 200px;
     }
 }
 </style>
