@@ -648,8 +648,15 @@ async def select_raw_materials_to_arrival_doc_operation(conn: Connection, arriva
         await cur.execute(q, {"arrival_doc_id": arrival_doc_id})
         raw_materials = await cur.fetchall()
 
-    return raw_materials
-
+    return [
+            {
+                "material_id": int(item["material_id"]),
+                "material": item["material"],
+                "tare_id": item["tare_id"],
+                "net_weight": item["net_weight"],
+            }
+            for item in raw_materials
+        ]
 
 async def select_stocks(conn: Connection, user_id: int):
     q = """
