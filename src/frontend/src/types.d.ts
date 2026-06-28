@@ -207,7 +207,7 @@ declare namespace frontend {
         material_id: number
         material: string
         tare_id: number
-        net_weight
+        net_weight: number
     }
 
     export type IArrival = {

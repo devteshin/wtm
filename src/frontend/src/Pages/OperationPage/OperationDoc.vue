@@ -30,6 +30,14 @@ let doc_id = 0;
 let operation_id = 0;   
 let doc_changed: boolean;
 
+// Переменные для подбора сырья
+const selectedBaseMaterial = ref<frontend.IBaseRawMaterial | undefined>(undefined);
+const rangeMode = ref<'single' | 'range'>('single');
+const singleTareId = ref<number | null>(null);
+const rangeFrom = ref<number | null>(null);
+const rangeTo = ref<number | null>(null);
+const isAddingInProgress = ref(false);
+
 // Колонки таблицы сырья
 const RawMaterialsColumns = [
     { prop: 'material', label: 'Материал', width: '200' },
@@ -82,6 +90,8 @@ const RawMaterialsColumns = [
         doc_material_list.value = doc_items.value.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})
     };
 
+    console.log(doc_raw_materials.value);
+    
     doc_changed = false
 
      watch(doc_number, () => {doc_changed = true});
@@ -180,6 +190,67 @@ function addMaterial() {
 
 };
 
+
+const addMaterialBySelection = async () => {
+  if (!selectedBaseMaterial.value) {
+    ElMessage.warning('Сначала выберите материал из списка');
+    return;
+  }
+
+  isAddingInProgress.value = true;
+
+  try {
+    const itemsToAdd: frontend.IRawMaterial[] = [];
+    const tareIds: number[] = [];
+
+    if (rangeMode.value === 'single') {
+      if (singleTareId.value !== null && singleTareId.value > 0) {
+        tareIds.push(singleTareId.value);
+      }
+    } else {
+      const from = rangeFrom.value ?? 0;
+      const to = rangeTo.value ?? 0;
+      if (from > 0 && to > 0 && from <= to) {
+        for (let i = from; i <= to; i++) {
+          tareIds.push(i);
+        }
+      } else {
+        ElMessage.warning('Укажите корректный диапазон номеров');
+        isAddingInProgress.value = false;
+        return;
+      }
+    }
+
+    if (tareIds.length === 0) {
+      ElMessage.warning('Не указаны номера для добавления');
+      isAddingInProgress.value = false;
+      return;
+    }
+
+    for (const tareId of tareIds) {
+        if (doc_raw_materials.value.some(r => r.tare_id === tareId && r.material_id == selectedBaseMaterial.value?.material_id)) {
+            ElMessage.warning(`Номер ${tareId} материала ${selectedBaseMaterial.value.material} уже есть в таблице`)
+
+        } else {
+            itemsToAdd.push({
+                material_id: selectedBaseMaterial.value.material_id,
+                material: selectedBaseMaterial.value.material,
+                tare_id: tareId,
+                net_weight: 0,
+            });
+        };    
+    }
+
+    doc_raw_materials.value = [...doc_raw_materials.value, ...itemsToAdd];
+    ElMessage.success(`Добавлено ${itemsToAdd.length} позиций`);
+  } catch (err) {
+    console.error(err);
+    ElMessage.error('Ошибка при добавлении материалов');
+  } finally {
+    isAddingInProgress.value = false;
+  }
+};
+
 const handleDeleteRow = (row: frontend.IRawMaterial) => {
     ElMessageBox.confirm(`Удалить материал: ${row.material} , номер: ${row.tare_id}?`, 'Подтверждение', {
         confirmButtonText: 'Да',
@@ -243,6 +314,72 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                     <el-text class="table-title">Материалы списанные на операцию</el-text>
                 </div>
 
+                <div class="raw-material-picker-block">
+                    <div class="picker-row">
+                        <!-- Селект материала -->
+                        <el-select
+                        v-model="selectedBaseMaterial"
+                        placeholder="Выберите базовый материал"
+                        class="material-select"
+                        clearable
+                        >
+                        <el-option
+                            v-for="item in doc_base_raw_materials"
+                            :key="item.material"
+                            :label="item.material"
+                            :value="item"
+                        />
+                        </el-select>
+
+                        <!-- Блок выбора номера/диапазона -->
+                        <div class="range-input-group">
+                        <el-form class="range-form" label-width="0px">
+                            <!-- Вариант 1: переключатель режим ввода -->
+                            <el-radio-group v-model="rangeMode" class="mode-switcher">
+                            <el-radio label="single">Один номер</el-radio>
+                            <el-radio label="range">Диапазон</el-radio>
+                            </el-radio-group>
+
+                            <div v-if="rangeMode === 'single'" class="single-mode-inputs">
+                            <el-input-number
+                                v-model="singleTareId"
+                                placeholder="Номер"
+                                size="small"
+                                :min="1"
+                            />
+                            </div>
+
+                            <div v-else class="range-mode-inputs">
+                            <el-form-item label="От" label-width="30px" style="margin-bottom: 4px;">
+                                <el-input-number
+                                v-model="rangeFrom"
+                                size="small"
+                                :min="1"
+                                />
+                            </el-form-item>
+                            <span class="range-separator">–</span>
+                            <el-form-item label="До" label-width="30px" style="margin-bottom: 4px;">
+                                <el-input-number
+                                v-model="rangeTo"
+                                size="small"
+                                :min="1"
+                                />
+                            </el-form-item>
+                            </div>
+                        </el-form>
+                        </div>
+
+                        <!-- Кнопка добавления -->
+                        <el-button
+                        type="primary"
+                        @click="addMaterialBySelection"
+                        :disabled="!selectedBaseMaterial || isAddingInProgress"
+                        >
+                        Добавить материал
+                        </el-button>
+                    </div>
+                </div>
+
                 <!-- Таблица (занимает всё оставшееся место) -->
                 <div class="table-area">
                     <div class="table-wrapper">
@@ -297,127 +434,178 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
 
 <style scoped>
 .page-container {
-    height: calc(100vh - 120px);
-    display: flex;
-    box-sizing: border-box;
+  height: calc(100vh - 120px);
+  display: flex;
+  box-sizing: border-box;
 }
 
 .sidebar {
-    background-color: #f5f7fa;
-    padding: 20px;
-    border-right: 1px solid #e6e9ef;
-    flex-shrink: 0;
-    width: 600px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  background-color: #f5f7fa;
+  padding: 20px;
+  border-right: 1px solid #e6e9ef;
+  flex-shrink: 0;
+  width: 600px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .left-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-    /* Важно: здесь flex-элементы будут идти по порядку, без лишнего растяжения */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
 }
 
-/* Форма и кнопки: НЕ растягиваются на всё место */
 .form-area {
-    /* flex: 1 убран — теперь блок занимает только свой контент */
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-row-doc {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .button-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-    margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 16px;
 }
 
-/* Отступ между кнопками и таблицей — ровно 12px */
 .buttons-spacer {
-    height: 12px;
-    flex-shrink: 0;
+  height: 12px;
+  flex-shrink: 0;
 }
 
-/* Разделитель */
 .divider {
-    height: 1px;
-    background-color: #e4e7ed;
-    margin: 0; /* margin лучше убрать, чтобы он не добавлял лишнего */
-    flex-shrink: 0;
+  height: 1px;
+  background-color: #e4e7ed;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .table-title-wrapper {
-    width: 100%;
-    margin-top: 12px;
-    flex-shrink: 0; /* чтобы не сжимался */
+  width: 100%;
+  margin-top: 12px;
+  flex-shrink: 0;
 }
 
-/* Сам текст — выравнивание по левому краю */
 .table-title {
-    display: inline-block;
-    font-weight: 500;
-    color: #333;
+  display: inline-block;
+  font-weight: 500;
+  color: #333;
 }
 
-/* Таблица: занимает всё оставшееся место */
+/* Блок подбора материалов */
+.raw-material-picker-block {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.picker-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.material-select {
+  min-width: 220px;
+}
+
+.range-input-group {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mode-switcher {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.single-mode-inputs,
+.range-mode-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-separator {
+  color: #999;
+  line-height: 1;
+  margin: 4px 0;
+}
+
+/* Таблица */
 .table-area {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-    height: 100%;
-    margin-top: 16px;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  height: 100%;
+  margin-top: 16px;
 }
 
 .right-block {
-    padding: 0 20px 20px;
-    box-sizing: border-box;
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+  padding: 0 20px 20px;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* Универсальная обёртка для скролла */
 .table-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: auto;
-    border-radius: 4px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  border-radius: 4px;
 }
 
 .right-wrapper {
-    padding: 16px 0;
+  padding: 16px 0;
 }
 
 @media (max-width: 768px) {
-    .page-container {
-        flex-direction: column;
-    }
-    
-    .sidebar {
-        width: 100%;
-        height: auto;
-        min-height: 300px;
-        border-right: none;
-        border-bottom: 1px solid #e6e9ef;
-    }
+  .page-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    min-height: 300px;
+    border-right: none;
+    border-bottom: 1px solid #e6e9ef;
+  }
 
-    .right-block {
-        height: calc(100vh - 120px - 300px);
-        min-height: 200px;
-    }
+  .right-block {
+    height: calc(100vh - 120px - 300px);
+    min-height: 200px;
+  }
+
+  .picker-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .material-select,
+  .range-input-group,
+  .el-button {
+    width: 100%;
+  }
 }
 </style>
