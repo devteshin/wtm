@@ -260,6 +260,17 @@
               </div>
             </el-main>
             <el-aside width="30%" class="footer-block footer-block-3">
+              <div class="switch-container">
+                <el-switch 
+                  v-model="isSelectionDetailedMode"
+                  active-color="#13ce66"
+                  inactive-color="#ff4949"
+                  @change="handleSwitchSelectionDetailedMode"
+                />
+                <span class="switch-description">
+                  {{ isSelectionDetailedMode ? 'развернуть подбор' : 'группировать подбор' }}
+                </span>
+              </div>
             </el-aside>
           </el-container>
       </el-footer>
@@ -321,6 +332,12 @@ const isDetailedMode = computed({
   get: () => reportStore.isDetailedMode,
   set: (value) => reportStore.setFilters({ isDetailedMode: value })
 });
+
+const isSelectionDetailedMode = computed({
+  get: () => reportStore.isSelectionDetailedMode,
+  set: (value) => reportStore.setFilters({ isSelectionDetailedMode: value })
+});
+
 const isOnlyNonZeroMode = computed({
   get: () => reportStore.isOnlyNonZeroMode,
   set: (value) => reportStore.setFilters({ isOnlyNonZeroMode: value })
@@ -494,6 +511,7 @@ watch(
     selectedMaterialGroup: selectedMaterialGroup.value,
     selectedMaterial: selectedMaterial.value,
     isDetailedMode: isDetailedMode.value,
+    isSelectionDetailedMode: isSelectionDetailedMode.value,
     isOnlyNonZeroMode: isOnlyNonZeroMode.value,
     isElementOrderMode: isElementOrderMode.value,
     isSelectionEnabled: isSelectionEnabled.value,
@@ -884,15 +902,18 @@ const makeSelectionReport = async () => {
   const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
   const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
 
+  console.log(isSelectionDetailedMode.value, indicators_list, key_material_list, stock_list);
+
   try {
-    console.log(elementOrder());
     await store.fetchSelectionData({
       stock_list: stock_list,
       indicators: indicators_list,
       key_material_list: key_material_list,
-      query_type: 'selection',
+      query_type: isSelectionDetailedMode.value ? 'detailed' : 'selection',
       element_order: elementOrder()
     });
+
+    console.log(store.selection_data);
 
     if (store.selection_data && Array.isArray(store.selection_data)) {
       reportStore.selectionTableData = store.selection_data;
@@ -1022,6 +1043,16 @@ const handleSwitchDetailedMode = () => {
   reportStore.tableData = [];
   
 };
+
+const handleSwitchSelectionDetailedMode = async() => {
+  try {
+    await makeSelectionReport();
+  } catch (error) {
+    console.error('Ошибка при формировании подбора:', error);
+  }
+  
+};
+
 
 const deleteRow = (index: number) => {
   tableCondition.value.splice(index, 1)

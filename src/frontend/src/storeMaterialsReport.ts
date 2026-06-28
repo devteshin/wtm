@@ -12,6 +12,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const selectedMaterialGroup = ref<string[]>([]);
   const selectedMaterial = ref<number[]>([]);
   const isDetailedMode = ref(false);
+  const isSelectionDetailedMode = ref(false);
   const isOnlyNonZeroMode = ref(false);
   const isElementOrderMode = ref(false);
   const isSelectionEnabled = ref(false);
@@ -35,6 +36,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     selectedMaterialGroup: string[];
     selectedMaterial: number[];
     isDetailedMode: boolean;
+    isSelectionDetailedMode: boolean;
     isOnlyNonZeroMode: boolean;
     isElementOrderMode: boolean;
     isSelectionEnabled: boolean;
@@ -52,6 +54,9 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     }
     if (filters.isDetailedMode !== undefined) {
       isDetailedMode.value = filters.isDetailedMode;
+    }
+    if (filters.isSelectionDetailedMode !== undefined) {
+      isSelectionDetailedMode.value = filters.isSelectionDetailedMode;
     }
     if (filters.isOnlyNonZeroMode !== undefined) {
       isOnlyNonZeroMode.value = filters.isOnlyNonZeroMode;
@@ -75,6 +80,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     selectedMaterialGroup.value = [];
     selectedMaterial.value = [];
     isDetailedMode.value = false;
+    isSelectionDetailedMode.value = false;
     isOnlyNonZeroMode.value = false;
     isElementOrderMode.value = false;
     isSelectionEnabled.value = false;
@@ -97,6 +103,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
           selectedMaterialGroup: data.selectedMaterialGroup || [],
           selectedMaterial: data.selectedMaterial || [],
           isDetailedMode: data.isDetailedMode || false,
+          isSelectionDetailedMode: data.isSelectionDetailedMode || false,
           isOnlyNonZeroMode: data.isOnlyNonZeroMode || false,
           isElementOrderMode: data.isElementOrderMode || false,
           isSelectionEnabled: data.isSelectionEnabled || false,
@@ -133,6 +140,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
       selectedMaterialGroup: selectedMaterialGroup.value,
       selectedMaterial: selectedMaterial.value,
       isDetailedMode: isDetailedMode.value,
+      isSelectionDetailedMode: isSelectionDetailedMode.value,
       isOnlyNonZeroMode: isOnlyNonZeroMode.value,
       isElementOrderMode: isElementOrderMode.value,
       isSelectionEnabled: isSelectionEnabled.value,
@@ -182,6 +190,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     selectedMaterialGroup,
     selectedMaterial,
     isDetailedMode,
+    isSelectionDetailedMode,
     isOnlyNonZeroMode,
     isElementOrderMode,
     isSelectionEnabled,

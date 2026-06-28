@@ -241,6 +241,7 @@ const addMaterialBySelection = async () => {
         };    
     }
 
+    
     doc_raw_materials.value = [...doc_raw_materials.value, ...itemsToAdd];
     ElMessage.success(`Добавлено ${itemsToAdd.length} позиций`);
   } catch (err) {
