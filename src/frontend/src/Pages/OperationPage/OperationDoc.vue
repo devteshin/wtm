@@ -91,7 +91,7 @@ const RawMaterialsColumns = [
     };
 
     console.log(doc_raw_materials.value);
-    
+
     doc_changed = false
 
      watch(doc_number, () => {doc_changed = true});
@@ -228,7 +228,7 @@ const addMaterialBySelection = async () => {
     }
 
     for (const tareId of tareIds) {
-        if (doc_raw_materials.value.some(r => r.tare_id === tareId && r.material_id == selectedBaseMaterial.value?.material_id)) {
+        if (doc_raw_materials.value.some(r => r.tare_id === tareId && r.material_id === selectedBaseMaterial.value?.material_id)) {
             ElMessage.warning(`Номер ${tareId} материала ${selectedBaseMaterial.value.material} уже есть в таблице`)
 
         } else {
@@ -336,8 +336,8 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                         <el-form class="range-form" label-width="0px">
                             <!-- Вариант 1: переключатель режим ввода -->
                             <el-radio-group v-model="rangeMode" class="mode-switcher">
-                            <el-radio label="single">Один номер</el-radio>
-                            <el-radio label="range">Диапазон</el-radio>
+                            <el-radio value="single">Один номер</el-radio>
+                            <el-radio value="range">Диапазон</el-radio>
                             </el-radio-group>
 
                             <div v-if="rangeMode === 'single'" class="single-mode-inputs">
