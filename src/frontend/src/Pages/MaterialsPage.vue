@@ -260,17 +260,21 @@
               </div>
             </el-main>
             <el-aside width="30%" class="footer-block footer-block-3">
-              <div class="switch-container">
-                <el-switch 
-                  v-model="isSelectionDetailedMode"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
-                  @change="handleSwitchSelectionDetailedMode"
-                />
-                <span class="switch-description">
-                  {{ isSelectionDetailedMode ? 'развернуть подбор' : 'группировать подбор' }}
-                </span>
-              </div>
+              <el-form label-position="top" class="filter-form">
+                <el-form-item>
+                  <div class="switch-container">
+                    <el-switch 
+                      v-model="isSelectionDetailedMode"
+                      active-color="#13ce66"
+                      inactive-color="#ff4949"
+                      @change="handleSwitchSelectionDetailedMode"
+                    />
+                    <span class="switch-description">
+                      {{ isSelectionDetailedMode ? 'развернуть подбор' : 'группировать подбор' }}
+                    </span>
+                  </div>
+                </el-form-item> 
+              </el-form>
             </el-aside>
           </el-container>
       </el-footer>
@@ -1211,6 +1215,7 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 .footer-block-3 {
   background-color: #fff9f3;
   border-right: none;
+  padding: 16px;
 }
 
 @media (max-width: 768px) {
