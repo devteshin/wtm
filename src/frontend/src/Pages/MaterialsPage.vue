@@ -233,7 +233,7 @@
                   show-overflow-tooltip
                 >
                   <el-table-column
-                    v-for="column in reportStore.selectionColumns"
+                    v-for="column in selectionDataColumns"
                     :key="column.prop"
                     :prop="column.prop"
                     :label="column.label"
@@ -559,6 +559,14 @@ const selectionColumns = ref([
   { prop: 'rest_net_weight', label: 'Нетто', width: '100' }
 ]);
 
+const detailedSelectionColumns = ref([
+  { prop: 'stock_name', label: 'Склад', width: '80' },
+  { prop: 'material', label: 'Материал', width: '300' },
+  { prop: 'tare_id', label: 'Номер', width: '80' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100' }
+]);
+
 const selectionIndColumns = [
   { prop: 'ind', label: 'Ind', width: '80', },
   { prop: 'percent', label: '%', width: '80' },
@@ -622,6 +630,9 @@ onMounted(async () => {
     }
     if (!reportStore.selectionColumns.length) {
       reportStore.selectionColumns = [...selectionColumns.value];
+    }
+    if (!reportStore.detailedSelectionColumns.length) {
+      reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value];
     }
 
   } finally {
@@ -802,6 +813,9 @@ const selectionColumn = computed(() =>
 const dataColumns = computed(() =>
   isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns);  
 
+const selectionDataColumns = computed(() =>
+  isSelectionDetailedMode.value ? reportStore.detailedSelectionColumns  : reportStore.selectionColumns);  
+
 
 watch(formattedTableData, (newData) => {
   if (newData && newData.length > 0 && tableRef.value) {
@@ -826,7 +840,11 @@ function configuringReportTables() {
   } else {
     reportStore.basicColumns = reportStore.basicColumns.filter(col => !col.prop.includes('_percent'));
   };
-  reportStore.selectionColumns = reportStore.selectionColumns.filter(col => !col.prop.includes('_percent'));
+  if (isSelectionDetailedMode.value) {
+    reportStore.detailedSelectionColumns = reportStore.detailedSelectionColumns.filter(col => !col.prop.includes('_percent'));
+  } else {
+    reportStore.selectionColumns = reportStore.selectionColumns.filter(col => !col.prop.includes('_percent'));
+  };
 
   const percent_items: Column[] = [];
   for (const item of tableCondition.value) {
@@ -846,8 +864,12 @@ function configuringReportTables() {
   } else {
     reportStore.basicColumns.push(...percent_items);
   }
-  reportStore.selectionColumns.push(...percent_items);
-  console.log(reportStore.selectionColumns);
+  if (isSelectionDetailedMode.value) {
+    reportStore.detailedSelectionColumns.push(...percent_items);
+  } else {
+    reportStore.selectionColumns.push(...percent_items);
+  }
+
 };
 
 const makeSelectionIndReport = async () => {
@@ -1045,6 +1067,13 @@ const handleSwitchDetailedMode = () => {
 };
 
 const handleSwitchSelectionDetailedMode = async() => {
+  try {
+    configuringReportTables();
+  } catch (error) {
+    console.error('Ошибка при настройке колонок:', error);
+    return;
+  }
+
   try {
     await makeSelectionReport();
   } catch (error) {

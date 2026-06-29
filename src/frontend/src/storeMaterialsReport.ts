@@ -27,6 +27,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const basicColumns = ref<any[]>([]);
   const detailedColumns = ref<any[]>([]);
   const selectionColumns = ref<any[]>([]);
+  const detailedSelectionColumns = ref<any[]>([]);
   const selectedTableData = ref<any[]>([]); // выбранные строки текущей таблицы материалов
   const selectionData = ref<any[]>([]); // хранит выбранные строки в формате таблицы материалов (tableData) 
   
@@ -128,6 +129,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         basicColumns.value = data.basicColumns || [];
         detailedColumns.value = data.detailedColumns || [];
         selectionColumns.value = data.selectionColumns || [];
+        detailedSelectionColumns.value = data.detailedSelectionColumns || [];
       }
     } catch (error) {
       console.error('Ошибка загрузки из LocalStorage:', error);
@@ -152,6 +154,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
       basicColumns: basicColumns.value,
       detailedColumns: detailedColumns.value,
       selectionColumns: selectionColumns.value,
+      detailedSelectionColumns: detailedSelectionColumns.value,
       selectedTableData: selectedTableData.value,
       selectionData: selectionData.value,
       timestamp: Date.now()
@@ -204,6 +207,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     basicColumns,
     detailedColumns,
     selectionColumns,
+    detailedSelectionColumns,
     // Экспортируем действия
     setFilters,
     resetFilters,
