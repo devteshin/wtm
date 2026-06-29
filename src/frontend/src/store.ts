@@ -47,10 +47,10 @@ export default defineStore("app_store", () => {
     };
     /** запрос к API для получения данных по остаткам материалов подбора */
     const fetchSelectionData = (params?: frontend.ISelectionQueryParams) => {
-        if (params?.query_type === "selection") {
-            return api.fetchSelectionData(params).then(body => selection_data.value = body).finally(() => loading.value = false);
-        } else {
+        if (params?.query_type === "selection_indicators") {
             return api.fetchSelectionData(params).then(body => selection_ind_data.value = body).finally(() => loading.value = false);
+        } else {
+            return api.fetchSelectionData(params).then(body => selection_data.value = body).finally(() => loading.value = false);
         };
     };
     /** запрос к API для получения данных для отчета по остаткам материалов */

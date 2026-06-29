@@ -925,7 +925,7 @@ const makeSelectionReport = async () => {
           {
             stock_name: 'Итого',
             material: '',
-            rest_tare_weight: total_rest_tare_amount,
+            rest_tare_amount: total_rest_tare_amount,
             rest_net_weight: total_rest_net_weight,
           }
         ]);
