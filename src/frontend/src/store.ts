@@ -1,4 +1,4 @@
-import { computed, reactive, ref, shallowRef } from "vue";
+import { computed, reactive, Ref, ref, shallowRef } from "vue";
 
 import ClientAPI from "@/api";
 import { defineStore } from "pinia";
@@ -29,6 +29,8 @@ export default defineStore("app_store", () => {
     const selection_data = ref<frontend.ISelectionData | null>(null);
     /** подбор материалов - значения показателей подбора */
     const selection_ind_data = ref<frontend.ISelectionIndData | null>(null);
+    /** подбор материалов для списания в документе приема из производства */
+    const raw_materials_data = ref<frontend.IRawMaterial[]>([]);
     /** список складов */
     const stocks = shallowRef<Array<frontend.IStock>>([]);
     /** список заданий */
@@ -47,11 +49,17 @@ export default defineStore("app_store", () => {
     };
     /** запрос к API для получения данных по остаткам материалов подбора */
     const fetchSelectionData = (params?: frontend.ISelectionQueryParams) => {
+        let targetRef: Ref<any>;
+
         if (params?.query_type === "selection_indicators") {
-            return api.fetchSelectionData(params).then(body => selection_ind_data.value = body).finally(() => loading.value = false);
+            targetRef = selection_ind_data;
+        } else if (params?.query_type === "raw_materials") {
+            targetRef = raw_materials_data;
         } else {
-            return api.fetchSelectionData(params).then(body => selection_data.value = body).finally(() => loading.value = false);
-        };
+            targetRef = selection_data;
+        }
+
+        return api.fetchSelectionData(params).then(body => targetRef.value = body).finally(() => loading.value = false);
     };
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsMeta = (stockID: number) => {
@@ -220,6 +228,7 @@ export default defineStore("app_store", () => {
         materials_meta,
         materials_data,
         selection_data,
+        raw_materials_data,
         selection_ind_data,
         tasks,
         tasks_progress,

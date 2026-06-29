@@ -198,6 +198,7 @@ const addMaterialBySelection = async () => {
   }
 
   isAddingInProgress.value = true;
+  let key_material_list = ''
 
   try {
     const itemsToAdd: frontend.IRawMaterial[] = [];
@@ -227,22 +228,23 @@ const addMaterialBySelection = async () => {
       return;
     }
 
-    for (const tareId of tareIds) {
-        if (doc_raw_materials.value.some(r => r.tare_id === tareId && r.material_id === selectedBaseMaterial.value?.material_id)) {
-            ElMessage.warning(`Номер ${tareId} материала ${selectedBaseMaterial.value.material} уже есть в таблице`)
+    key_material_list = tareIds.map(id => `${selectedBaseMaterial.value?.material_id}_${id}`).join('|')
+    try {
+      await store.fetchSelectionData({
+        stock_list: `${props.stockID}`,  
+        indicators: '',
+        key_material_list: key_material_list,
+        query_type: 'raw_materials',
+        element_order: ''
+      });
 
-        } else {
-            itemsToAdd.push({
-                material_id: selectedBaseMaterial.value.material_id,
-                material: selectedBaseMaterial.value.material,
-                tare_id: tareId,
-                net_weight: 0,
-            });
-        };    
+    } catch (error) {
+      console.error('Ошибка при формировании списка добавляемых материалов:', error);
+    } finally {
     }
 
-    
-    doc_raw_materials.value = [...doc_raw_materials.value, ...itemsToAdd];
+    doc_raw_materials.value = [...doc_raw_materials.value, ...store.raw_materials_data];
+
     ElMessage.success(`Добавлено ${itemsToAdd.length} позиций`);
   } catch (err) {
     console.error(err);
