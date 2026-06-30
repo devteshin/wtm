@@ -765,8 +765,6 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
             VALUES
         """ + production_values_string
 
-    print("q_insert_production_tmp", q_insert_production_tmp)
-
     async with conn.cursor() as cur:
         await cur.callproc("action_arrival_write_before")
         await cur.execute("START TRANSACTION;")
