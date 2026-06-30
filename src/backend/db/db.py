@@ -709,7 +709,7 @@ def make_production_items_string(production_items: list[dict]):
 
     for item in production_items:
 
-        item_string = (f",({item["material_id"]}_{item["tare_id"]},{item["tare_amount"]}"
+        item_string = (f",({item["material_id"]}_{item["tare_id"]},1"
         f",{item["net_weight"]},{item["material_id"]},{item["tare_id"]},0)")
 
         res_string = res_string + item_string
