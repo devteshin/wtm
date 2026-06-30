@@ -200,6 +200,8 @@ const addMaterialBySelection = async () => {
 
   isAddingInProgress.value = true;
   let key_material_list = ''
+  let from = 0;
+  let to = 0;
 
   try {
     const itemsToAdd: frontend.IRawMaterial[] = [];
@@ -207,20 +209,28 @@ const addMaterialBySelection = async () => {
 
     if (rangeMode.value === 'single') {
       if (singleTareId.value !== null && singleTareId.value > 0) {
-        tareIds.push(singleTareId.value);
+        from = singleTareId.value;
+        to = singleTareId.value;
+      } else {
+        from = 0;
+        to = 0;
       }
     } else {
-      const from = rangeFrom.value ?? 0;
-      const to = rangeTo.value ?? 0;
-      if (from > 0 && to > 0 && from <= to) {
-        for (let i = from; i <= to; i++) {
+      from = rangeFrom.value ?? 0;
+      to = rangeTo.value ?? 0;
+    }
+    if (from > 0 && to > 0 && from <= to) {
+      for (let i = from; i <= to; i++) {
+        if (doc_raw_materials.value.some(r => r.tare_id === i && r.material_id === selectedBaseMaterial.value?.material_id)) {
+            ElMessage.warning(`Номер ${i} материала ${selectedBaseMaterial.value.material} уже есть в таблице`)
+        } else {
           tareIds.push(i);
-        }
-      } else {
-        ElMessage.warning('Укажите корректный диапазон номеров');
-        isAddingInProgress.value = false;
-        return;
+        }         
       }
+    } else {
+      ElMessage.warning('Укажите корректный диапазон номеров');
+      isAddingInProgress.value = false;
+      return;
     }
 
     if (tareIds.length === 0) {
@@ -247,7 +257,7 @@ const addMaterialBySelection = async () => {
 
     doc_raw_materials.value = [...doc_raw_materials.value, ...store.raw_materials_data];
 
-    ElMessage.success(`Добавлено ${itemsToAdd.length} позиций`);
+    ElMessage.success(`Добавлено ${tareIds.length} позиций`);
   } catch (err) {
     console.error(err);
     ElMessage.error('Ошибка при добавлении материалов');
