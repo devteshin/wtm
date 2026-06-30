@@ -642,6 +642,7 @@ async def select_raw_materials_to_arrival_doc_operation(conn: Connection, arriva
         INNER JOIN production_doc AS doc ON p.doc_id = doc.id 
             AND doc.id = (SELECT pr_doc_id FROM arrival_doc WHERE id = %(arrival_doc_id)s)
         LEFT JOIN material AS m ON m.id = p.material
+        order by m.material, tare_id
     """
     raw_materials = []
     async with conn.cursor() as cur:

@@ -155,7 +155,7 @@ const saveDoc = async () =>  {
   if (doc_number.value == '' ||  doc_date.value == '' || doc_items.value.map(item => item.material).find(item => item === "")) {
     return
   };
-   
+  
   const docParams = {
       stockID: props.stockID,
       docID: doc_id,
@@ -230,6 +230,7 @@ const addMaterialBySelection = async () => {
     }
 
     key_material_list = tareIds.map(id => `${selectedBaseMaterial.value?.material_id}_${id}`).join('|')
+    console.log(key_material_list);
     try {
       await store.fetchSelectionData({
         stock_list: `${props.stockID}`,  
