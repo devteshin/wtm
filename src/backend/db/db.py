@@ -761,7 +761,7 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     production_values_string = make_production_items_string(production_items)
     if production_values_string:
         q_insert_production_tmp = """
-            INSERT INTO produciton_tmp (key_material, tare_amount, net_weight, material, tare_id, doc_id)
+            INSERT INTO production_tmp (key_material, tare_amount, net_weight, material, tare_id, doc_id)
             VALUES
         """ + production_values_string
 
@@ -769,9 +769,6 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     async with conn.cursor() as cur:
         await cur.callproc("action_arrival_write_before")
-        #await cur.execute("CREATE TEMPORARY TABLE arrival_doc_tmp AS SELECT * FROM arrival_doc LIMIT 0")
-        #await cur.execute("CREATE TEMPORARY TABLE arrival_tmp AS SELECT * FROM arrival LIMIT 0")
-        #await cur.execute("CREATE TEMPORARY TABLE production_tmp AS SELECT * FROM production LIMIT 0")
         await cur.execute("START TRANSACTION;")
         try:
             await cur.execute(q_get_org_id, {"stock_id": stock_id})
@@ -848,14 +845,10 @@ async def check_doc_number_production(conn: Connection, doc_id: int, doc_number:
     WHERE doc_number = %(doc_number)s 
     AND id <> (SELECT pr_doc_id FROM arrival_doc WHERE id = %(doc_id)s)) AS doc_number_exists 
     """
-    #doc_number_exists = False
     async with conn.cursor() as cur:
         await cur.execute(q, {"doc_id": doc_id, "doc_number": doc_number})
         result = await cur.fetchone()
-     #   if result.get("doc_number_exists", 0) == 1:
-     #       doc_number_exists = True
-            
-    #return doc_number_exists
+
     return bool(result.get("doc_number_exists", 0))
 
 
