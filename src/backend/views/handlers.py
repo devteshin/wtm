@@ -292,12 +292,13 @@ async def update_arrival_handler(request: Request):
     doc_number = payload.get("docNumber", None)
     doc_date = payload.get("docDate", None)
     arrival_items: list[dict] = payload.get("arrival_items", [])
+    production_items: list[dict] = payload.get("production_items", [])
 
     if stock_id is None or doc_id is None or doc_number is None or doc_date is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            await update_arrival(conn, stock_id, doc_id, doc_number, doc_date, arrival_items)
+            await update_arrival(conn, stock_id, doc_id, doc_number, doc_date, arrival_items, production_items)
         except DocumentExistsError as exc:
             raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
         except ItemsExistsError as exc:

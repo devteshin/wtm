@@ -161,7 +161,8 @@ const saveDoc = async () =>  {
       docID: doc_id,
       docNumber: doc_number.value.trim(),
       docDate: doc_date.value,
-      arrival_items: doc_items.value.filter(item => item.gross_weight > 0 && item.tare_type != '')
+      arrival_items: doc_items.value.filter(item => item.gross_weight > 0 && item.tare_type != ''),
+      production_items: doc_raw_materials.value
   };
 
 try {

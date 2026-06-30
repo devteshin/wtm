@@ -703,13 +703,35 @@ def make_arrival_items_string(doc_id: int, material_id_dict: dict, arrival_items
 
     return res_string
 
-async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_number: str, doc_date: str, arrival_items: list[dict]):
+def make_production_items_string(production_items: list[dict]):
 
-    doc_number_exists = await check_doc_number(conn, doc_id, doc_number)
+    res_string = ""
+
+    for item in production_items:
+
+        item_string = (f",({item["material_id"]}_{item["tare_id"]},{item["tare_amount"]}"
+        f",{item["net_weight"]},{item["material_id"]},{item["tare_id"]},0)")
+
+        res_string = res_string + item_string
+
+    if res_string:
+        res_string = res_string[1:]
+
+    return res_string
+
+async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_number: str, doc_date: str, arrival_items: list[dict], production_items: list[dict]):
+
+    doc_number_exists = await check_doc_number_arrival(conn, doc_id, doc_number)
 
     if doc_number_exists:
-        raise DocumentExistsError(f"Документ '{doc_number}' уже существует.")
-    
+        raise DocumentExistsError(f"Документ приема из производства'{doc_number}' уже существует.")
+
+    if production_items:
+        doc_number_exists = await check_doc_number_production(conn, doc_id, doc_number)
+
+        if doc_number_exists:
+            raise DocumentExistsError(f"Документ списания материалов в производство'{doc_number}' уже существует.")
+
     material_id_dict = await get_material_id_dict(conn, arrival_items)
     if material_id_dict is None:
         raise MaterialError(f"Ошибка при формировании кода материала.")
@@ -728,18 +750,28 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         from arrival_doc where id = %(doc_id)s
     """
 
-    values_string = make_arrival_items_string(doc_id, material_id_dict, arrival_items)
-    if values_string:
+    arrival_values_string = make_arrival_items_string(doc_id, material_id_dict, arrival_items)
+    if arrival_values_string:
         q_insert_arrival_tmp = """
             INSERT INTO arrival_tmp (material, tare_id, tare_type, tare_amount, gross_weight_arrival
             , net_weight_arrival, gross_weight, net_weight, key_material, doc_id, next_operation_flag)
             VALUES
-        """ + values_string
-    
+        """ + arrival_values_string
+
+    production_values_string = make_production_items_string(production_items)
+    if production_values_string:
+        q_insert_production_tmp = """
+            INSERT INTO produciton_tmp (key_material, tare_amount, net_weight, material, tare_id, doc_id)
+            VALUES
+        """ + production_values_string
+
+    print("q_insert_production_tmp", q_insert_production_tmp)
+
     async with conn.cursor() as cur:
         await cur.callproc("action_arrival_write_before")
-        await cur.execute("CREATE TEMPORARY TABLE arrival_doc_tmp AS SELECT * FROM arrival_doc LIMIT 0")
-        await cur.execute("CREATE TEMPORARY TABLE arrival_tmp AS SELECT * FROM arrival LIMIT 0")
+        #await cur.execute("CREATE TEMPORARY TABLE arrival_doc_tmp AS SELECT * FROM arrival_doc LIMIT 0")
+        #await cur.execute("CREATE TEMPORARY TABLE arrival_tmp AS SELECT * FROM arrival LIMIT 0")
+        #await cur.execute("CREATE TEMPORARY TABLE production_tmp AS SELECT * FROM production LIMIT 0")
         await cur.execute("START TRANSACTION;")
         try:
             await cur.execute(q_get_org_id, {"stock_id": stock_id})
@@ -748,10 +780,13 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
                 print("Не установлена организация")    
             org_id = result.get("organization_id", 1)
             await cur.execute(q_insert_doc_tmp, {"doc_number": doc_number, "doc_date": doc_date, "doc_id": doc_id})
-            if values_string:
+            if arrival_values_string:
                 await cur.execute(q_insert_arrival_tmp)
+            if production_values_string:
+                await cur.execute(q_insert_production_tmp)
             await cur.callproc("action_arrival_write", [doc_id, 0])
             await cur.callproc("action_arrival_util_ind_transmit", [org_id, doc_id])
+            await cur.callproc("action_arrival_util_app_update_production", [doc_id])
 
         except Exception as e:
             await cur.execute("ROLLBACK;")
@@ -798,7 +833,7 @@ async def get_material_id(conn: Connection, material: str):
                 return result.get("id", 0)
 
 
-async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
+async def check_doc_number_arrival(conn: Connection, doc_id: int, doc_number: str):
     q = """ SELECT EXISTS (SELECT TRUE FROM arrival_doc WHERE doc_number = %(doc_number)s AND id <> %(doc_id)s) AS doc_number_exists """
     doc_number_exists = False
     async with conn.cursor() as cur:
@@ -807,6 +842,21 @@ async def check_doc_number(conn: Connection, doc_id: int, doc_number: str):
         if result.get("doc_number_exists", 0) == 1:
             doc_number_exists = True
     return doc_number_exists
+
+async def check_doc_number_production(conn: Connection, doc_id: int, doc_number: str):
+    q = """ SELECT EXISTS (SELECT TRUE FROM production_doc 
+    WHERE doc_number = %(doc_number)s 
+    AND id <> (SELECT pr_doc_id FROM arrival_doc WHERE id = %(doc_id)s)) AS doc_number_exists 
+    """
+    #doc_number_exists = False
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"doc_id": doc_id, "doc_number": doc_number})
+        result = await cur.fetchone()
+     #   if result.get("doc_number_exists", 0) == 1:
+     #       doc_number_exists = True
+            
+    #return doc_number_exists
+    return bool(result.get("doc_number_exists", 0))
 
 
 async def delete_arrival(conn: Connection, doc_id: int):
