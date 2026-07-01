@@ -1004,6 +1004,7 @@ const makeMaterialReport = async () => {
       element_order: elementOrder()
     });
 
+    
     if (store.materials_data && Array.isArray(store.materials_data)) {
       reportStore.tableData = store.materials_data;
       if (reportStore.tableData.length > 1) {

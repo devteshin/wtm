@@ -4,7 +4,7 @@
       <span class="header-title">Выбор номеров (сетка)</span>
       <el-button
         size="small"
-        type="text"
+        link                
         class="close-btn"
         @click="emit('close-selection')"
       >
@@ -40,10 +40,9 @@ const emit = defineEmits<{
 }>();
 
 const handleCellClick = (tareId: number) => {
-  // Если номер уже выбран — не обрабатываем клик
-  if (props.selectedNumbers.includes(tareId)) {
-    return;
-  }
+//  if (props.selectedNumbers.includes(tareId)) {
+//    return;
+//  }
   emit('cell-click', tareId);
 };
 </script>
@@ -110,7 +109,6 @@ const handleCellClick = (tareId: number) => {
 
 /* Стиль для уже выбранного номера */
 .grid-cell.is-selected {
-  cursor: not-allowed;
   background-color: #d4edda; /* светло-зелёный */
   color: #155724;            /* тёмно-зелёный текст */
   opacity: 0.8;

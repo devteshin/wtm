@@ -38,6 +38,8 @@ const singleTareId = ref<number | null>(null);
 const rangeFrom = ref<number | null>(null);
 const rangeTo = ref<number | null>(null);
 const isAddingInProgress = ref(false);
+const isGridMode = ref(false);
+const gridNumbers = ref<number[]>([]);    
 
 // Колонки таблицы сырья
 const RawMaterialsColumns = [
@@ -46,25 +48,47 @@ const RawMaterialsColumns = [
     { prop: 'net_weight', label: 'Нетто', width: '100' },
 ] as const;
 
-const handleGridCellClick = (tareId: number) => {
-  if (doc_raw_materials.value.some(r => r.tare_id === tareId)) {
-    ElMessage.warning(`Номер ${tareId} уже есть в таблице`);
-    return;
+const handleGridCellClick = async (tareId: number) => {
+  if (doc_raw_materials.value.some(item => item.tare_id === tareId && item.material === selectedBaseMaterial.value?.material)) {
+    doc_raw_materials.value = doc_raw_materials.value.filter(item => !(item.tare_id === tareId && item.material === selectedBaseMaterial.value?.material));
+  } else {
+    await addMaterialToRawMaterialsTable(tareId, tareId);
   }
-
-  const newRow: frontend.IRawMaterial = {
-    material_id: selectedBaseMaterial.value?.material_id ?? 0,
-    material: selectedBaseMaterial.value?.material ?? 'Неизвестный материал',
-    tare_id: tareId,
-    net_weight: 0
-  };
-
-  doc_raw_materials.value = [...doc_raw_materials.value, newRow];
-  ElMessage.success(`Добавлен номер ${tareId}`);
 };
 
-const gridNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
-const selectedTareIds = ref<number[]>([1, 2, 3]); // тестовые выбранные номера
+//const gridNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+//const selectedTareIds = ref<number[]>([1, 2, 3]); // тестовые выбранные номера
+
+const selectedTareIds = computed(() => {
+    return doc_raw_materials.value.filter(item => item.material === selectedBaseMaterial.value?.material).map(item => item.tare_id);
+});
+
+const loadGridNumbers = async () => {
+  try {
+    console.log(props.stockID);
+    await store.fetchMaterialsData(props.stockID, {
+      materials: selectedBaseMaterial.value?.material_id.toString(),
+      stocks: props.stockID.toString(),
+      material_groups: '',
+      indicators: '',
+      indicator_conditions: '',
+      detailed_mode: 'detailed',
+      only_non_zero_mode: true,
+      element_order: ''
+    });
+
+    console.log(store.materials_data);
+
+    if (store.materials_data && Array.isArray(store.materials_data)) {
+      gridNumbers.value = store.materials_data.map(item => item.tare_id);
+    } else {
+      gridNumbers.value = [];
+    }
+  } catch (error) {
+    console.error('Ошибка при формировании остатков:', error);
+    gridNumbers.value = [];
+  }
+};
 
  onMounted(async () => {
 
@@ -121,6 +145,7 @@ const selectedTareIds = ref<number[]>([1, 2, 3]); // тестовые выбра
      watch(doc_raw_materials, () => {doc_changed = true}, {deep: true});
 });
 
+  
 const deleteDoc = async () =>  {
     try {
         await ElMessageBox.confirm(
@@ -220,30 +245,46 @@ const addMaterialBySelection = async () => {
     return;
   }
 
-  isAddingInProgress.value = true;
-  let key_material_list = ''
+  if (rangeMode.value === 'grid') {
+    if (doc_changed) {
+      await saveDoc()
+    };
+    await loadGridNumbers()
+    isGridMode.value = true;
+    return;
+  }
+  
   let from = 0;
   let to = 0;
 
-  try {
-    const tareIds: number[] = [];
-
-    if (rangeMode.value === 'single') {
-      if (singleTareId.value !== null && singleTareId.value > 0) {
-        from = singleTareId.value;
-        to = singleTareId.value;
-      } else {
-        from = 0;
-        to = 0;
-      }
+  if (rangeMode.value === 'single') {
+    if (singleTareId.value !== null && singleTareId.value > 0) {
+      from = singleTareId.value;
+      to = singleTareId.value;
     } else {
-      from = rangeFrom.value ?? 0;
-      to = rangeTo.value ?? 0;
+      from = 0;
+      to = 0;
     }
+  } else {
+    from = rangeFrom.value ?? 0;
+    to = rangeTo.value ?? 0;
+  }
+
+  await addMaterialToRawMaterialsTable(from, to);
+
+
+};
+
+async function addMaterialToRawMaterialsTable(from: number, to: number) {
+  let key_material_list = ''
+  const tareIds: number[] = [];
+
+  isAddingInProgress.value = true;
+  try {
     if (from > 0 && to > 0 && from <= to) {
       for (let i = from; i <= to; i++) {
         if (doc_raw_materials.value.some(r => r.tare_id === i && r.material_id === selectedBaseMaterial.value?.material_id)) {
-            ElMessage.warning(`Номер ${i} материала ${selectedBaseMaterial.value.material} уже есть в таблице`)
+            ElMessage.warning(`Номер ${i} материала ${selectedBaseMaterial.value?.material} уже есть в таблице`)
         } else {
           tareIds.push(i);
         }         
@@ -285,6 +326,7 @@ const addMaterialBySelection = async () => {
   } finally {
     isAddingInProgress.value = false;
   }
+  
 };
 
 const handleDeleteRow = (row: frontend.IRawMaterial) => {
@@ -294,7 +336,6 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
         type: 'warning'
     }).then(() => {
         doc_raw_materials.value = doc_raw_materials.value.filter(r => r !== row);
-        // Если нужно удаление на бэкенд — запрос здесь
     });
 };
 
@@ -350,7 +391,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                     <el-text class="table-title">Материалы списанные на операцию</el-text>
                 </div>
 
-                <div class="raw-material-picker-block">
+                <div v-if="!isGridMode" class="raw-material-picker-block">
                     <div class="picker-row">
                         <!-- Селект материала -->
                         <el-select
@@ -453,7 +494,17 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
         <!-- Правый блок -->
         <el-main class="right-block">
             <div class="table-wrapper right-wrapper">
-                <div v-for="material in doc_material_list" :key="material" class="material-item">
+                <div v-if="isGridMode">
+                  <RawMaterialGrid
+                    :numbers="gridNumbers"
+                    :selected-numbers="selectedTareIds"
+                    @cell-click="handleGridCellClick"
+                    @close-selection="() => {
+                      isGridMode = false;
+                    }"
+                  />              
+                </div>  
+                <div v-else v-for="material in doc_material_list" :key="material" class="material-item">
                     <OperationDocItems
                         :material="material"
                         :operation="doc_operation"
