@@ -857,6 +857,7 @@ async def delete_arrival(conn: Connection, doc_id: int):
         try:
             await cur.callproc("action_arrival_delete_before")
             await cur.execute("START TRANSACTION;")
+            await cur.callproc("action_arrival_util_app_delete_production", [doc_id])
             await cur.callproc("action_arrival_delete", [doc_id])
 
         except Exception as e:
