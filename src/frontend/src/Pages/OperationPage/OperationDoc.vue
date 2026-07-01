@@ -6,6 +6,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
 import { Delete } from '@element-plus/icons-vue';
+import RawMaterialGrid from './RawMaterialGrid.vue';
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -44,6 +45,25 @@ const RawMaterialsColumns = [
     { prop: 'tare_id', label: 'Номер', width: '100' },
     { prop: 'net_weight', label: 'Нетто', width: '100' },
 ] as const;
+
+const handleGridCellClick = (tareId: number) => {
+  if (doc_raw_materials.value.some(r => r.tare_id === tareId)) {
+    ElMessage.warning(`Номер ${tareId} уже есть в таблице`);
+    return;
+  }
+
+  const newRow: frontend.IRawMaterial = {
+    material_id: selectedBaseMaterial.value?.material_id ?? 0,
+    material: selectedBaseMaterial.value?.material ?? 'Неизвестный материал',
+    tare_id: tareId,
+    net_weight: 0
+  };
+
+  doc_raw_materials.value = [...doc_raw_materials.value, newRow];
+  ElMessage.success(`Добавлен номер ${tareId}`);
+};
+
+const gridNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
 
  onMounted(async () => {
 
@@ -205,7 +225,6 @@ const addMaterialBySelection = async () => {
   let to = 0;
 
   try {
-    const itemsToAdd: frontend.IRawMaterial[] = [];
     const tareIds: number[] = [];
 
     if (rangeMode.value === 'single') {
@@ -257,6 +276,8 @@ const addMaterialBySelection = async () => {
     }
 
     doc_raw_materials.value = [...doc_raw_materials.value, ...store.raw_materials_data];
+
+    console.log(store.raw_materials_data);
 
     ElMessage.success(`Добавлено ${tareIds.length} позиций`);
   } catch (err) {
@@ -398,7 +419,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
 
                 <!-- Таблица (занимает всё оставшееся место) -->
                 <div class="table-area">
-                    <div class="table-wrapper">
+                    <div class="raw_materials-table-wrapper">
                         <el-table
                             :data="doc_raw_materials"
                             style="width: 100%"
@@ -427,23 +448,32 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                         </el-table>
                     </div>
                 </div>
-            </div>
+          </div>            
         </el-aside>
 
         <!-- Правый блок -->
         <el-main class="right-block">
-            <div class="table-wrapper right-wrapper">
-                <div v-for="material in doc_material_list" :key="material" class="material-item">
-                    <OperationDocItems
-                        :material="material"
-                        :operation="doc_operation"
-                        :operation_material="doc_operation_material"
-                        v-model:material_list="doc_material_list"
-                        v-model:items="doc_items"
-                        :table-width="'100%'"
-                    />
-                </div>
+          <!-- Сетка: занимает фиксированное место, не сжимается -->
+          <div class="grid-wrapper">
+            <RawMaterialGrid
+              :numbers="gridNumbers"
+              @cell-click="handleGridCellClick"
+            />
+          </div>
+
+          <!-- Таблицы: занимают всё оставшееся место и скроллятся при необходимости -->
+          <div class="table-wrapper right-wrapper">
+            <div v-for="material in doc_material_list" :key="material" class="material-item">
+              <OperationDocItems
+                :material="material"
+                :operation="doc_operation"
+                :operation_material="doc_operation_material"
+                v-model:material_list="doc_material_list"
+                v-model:items="doc_items"
+                :table-width="'100%'"
+              />
             </div>
+          </div>
         </el-main>
     </el-container>
 </template>
@@ -572,16 +602,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
   margin-top: 16px;
 }
 
-.right-block {
-  padding: 0 20px 20px;
-  box-sizing: border-box;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.table-wrapper {
+.raw_materials-table-wrapper {
   position: absolute;
   top: 0;
   left: 0;
@@ -591,8 +612,31 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
   border-radius: 4px;
 }
 
-.right-wrapper {
-  padding: 16px 0;
+
+.right-block {
+  padding: 20px; /* отступ снаружи, а не только снизу */
+  box-sizing: border-box;
+  /* Важно: нормальная раскладка, без absolute */
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* расстояние между сеткой и таблицами */
+  height: 100%;
+  min-height: 0; /* чтобы flex-элемент мог сжиматься и скроллиться */
+}
+
+/* УБРАТЬ position: absolute у table-wrapper */
+.table-wrapper {
+  flex: 1; /* занимает всё оставшееся место */
+  min-height: 0; /* критично для скролла внутри flex */
+  overflow: auto;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.grid-wrapper {
+  width: 100%;
+  flex-shrink: 0; /* сетка не сжимается */
 }
 
 @media (max-width: 768px) {
@@ -609,8 +653,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
   }
 
   .right-block {
-    height: calc(100vh - 120px - 300px);
-    min-height: 200px;
+    padding: 16px;
   }
 
   .picker-row {
@@ -623,5 +666,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
   .el-button {
     width: 100%;
   }
+
+
 }
 </style>
