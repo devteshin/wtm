@@ -33,7 +33,7 @@ let doc_changed: boolean;
 
 // Переменные для подбора сырья
 const selectedBaseMaterial = ref<frontend.IBaseRawMaterial | undefined>(undefined);
-const rangeMode = ref<'single' | 'range'>('single');
+const rangeMode = ref<'single' | 'range' | 'grid'>('single');
 const singleTareId = ref<number | null>(null);
 const rangeFrom = ref<number | null>(null);
 const rangeTo = ref<number | null>(null);
@@ -64,6 +64,7 @@ const handleGridCellClick = (tareId: number) => {
 };
 
 const gridNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
+const selectedTareIds = ref<number[]>([1, 2, 3]); // тестовые выбранные номера
 
  onMounted(async () => {
 
@@ -277,8 +278,6 @@ const addMaterialBySelection = async () => {
 
     doc_raw_materials.value = [...doc_raw_materials.value, ...store.raw_materials_data];
 
-    console.log(store.raw_materials_data);
-
     ElMessage.success(`Добавлено ${tareIds.length} позиций`);
   } catch (err) {
     console.error(err);
@@ -371,37 +370,37 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                         <!-- Блок выбора номера/диапазона -->
                         <div class="range-input-group">
                         <el-form class="range-form" label-width="0px">
-                            <!-- Вариант 1: переключатель режим ввода -->
                             <el-radio-group v-model="rangeMode" class="mode-switcher">
                             <el-radio value="single">Один номер</el-radio>
                             <el-radio value="range">Диапазон</el-radio>
+                            <el-radio value="grid">Подбор</el-radio>
                             </el-radio-group>
 
                             <div v-if="rangeMode === 'single'" class="single-mode-inputs">
-                            <el-input-number
-                                v-model="singleTareId"
-                                placeholder="Номер"
-                                size="small"
-                                :min="1"
-                            />
+                              <el-input-number
+                                  v-model="singleTareId"
+                                  placeholder="Номер"
+                                  size="small"
+                                  :min="1"
+                              />
                             </div>
 
-                            <div v-else class="range-mode-inputs">
-                            <el-form-item label="От" label-width="30px" style="margin-bottom: 4px;">
-                                <el-input-number
-                                v-model="rangeFrom"
-                                size="small"
-                                :min="1"
-                                />
-                            </el-form-item>
-                            <span class="range-separator">–</span>
-                            <el-form-item label="До" label-width="30px" style="margin-bottom: 4px;">
-                                <el-input-number
-                                v-model="rangeTo"
-                                size="small"
-                                :min="1"
-                                />
-                            </el-form-item>
+                            <div v-if="rangeMode === 'range'" class="range-mode-inputs">
+                              <el-form-item label="От" label-width="30px" style="margin-bottom: 4px;">
+                                  <el-input-number
+                                  v-model="rangeFrom"
+                                  size="small"
+                                  :min="1"
+                                  />
+                              </el-form-item>
+                              <span class="range-separator">–</span>
+                              <el-form-item label="До" label-width="30px" style="margin-bottom: 4px;">
+                                  <el-input-number
+                                  v-model="rangeTo"
+                                  size="small"
+                                  :min="1"
+                                  />
+                              </el-form-item>
                             </div>
                         </el-form>
                         </div>
@@ -419,7 +418,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
 
                 <!-- Таблица (занимает всё оставшееся место) -->
                 <div class="table-area">
-                    <div class="raw_materials-table-wrapper">
+                    <div class="table-wrapper">
                         <el-table
                             :data="doc_raw_materials"
                             style="width: 100%"
@@ -448,32 +447,23 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                         </el-table>
                     </div>
                 </div>
-          </div>            
+            </div>
         </el-aside>
 
         <!-- Правый блок -->
         <el-main class="right-block">
-          <!-- Сетка: занимает фиксированное место, не сжимается -->
-          <div class="grid-wrapper">
-            <RawMaterialGrid
-              :numbers="gridNumbers"
-              @cell-click="handleGridCellClick"
-            />
-          </div>
-
-          <!-- Таблицы: занимают всё оставшееся место и скроллятся при необходимости -->
-          <div class="table-wrapper right-wrapper">
-            <div v-for="material in doc_material_list" :key="material" class="material-item">
-              <OperationDocItems
-                :material="material"
-                :operation="doc_operation"
-                :operation_material="doc_operation_material"
-                v-model:material_list="doc_material_list"
-                v-model:items="doc_items"
-                :table-width="'100%'"
-              />
+            <div class="table-wrapper right-wrapper">
+                <div v-for="material in doc_material_list" :key="material" class="material-item">
+                    <OperationDocItems
+                        :material="material"
+                        :operation="doc_operation"
+                        :operation_material="doc_operation_material"
+                        v-model:material_list="doc_material_list"
+                        v-model:items="doc_items"
+                        :table-width="'100%'"
+                    />
+                </div>
             </div>
-          </div>
         </el-main>
     </el-container>
 </template>
@@ -602,7 +592,16 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
   margin-top: 16px;
 }
 
-.raw_materials-table-wrapper {
+.right-block {
+  padding: 0 20px 20px;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.table-wrapper {
   position: absolute;
   top: 0;
   left: 0;
@@ -612,31 +611,8 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
   border-radius: 4px;
 }
 
-
-.right-block {
-  padding: 20px; /* отступ снаружи, а не только снизу */
-  box-sizing: border-box;
-  /* Важно: нормальная раскладка, без absolute */
-  display: flex;
-  flex-direction: column;
-  gap: 24px; /* расстояние между сеткой и таблицами */
-  height: 100%;
-  min-height: 0; /* чтобы flex-элемент мог сжиматься и скроллиться */
-}
-
-/* УБРАТЬ position: absolute у table-wrapper */
-.table-wrapper {
-  flex: 1; /* занимает всё оставшееся место */
-  min-height: 0; /* критично для скролла внутри flex */
-  overflow: auto;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  background: #fff;
-}
-
-.grid-wrapper {
-  width: 100%;
-  flex-shrink: 0; /* сетка не сжимается */
+.right-wrapper {
+  padding: 16px 0;
 }
 
 @media (max-width: 768px) {
@@ -653,7 +629,8 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
   }
 
   .right-block {
-    padding: 16px;
+    height: calc(100vh - 120px - 300px);
+    min-height: 200px;
   }
 
   .picker-row {
@@ -666,7 +643,5 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
   .el-button {
     width: 100%;
   }
-
-
 }
 </style>
