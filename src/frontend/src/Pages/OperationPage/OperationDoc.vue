@@ -97,6 +97,7 @@ const RawMaterialsColumns = [
      watch(doc_number, () => {doc_changed = true});
      watch(doc_date, () => {doc_changed = true});
      watch(doc_items, () => {doc_changed = true}, {deep: true});
+     watch(doc_raw_materials, () => {doc_changed = true}, {deep: true});
 });
 
 const deleteDoc = async () =>  {
