@@ -40,9 +40,6 @@ const emit = defineEmits<{
 }>();
 
 const handleCellClick = (tareId: number) => {
-//  if (props.selectedNumbers.includes(tareId)) {
-//    return;
-//  }
   emit('cell-click', tareId);
 };
 </script>
@@ -54,7 +51,8 @@ const handleCellClick = (tareId: number) => {
   margin-top: 20px;
   overflow: hidden;
   background: #fff;
-  max-height: 50vh;
+  /* Было: max-height: 50vh; */
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -92,6 +90,7 @@ const handleCellClick = (tareId: number) => {
   gap: 1px;
   background: #e4e7ed;
   flex: 1;
+  min-height: 0;
 }
 
 .grid-cell {

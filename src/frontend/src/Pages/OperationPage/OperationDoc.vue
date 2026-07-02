@@ -24,8 +24,10 @@ const doc_operation = ref('');
 const doc_operation_material = ref('');
 const doc_material_list = ref(['']);
 const doc_items = ref([<frontend.IArrivalItems>{}]);
-const doc_base_raw_materials = ref([<frontend.IBaseRawMaterial>{}]);
-const doc_raw_materials = ref([<frontend.IRawMaterial>{}]);
+//const doc_base_raw_materials = ref([<frontend.IBaseRawMaterial>{}]);
+const doc_base_raw_materials = ref<frontend.IBaseRawMaterial[]>([]);  
+//const doc_raw_materials = ref([<frontend.IRawMaterial>{}]);
+const doc_raw_materials = ref<frontend.IRawMaterial[]>([]);  
 let isNewDoc = false;  
 let doc_id = 0;
 let operation_id = 0;   
@@ -56,14 +58,38 @@ const handleGridCellClick = async (tareId: number) => {
   }
 };
 
-//const gridNumbers = Array.from({ length: 20 }, (_, i) => i + 1);
-//const selectedTareIds = ref<number[]>([1, 2, 3]); // тестовые выбранные номера
+const uniqueDocRawMaterials = (): frontend.IBaseRawMaterial[] => {
+  const seen = new Set<number>();
+  return doc_raw_materials.value
+    .filter(item => {
+      if (seen.has(item.material_id)) return false;
+      seen.add(item.material_id);
+      return true;
+    })
+    .map(item => ({
+      material: item.material,
+      material_id: item.material_id,
+    })) as frontend.IBaseRawMaterial[];
+};
+
+const raw_materials_options = computed<frontend.IBaseRawMaterial[]>(() => {
+  const baseItems = doc_base_raw_materials.value;
+  const addedItems = uniqueDocRawMaterials();
+
+  const baseIds = new Set(baseItems.map(i => i.material_id));
+
+  const onlyNewInDoc = addedItems.filter(i => !baseIds.has(i.material_id));
+
+  return [...baseItems, ...onlyNewInDoc];
+});
 
 const selectedTareIds = computed(() => {
     return doc_raw_materials.value.filter(item => item.material === selectedBaseMaterial.value?.material).map(item => item.tare_id);
 });
 
 const loadGridNumbers = async () => {
+  //gridNumbers.value = Array.from({ length: 1000 }, (_, i) => i + 1);
+  //return
   try {
     console.log(props.stockID);
     await store.fetchMaterialsData(props.stockID, {
@@ -401,7 +427,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                         clearable
                         >
                         <el-option
-                            v-for="item in doc_base_raw_materials"
+                            v-for="item in raw_materials_options"
                             :key="item.material"
                             :label="item.material"
                             :value="item"
@@ -458,7 +484,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                 </div>
 
                 <!-- Таблица (занимает всё оставшееся место) -->
-                <div class="table-area">
+                <div v-if="doc_raw_materials.length > 0" class="table-area">
                     <div class="table-wrapper">
                         <el-table
                             :data="doc_raw_materials"
@@ -473,7 +499,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                                 :width="col.width"
                             />
 
-                            <el-table-column label="" width="50" fixed="right">
+                            <el-table-column v-if="!isGridMode" label="" width="50" fixed="right">
                                 <template #default="scope">
                                     <el-button
                                         link
