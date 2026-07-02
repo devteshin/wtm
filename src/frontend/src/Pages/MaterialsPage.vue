@@ -957,6 +957,8 @@ const makeSelectionReport = async () => {
         ]);
       };
     };
+    console.log(reportStore.selectionTableData);
+
   } catch (error) {
     console.error('Ошибка при формировании отчёта:', error);
   } finally {

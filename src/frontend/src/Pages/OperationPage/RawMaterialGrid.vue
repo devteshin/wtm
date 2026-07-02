@@ -1,7 +1,7 @@
 <template>
   <div class="grid-container">
     <div class="grid-header">
-      <span class="header-title">Выбор номеров (сетка)</span>
+      <span class="header-title">Выбор номеров</span>
       <el-button
         size="small"
         link                
