@@ -7,6 +7,8 @@ import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
 import { Delete } from '@element-plus/icons-vue';
 import RawMaterialGrid from './RawMaterialGrid.vue';
+import MaterialPage from '../MaterialsPage.vue';
+import DebugDrawerContent from '../DebugDrawerContent.vue';
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -174,9 +176,17 @@ const loadGridNumbers = async () => {
      watch(doc_date, () => {doc_changed = true});
      watch(doc_items, () => {doc_changed = true}, {deep: true});
      watch(doc_raw_materials, () => {doc_changed = true}, {deep: true});
+
+    // updateDrawerWidth();
+    // window.addEventListener('resize', updateDrawerWidth);
+    // console.log(drawerWidth.value);     
+
 });
 
-  
+onBeforeUnmount(() => {
+  // window.removeEventListener('resize', updateDrawerWidth);
+});
+
 const deleteDoc = async () =>  {
     try {
         await ElMessageBox.confirm(
@@ -228,6 +238,12 @@ const closeDoc = async () =>  {
     router.push(`/stock/${props.stockID}/operation/${operation_id}`);
   }
 };
+
+const openSelection = async () =>  {
+  await saveDoc();
+  drawerVisible.value = true;
+};
+
 
 const saveDoc = async () =>  {
   if (doc_number.value == '' ||  doc_date.value == '' || doc_items.value.map(item => item.material).find(item => item === "")) {
@@ -370,6 +386,56 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
     });
 };
 
+const drawerVisible = ref(false);
+
+const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
+  if (!items.length) {
+    ElMessage.warning('Ничего не выбрано');
+    return;
+  }
+
+  // Проверяем дубликаты по tare_id + material_id (или по tare_id — зависит от твоей бизнес-логики)
+  const existingIds = new Set(
+    doc_raw_materials.value.map(i => `${i.material_id}_${i.tare_id}`)
+  );
+
+  const newItems = items.filter(
+    item => !existingIds.has(`${item.material_id}_${item.tare_id}`)
+  );
+
+  if (newItems.length === 0) {
+    ElMessage.info('Все выбранные позиции уже есть в документе');
+    drawerVisible.value = false;
+    return;
+  }
+
+  doc_raw_materials.value = [...doc_raw_materials.value, ...newItems];
+  ElMessage.success(`Добавлено ${newItems.length} позиций`);
+  drawerVisible.value = false;
+};
+
+// const drawerWidth = ref(1200);
+
+// const updateDrawerWidth = () => {
+//   const w = window.innerWidth;
+//   console.log(w);
+//   if (w <= 768) drawerWidth.value = 400;
+//   else if (w <= 1280) drawerWidth.value = 1000;
+//   else drawerWidth.value = 1000;
+// };
+
+const drawerSize = computed<number>(() => {
+  const w = window.innerWidth;
+  console.log(w);
+  if (w <= 768) {
+    return Math.floor(0.98 * w);       
+  }
+  if (w <= 1280) {
+    return Math.floor(0.95 * w);
+  }
+  return Math.floor(0.9 * w);
+});
+
 </script>
 
 <template v-if="store.isAuth">
@@ -408,6 +474,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
                         <el-button type="success" plain @click="closeDoc">Закрыть</el-button>
                         <el-button type="danger" plain @click="deleteDoc">Удалить</el-button>
                         <el-button type="success" plain @click="addMaterial">Добавить продукт</el-button>
+                        <el-button type="primary" plain @click="openSelection">Подбор материалов</el-button>
                     </div>
                 </div>
 
@@ -548,6 +615,21 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
             </div>
         </el-main>
     </el-container>
+    <el-drawer
+      v-model="drawerVisible"
+      title="Подбор материалов"
+      direction="rtl"
+      :size="drawerSize"
+      @close="() => drawerVisible = false"
+    >
+       <MaterialPage
+        :stockID="props.stockID"
+        @selection-confirmed="onSelectionConfirmed"
+        @close="() => drawerVisible = false"
+      />
+       
+      <!-- <DebugDrawerContent /> -->
+    </el-drawer>    
 </template>
 
 <style scoped>

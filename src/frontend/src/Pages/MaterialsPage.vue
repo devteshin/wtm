@@ -273,7 +273,13 @@
                       {{ isSelectionDetailedMode ? 'развернуть подбор' : 'группировать подбор' }}
                     </span>
                   </div>
-                </el-form-item> 
+                </el-form-item>
+                <el-form-item style="margin-top: 16px;">
+                  <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <el-button @click="handleDrawerClose">Отмена</el-button>
+                    <el-button type="primary" @click="handleApplySelection">Применить выбор</el-button>
+                  </div>
+                </el-form-item>                 
               </el-form>
             </el-aside>
           </el-container>
@@ -1134,6 +1140,26 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
   
 };
 
+const emit = defineEmits<{
+  (e: 'selection-confirmed', items: frontend.IRawMaterial[]): void;
+  (e: 'close'): void;
+}>();
+
+const handleApplySelection = () => {
+  const result: frontend.IRawMaterial[] = reportStore.selectionData.map(row => ({
+    material: row.material,
+    material_id: row.material_id,
+    tare_id: row.tare_id,
+    net_weight: row.rest_net_weight,
+  }));
+
+  emit('selection-confirmed', result);
+};
+
+const handleDrawerClose = () => {
+  emit('close');
+};
+
 
 </script>
 
@@ -1141,6 +1167,8 @@ const handleTableCellDblClick = (row: any, column: any, cell: HTMLElement, event
 .page-container {
   height: calc(100vh - 120px); /* Занимает всю высоту экрана минус меню */
   display: flex;
+  width: 100%;
+  box-sizing: border-box;  
 }
 
 .sidebar {
