@@ -617,7 +617,7 @@ async def select_base_raw_material(conn: Connection, operation: str):
     q = """
         SELECT DISTINCT sd.material AS material_id, m.material AS material FROM stock_data AS sd
         INNER JOIN arrival_doc AS doc ON doc.id = sd.doc_id 
-        AND doc.operation = (
+        AND doc.operation IN (
             SELECT operation FROM production_sequence_items AS psi
             INNER JOIN
             (
