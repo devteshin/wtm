@@ -928,8 +928,6 @@ const makeSelectionReport = async () => {
   const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
   const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
 
-  console.log(isSelectionDetailedMode.value, indicators_list, key_material_list, stock_list);
-
   try {
     await store.fetchSelectionData({
       stock_list: stock_list,

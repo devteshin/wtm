@@ -28,6 +28,7 @@ declare namespace frontend {
     export type IMaterialsData = {
         stock_name: string
         material: string
+        material_id: number
         tare_type: string
         tare_id: number
         tare_mark: string
@@ -42,6 +43,7 @@ declare namespace frontend {
     export type ISelectionData = {
         stock_name: string
         material: string
+        material_id: number
         rest_tare_amount: number
         rest_net_weight: number
         [key: string]: number;
