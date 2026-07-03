@@ -41,11 +41,18 @@ const isAddingInProgress = ref(false);
 const isGridMode = ref(false);
 const gridNumbers = ref<number[]>([]);    
 
+type RawMaterialsTableColumn = {
+  prop: string;
+  label: string;
+  width?: number;
+};
+
+
 // Колонки таблицы сырья
-const RawMaterialsColumns = [
-    { prop: 'material', label: 'Материал', width: '200' },
-    { prop: 'tare_id', label: 'Номер', width: '100' },
-    { prop: 'net_weight', label: 'Нетто', width: '100' },
+const RawMaterialsColumns: RawMaterialsTableColumn[] = [
+    { prop: 'material', label: 'Материал' },
+    { prop: 'tare_id', label: 'Номер', width: 100 },
+    { prop: 'net_weight', label: 'Нетто', width: 100 },
 ] as const;
 
 const handleGridCellClick = async (tareId: number) => {
