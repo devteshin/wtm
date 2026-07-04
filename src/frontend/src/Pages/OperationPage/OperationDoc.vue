@@ -243,6 +243,7 @@ const closeDoc = async () =>  {
 
 const openSelection = async () =>  {
   await saveDoc();
+  reportStore.isAutoGenerateReport = true;
   setContextMaterialsSelection();
   drawerVisible.value = true;
 };
@@ -260,7 +261,6 @@ function setContextMaterialsSelection() {
   reportStore.isSelectionEnabled = true;
   reportStore.isSelectionControlEnabled = true;
   reportStore.isOnlyNonZeroMode = true;
-  reportStore.isAutoGenerateReport = true;
 }; 
 
 const saveDoc = async () =>  {

@@ -164,7 +164,7 @@
         <!-- Таблица с данными -->
         <template v-else>
           <div class="table-wrapper">
-            <div v-if="!reportStore.tableData?.length">Таблица пуста</div>
+            <div v-if="!reportStore.tableData?.length">Нет данных для отображения</div>
             <el-table
               v-else
               ref="tableRef"
@@ -373,7 +373,6 @@ const tableCondition = computed({
   get: () => reportStore.tableCondition,
   set: (value) => reportStore.setFilters({ tableCondition: value })
 });
-
 
 const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
@@ -644,12 +643,6 @@ onMounted(async () => {
     if (!reportStore.detailedSelectionColumns.length) {
       reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value];
     }
-    if (reportStore.isAutoGenerateReport) {
-      if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
-        await handleMakeReport();
-      };  
-      reportStore.isAutoGenerateReport = false;
-    }
   } finally {
     store.loading = false;
   }
@@ -847,6 +840,7 @@ watch(() => tableRef.value, (tableInstance) => {
     });
   }
 });
+
 
 function configuringReportTables() {
   // Удаляем старые колонки с процентами перед добавлением новых
@@ -1165,6 +1159,18 @@ const handleDrawerClose = () => {
   emit('close');
 };
 
+watch(
+  () => reportStore.isAutoGenerateReport,
+  async (newValue) => {
+    if (!newValue) return;
+
+    if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
+      await handleMakeReport();
+    };  
+    reportStore.isAutoGenerateReport = false;
+  },
+  { immediate: true }
+);
 
 </script>
 
