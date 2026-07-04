@@ -274,7 +274,7 @@
                     </span>
                   </div>
                 </el-form-item>
-                <el-form-item style="margin-top: 16px;">
+                <el-form-item v-if="isSelectionDetailedMode" style="margin-top: 16px;">
                   <div style="display: flex; gap: 8px; justify-content: flex-end;">
                     <el-button @click="handleDrawerClose">Отмена</el-button>
                     <el-button type="primary" @click="handleApplySelection">Применить выбор</el-button>
@@ -644,7 +644,12 @@ onMounted(async () => {
     if (!reportStore.detailedSelectionColumns.length) {
       reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value];
     }
-
+    if (reportStore.isAutoGenerateReport) {
+      if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
+        await handleMakeReport();
+      };  
+      reportStore.isAutoGenerateReport = false;
+    }
   } finally {
     store.loading = false;
   }
@@ -1182,7 +1187,7 @@ const handleDrawerClose = () => {
 
 /* Таблица занимает 70% высоты, если футер виден, иначе 100% */
 .table-container {
-  flex: 0 0 70%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 80% */
+  flex: 0 0 70%; /* flex-grow: 0, flex-shrink: 0, flex-basis: % */
   padding: 0 20px 20px;
   box-sizing: border-box;
   position: relative; /* Для корректной работы абсолютного позиционирования внутри */

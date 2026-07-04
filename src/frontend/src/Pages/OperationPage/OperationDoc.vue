@@ -2,6 +2,7 @@
 import { onMounted, onBeforeUnmount, computed, ref, watchEffect, watch } from "vue";
 import { useRouter } from "vue-router";
 import useApplicationStore from "@/store";
+import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
@@ -10,9 +11,10 @@ import RawMaterialGrid from './RawMaterialGrid.vue';
 import MaterialPage from '../MaterialsPage.vue';
 import DebugDrawerContent from '../DebugDrawerContent.vue';
 
+
 const router = useRouter();
 const store = useApplicationStore();
-
+const reportStore = useMaterialsReportStore()
 const props = defineProps({
     stockID: { type:Number, required: true },
     operationID: { type: Number, required: true },
@@ -241,9 +243,25 @@ const closeDoc = async () =>  {
 
 const openSelection = async () =>  {
   await saveDoc();
+  setContextMaterialsSelection();
   drawerVisible.value = true;
 };
 
+function setContextMaterialsSelection() {
+  if (raw_materials_options.value.length >0){
+    const newselectedMaterials = raw_materials_options.value.filter(item => !reportStore.selectedMaterial.includes(item.material_id)).map(item => item.material_id);
+    reportStore.selectedMaterial = [...reportStore.selectedMaterial, ...newselectedMaterials];
+  };  
+  if (props.stockID != null) {
+    reportStore.selectedStore = [props.stockID];
+  };
+  reportStore.isSelectionDetailedMode = true;
+  reportStore.isDetailedMode = true;
+  reportStore.isSelectionEnabled = true;
+  reportStore.isSelectionControlEnabled = true;
+  reportStore.isOnlyNonZeroMode = true;
+  reportStore.isAutoGenerateReport = true;
+}; 
 
 const saveDoc = async () =>  {
   if (doc_number.value == '' ||  doc_date.value == '' || doc_items.value.map(item => item.material).find(item => item === "")) {
