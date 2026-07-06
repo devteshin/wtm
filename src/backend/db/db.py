@@ -453,7 +453,7 @@ async def select_dnm_doc_number(conn: Connection, operation_id: int):
     return ""
 
 
-async def select_operations(conn: Connection, user_id: int, stock_id: int, active_operation_flag: int):
+async def select_operations(conn: Connection, user_id: int, stock_id: int, active_operation_mode: int):
     q = """
         SELECT 
             o.id
@@ -470,11 +470,11 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int, activ
             a.operation = o.id
         WHERE 
             executor_id = %(user_id)s 
-            AND o.done <> %(active_operation_flag)s   
+            AND o.done <> %(active_operation_mode)s   
     """
     operations = []
     async with conn.cursor() as cur:
-        await cur.execute(q, {"user_id": user_id, "stock_id":stock_id, "active_operation_flag":active_operation_flag})
+        await cur.execute(q, {"user_id": user_id, "stock_id":stock_id, "active_operation_flag":active_operation_mode})
         operations = await cur.fetchall()
     return operations
 

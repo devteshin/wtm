@@ -16,7 +16,7 @@
                     inactive-color="#ff4949"
                 />
                 <span class="switch-description">
-                    {{ isActiveOperationMode ? 'активные оперции' : 'выполненные операции' }}
+                    {{ isActiveOperationMode ? 'активные операции' : 'выполненные операции' }}
                 </span>
                 </div>
             </el-form-item>
