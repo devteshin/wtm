@@ -243,7 +243,7 @@ const closeDoc = async () =>  {
 
 const openSelection = async () =>  {
   await saveDoc();
-  reportStore.isAutoGenerateReport = true;
+  reportStore.isOperationDocAutoGenerateReport = true;
   setContextMaterialsSelection();
   drawerVisible.value = true;
 };

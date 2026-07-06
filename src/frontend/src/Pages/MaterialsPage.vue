@@ -274,7 +274,7 @@
                     </span>
                   </div>
                 </el-form-item>
-                <el-form-item v-if="isSelectionDetailedMode && isAutoGenerateMode" style="margin-top: 16px;">
+                <el-form-item v-if="isSelectionDetailedMode && isOperationDocMode" style="margin-top: 16px;">
                   <div style="display: flex; gap: 8px; justify-content: flex-end;">
                     <el-button @click="handleDrawerClose">Отмена</el-button>
                     <el-button type="primary" @click="handleApplySelection">Применить выбор</el-button>
@@ -324,7 +324,7 @@ const reportStore = useMaterialsReportStore()
 
 const isAutoSelectionUpdate = ref(false);
 const hasFooter = computed(() => isSelectionControlEnabled.value);
-const isAutoGenerateMode =ref(false);
+const isOperationDocMode =ref(false);
 
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
@@ -644,7 +644,7 @@ onMounted(async () => {
     if (!reportStore.detailedSelectionColumns.length) {
       reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value];
     }
-    isAutoGenerateMode.value = reportStore.isAutoGenerateReport;
+    isOperationDocMode.value = reportStore.isOperationDocAutoGenerateReport;
   } finally {
     store.loading = false;
   }
@@ -1162,14 +1162,14 @@ const handleDrawerClose = () => {
 };
 
 watch(
-  () => reportStore.isAutoGenerateReport,
+  () => reportStore.isOperationDocAutoGenerateReport,
   async (newValue) => {
     if (!newValue) return;
 
     if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
       await handleMakeReport();
     };  
-    reportStore.isAutoGenerateReport = false;
+    reportStore.isOperationDocAutoGenerateReport = false;
   },
   { immediate: true }
 );
