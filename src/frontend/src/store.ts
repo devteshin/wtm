@@ -66,8 +66,8 @@ export default defineStore("app_store", () => {
         return api.fetchMaterialsMeta(stockID).then(body => materials_meta.value = body).finally(() => loading.value = false);
     };
     /** запрос к API для получения списка операций */
-    const fetchOperations = (stockID: number) => {
-        return api.fetchOperations(stockID).then(body => operations.value = body).finally(() => loading.value = false);
+    const fetchOperations = (stockID: number, activeOperationMode: boolean) => {
+        return api.fetchOperations(stockID, activeOperationMode).then(body => operations.value = body).finally(() => loading.value = false);
     };
     /** запрос к API для получения списка складов */
     const fetchStocks = () => {

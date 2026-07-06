@@ -17,6 +17,7 @@ const ARRIVAL_CREATE = "arrival/create";
 const RGW = "rest_gross_weight";
 const TASKS_PROGRESS = "tasks_progress";
 const CHECK_ITEM = "check_item";
+const ACTIVE_OPERATION = "active_operation";
 
 type user = {
     can_login: number;
@@ -126,9 +127,10 @@ class ClientAPI {
         return body;
     }
 
-    async fetchOperations(stockID: number) {
+    async fetchOperations(stockID: number, activeOperationMode: boolean) {
         this.checkToken();
-        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/operations`, { headers: this.requestHeaders() });
+        const modeValue = activeOperationMode ? 1 : 0;
+        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/${ACTIVE_OPERATION}/${modeValue}/operations`, { headers: this.requestHeaders() });
         if (response.status === 403) {
             window.localStorage.removeItem("token");
             location.href = "/login";
