@@ -49,11 +49,13 @@ async def get_dnm_doc_number(request: Request):
 async def get_operations(request: Request):
     """ получени списка операций """
     stock_id = request.match_info.get("stockID", None)
-    active_operation_mode = request.match_info.get("activeOperationMode", None)
+    #active_operation_mode = request.match_info.get("activeOperationMode", None)
+    active_operation_mode_str = request.query.get("activeOperationMode")
     if stock_id is None:
         raise HTTPBadRequest()
-    if active_operation_mode is None:
+    if active_operation_mode_str is None:
         raise HTTPBadRequest()
+    active_operation_mode = int (active_operation_mode_str)
     operations = []
     async with request.app["db"].acquire() as conn:
         operations = await select_operations(conn, request.user_id, stock_id, active_operation_mode)

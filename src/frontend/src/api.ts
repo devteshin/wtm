@@ -142,11 +142,14 @@ class ClientAPI {
 async fetchOperations(stockID: number, activeOperationMode: boolean) {
   this.checkToken();
 
-  const url = new URL(`${BASE_URL}/${STOCK}/${stockID}/operations`);
-  url.searchParams.set('activeOperationMode', activeOperationMode ? '1' : '0');
+  const path = `${BASE_URL}/${STOCK}/${stockID}/operations`;
+  const query = `?activeOperationMode=${activeOperationMode ? '1' : '0'}`;
 
-  const response = await fetch(url.toString(), { headers: this.requestHeaders() });
+  const url = path + query;
 
+  console.log('URL:', url);
+
+  const response = await fetch(url, { headers: this.requestHeaders() });
   if (response.status === 403) {
     window.localStorage.removeItem("token");
     location.href = "/login";

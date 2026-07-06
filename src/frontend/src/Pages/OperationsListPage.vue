@@ -67,7 +67,7 @@
     :before-close="handleCloseDrawer"
     size="60%"
   >
-    <OperationItem :operationID="currentOperationID" @close="drawerVisible = false" />
+    <OperationItems :operationID="currentOperationID" @close="drawerVisible = false" />
   </el-drawer>
 </template>
 
@@ -76,7 +76,7 @@ import { ref, watch } from "vue";
 import { onMounted } from "vue";
 import useApplicationStore from "@/store";
 import { useRouter } from "vue-router";
-import OperationItem from "../Pages/OperationPage/OperationItem.vue";
+import OperationItems from "../Pages/OperationPage/OperationItems.vue";
 
 import { Plus, Edit } from "@element-plus/icons-vue";
 
