@@ -170,6 +170,7 @@ class ClientAPI {
 
     async fetchOperationData(operationID: number) {
         this.checkToken();
+        console.log("API", "fetching operation data for ID:", {operationID});
         const response = await fetch(`${BASE_URL}/${OPERATION}/${operationID}/operation_data`, { headers: this.requestHeaders() });
         if (response.status === 403) {
             window.localStorage.removeItem("token");
