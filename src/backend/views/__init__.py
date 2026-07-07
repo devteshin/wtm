@@ -4,7 +4,7 @@ from aiohttp.web import Application, FileResponse, Request
 
 from .handlers import (
     change_password_handler, get_stocks, get_task,
-    get_tasks, get_dnm_doc_number, get_operations, get_operation, get_arrival, login_handler, rest_gross_weight,
+    get_tasks, get_dnm_doc_number, get_operations, get_operations_meta, get_operation, get_arrival, login_handler, rest_gross_weight,
     tasks_progress, update_job_status_handler, get_max_tare_id,
     update_jobs_status_handler, create_arrival_handler, update_arrival_handler, delete_arrival_handler, 
     check_material_item_handler, get_materials_meta, get_materials_data, get_selection_data)
@@ -42,6 +42,7 @@ def setup_handlers(app: Application):
         ("GET", "/api/stocks", get_stocks, "get_stocks"),
         # ("GET", "/api/stock/{stockID}/active_operation/{activeOperation}/operations", get_operations, "get_operations"),
         ("GET", "/api/stock/{stockID}/operations", get_operations, "get_operations"),
+        ("GET", "/api/stock/{stockID}/operations_meta", get_operations_meta, "get_operations_meta"),
         ("GET", "/api/stock/{stockID}/operation/{operationID}", get_operation, "get_operation"),
         ("GET", "/api/dnm/{operationID}", get_dnm_doc_number, "get_dnm_doc_number"),
         ("GET", "/api/stock/{stockID}/operation/{operationID}/doc/{docID}", get_arrival, "get_arrival"),

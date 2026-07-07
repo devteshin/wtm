@@ -98,6 +98,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const fetchOperationsMeta = (stockID: number, with_load=true) => {
+        if (with_load) loading.value = true;
+        return api.fetchOperationsMeta(stockID).then(body => operation.value = body).finally(() => {
+            if (with_load) loading.value = false;
+        });
+    };
+
     /** запрос к API для получения позиций документа приема из производства */
     const fetchArrival = (stockID: number, operationID: number, docID: number, with_load=true) => {
         if (with_load) loading.value = true;
@@ -209,6 +216,7 @@ export default defineStore("app_store", () => {
         fetchMaterialsData,
         fetchSelectionData,
         fetchOperations,
+        fetchOperationsMeta,
         fetchOperation,
         fetchDNMDocNumber,
         fetchMaxTareID,

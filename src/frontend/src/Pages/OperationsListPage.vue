@@ -67,7 +67,16 @@
     :before-close="handleCloseDrawer"
     size="60%"
   >
-    <OperationItems :operationID="currentOperationID" @close="drawerVisible = false" />
+    <OperationItems
+      v-if="currentOperationID !== null && store.currentUser?.id !== undefined"
+      :operationID="currentOperationID!"
+      :stockID="props.stockID"
+      :userID="Number(store.currentUser?.id)"
+      @close="drawerVisible = false"
+    />
+    <div v-else class="empty-state">
+      Недостаточно данных для отображения формы
+    </div>
   </el-drawer>
 </template>
 

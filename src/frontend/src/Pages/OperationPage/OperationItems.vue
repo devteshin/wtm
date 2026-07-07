@@ -3,7 +3,7 @@
     <el-form
       ref="formRef"
       :model="form"
-      label-width="140px"
+      label-width="200px"
       status-icon
       :rules="rules"
     >
@@ -24,7 +24,7 @@
           <el-option
             v-for="p in processOptions"
             :key="p.id"
-            :label="p.name"
+            :label="p.process_name"
             :value="p.id"
           />
         </el-select>
@@ -41,7 +41,7 @@
           <el-option
             v-for="e in executorOptions"
             :key="e.id"
-            :label="e.name"
+            :label="e.employee_name"
             :value="e.id"
           />
         </el-select>
@@ -62,7 +62,7 @@
           <el-option
             v-for="t in templateOptions"
             :key="t.id"
-            :label="t.name"
+            :label="t.template_name"
             :value="t.id"
           />
         </el-select>
@@ -89,13 +89,16 @@
 import { ref, onMounted, watch, shallowRef } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessageBox } from 'element-plus' // для confirm
+import useApplicationStore from "@/store";
+
+const store = useApplicationStore();
 
 // --- Пропсы ---
-const props = defineProps<{
-  stockID: number | null
-  userID: number | null
-  operationID: number | null
-}>()
+const props = defineProps({
+  stockID: { type: Number, required: true },
+  userID: { type: Number, required: true },
+  operationID: { type: Number, required: true },
+});
 
 // --- Локальные состояния ---
 const formRef = ref<FormInstance | undefined>(undefined)
@@ -121,18 +124,18 @@ const form = shallowRef<FormData>({
 // Храним «оригинальную» версию формы, чтобы детектить изменения
 const originalForm = shallowRef<FormData | null>(null)
 
-const processOptions = ref<{ id: number; name: string }[]>([])
-const executorOptions = ref<{ id: number; name: string }[]>([])
-const templateOptions = ref<{ id: number; name: string }[]>([])
+const processOptions = ref<{ id: number; process_name: string }[]>([])
+const executorOptions = ref<{ id: number; employee_name: string }[]>([])
+const templateOptions = ref<{ id: number; template_name: string }[]>([])
 
 // --- Мета-данные ---
 const fetchMeta = async () => {
-  // Вставь сюда свой fetchOperationMeta
-  // Пример:
-  // const meta = await fetchOperationMeta()
-  // processOptions.value = meta.processes
-  // executorOptions.value = meta.executors
-  // templateOptions.value = meta.templates
+  if (props.stockID) {
+    const meta = await store.fetchOperationsMeta(props.stockID)
+    processOptions.value = meta.processes
+    executorOptions.value = meta.executors
+    templateOptions.value = meta.doc_templates
+  }
 }
 
 // Загрузка операции для редактирования

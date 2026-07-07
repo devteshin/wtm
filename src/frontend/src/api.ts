@@ -17,7 +17,6 @@ const ARRIVAL_CREATE = "arrival/create";
 const RGW = "rest_gross_weight";
 const TASKS_PROGRESS = "tasks_progress";
 const CHECK_ITEM = "check_item";
-//const ACTIVE_OPERATION = "active_operation";
 
 type user = {
     can_login: number;
@@ -139,25 +138,35 @@ class ClientAPI {
         return body;
     }
  */
-async fetchOperations(stockID: number, activeOperationMode: boolean) {
-  this.checkToken();
+    async fetchOperations(stockID: number, activeOperationMode: boolean) {
+    this.checkToken();
 
-  const path = `${BASE_URL}/${STOCK}/${stockID}/operations`;
-  const query = `?activeOperationMode=${activeOperationMode ? '1' : '0'}`;
+    const path = `${BASE_URL}/${STOCK}/${stockID}/operations`;
+    const query = `?activeOperationMode=${activeOperationMode ? '1' : '0'}`;
 
-  const url = path + query;
+    const url = path + query;
 
-  console.log('URL:', url);
+    console.log('URL:', url);
 
-  const response = await fetch(url, { headers: this.requestHeaders() });
-  if (response.status === 403) {
-    window.localStorage.removeItem("token");
-    location.href = "/login";
-  }
+    const response = await fetch(url, { headers: this.requestHeaders() });
+    if (response.status === 403) {
+        window.localStorage.removeItem("token");
+        location.href = "/login";
+    }
 
-  return response.json();
-}
+    return response.json();
+    }
 
+    async fetchOperationsMeta(stockID: number) {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/operations_meta`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
 
     async fetchOperation(stockID: number, operationID: number) {
         this.checkToken();
@@ -369,10 +378,6 @@ async fetchOperations(stockID: number, activeOperationMode: boolean) {
             "Content-Type": "application/json",
             ...this.requestHeaders()
         };
-        //const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });  
-        //if (response.status !== 201) {
-        //   throw new Error(await response.text());
-        //}
 
         try {
             const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });

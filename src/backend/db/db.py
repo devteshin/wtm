@@ -478,6 +478,20 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int, activ
         operations = await cur.fetchall()
     return operations
 
+async def select_operations_meta(conn: Connection, user_id: int, stock_id: int):
+    operations_meta = {}
+    async with conn.cursor() as cur:
+        await cur.execute("SELECT id, process_name FROM technical_process")
+        processes = await cur.fetchall()
+        await cur.execute("SELECT id, employee_name FROM staff")
+        executors = await cur.fetchall()
+        await cur.execute("SELECT id, name AS template_name FROM doc_num_modifier")
+        doc_templates = await cur.fetchall()
+    operations_meta["processes"] = processes
+    operations_meta["executors"] = executors
+    operations_meta["doc_templates"] = doc_templates
+    return operations_meta
+
 async def select_operation(conn: Connection, user_id: int, stock_id: int, operation_id: int):
     q = """
 SELECT
