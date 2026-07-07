@@ -532,7 +532,8 @@ async def select_operation_data(conn: Connection, operation_id: int):
             {"operation_id": operation_id},
         )
         executors_raw = await cur.fetchall()
-        operation_data["executorIds"] = [e[0] for e in executors_raw]
+        print(executors_raw)
+        operation_data["executorIds"] = [e["executor_id"] for e in executors_raw]
 
         return operation_data
 
