@@ -474,7 +474,7 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int, activ
     """
     operations = []
     async with conn.cursor() as cur:
-        await cur.execute(q, {"user_id": user_id, "stock_id":stock_id, "active_operation_flag":active_operation_mode})
+        await cur.execute(q, {"user_id": user_id, "stock_id":stock_id, "active_operation_mode":active_operation_mode})
         operations = await cur.fetchall()
     return operations
 
