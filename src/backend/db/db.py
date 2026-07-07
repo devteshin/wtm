@@ -85,7 +85,6 @@ async def select_selection_data(
     return report_result
 
 
-
 async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
     q_stock = """
 SELECT 
@@ -108,7 +107,23 @@ SELECT
 WHERE FIND_IN_SET((SELECT organization_id FROM stock WHERE id = %(stock_id)s), organization_id)
     ORDER BY code    
     """
+    async with conn.cursor() as cur:
+        await cur.execute(q_stock, {"stock_id": stock_id})
+        stock_list = await cur.fetchall()
 
+        await cur.execute(q_element, {"stock_id": stock_id})
+        material_group_list = await cur.fetchall()
+
+    material_list = await select_materials_list(conn)
+
+    return {
+        "material_list": material_list,
+        "stock_list": stock_list,
+        "material_group_list": material_group_list
+    }
+
+
+async def select_materials_list(conn: Connection):
     q_material = """
 SELECT 
     id
@@ -117,22 +132,11 @@ SELECT
 WHERE kind = 0    
 ORDER BY material    
     """
-
     async with conn.cursor() as cur:
-        await cur.execute(q_stock, {"stock_id": stock_id})
-        stock_list = await cur.fetchall()
-
-        await cur.execute(q_element, {"stock_id": stock_id})
-        material_group_list = await cur.fetchall()
-
         await cur.execute(q_material)
         material_list = await cur.fetchall()
 
-    return {
-        "material_list": material_list,
-        "stock_list": stock_list,
-        "material_group_list": material_group_list
-    }
+    return material_list
 
 async def select_tasks(conn: Connection, user_id: int, stock_id: int) -> list:
     """ получение списка заданий """
@@ -487,10 +491,51 @@ async def select_operations_meta(conn: Connection, user_id: int, stock_id: int):
         executors = await cur.fetchall()
         await cur.execute("SELECT id, name AS template_name FROM doc_num_modifier")
         doc_templates = await cur.fetchall()
+    material_list = await select_materials_list(conn)
+    operations_meta["products"] =  [
+            {
+                "id": item["id"],
+                "product_name": item["name"],
+            }
+            for item in material_list
+    ]
     operations_meta["processes"] = processes
     operations_meta["executors"] = executors
     operations_meta["doc_templates"] = doc_templates
     return operations_meta
+
+async def select_operation_data(conn: Connection, operation_id: int):
+    async with conn.cursor() as cur:
+        await cur.execute(
+            """
+            SELECT name, product_id, dnm_id, tp_id, done
+            FROM operations
+            WHERE id = %(operation_id)s
+            """,
+            {"operation_id": operation_id},
+        )
+        row = await cur.fetchone()
+
+        if row is None:
+            return None
+
+        operation_data = {
+            "operationName": row.name,
+            "productId": row.product_id,         
+            "processId": row.tp_id,
+            "documentTemplateId": row.dnm_id,
+            "isCompleted": bool(row.done),
+        }
+
+        await cur.execute(
+            "SELECT executor_id FROM operation_executors WHERE operation_id = %(operation_id)s",
+            {"operation_id": operation_id},
+        )
+        executors_raw = await cur.fetchall()
+        operation_data["executorIds"] = [e[0] for e in executors_raw]
+
+        return operation_data
+
 
 async def select_operation(conn: Connection, user_id: int, stock_id: int, operation_id: int):
     q = """

@@ -49,7 +49,7 @@
           <el-table-column width="60" align="center">
             <template #default="{ row }">
               <el-button
-                type="text"
+                link
                 :icon="Edit"
                 @click.stop="openDrawer(row.id)"
               />

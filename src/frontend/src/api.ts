@@ -168,6 +168,17 @@ class ClientAPI {
         return body;
     }
 
+    async fetchOperationData(operationID: number) {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/${OPERATION}/${operationID}/operation_data`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
     async fetchOperation(stockID: number, operationID: number) {
         this.checkToken();
         const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/${OPERATION}/${operationID}`, { headers: this.requestHeaders() });

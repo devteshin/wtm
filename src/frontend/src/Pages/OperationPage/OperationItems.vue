@@ -11,8 +11,19 @@
         <el-input v-model="form.operationName" clearable />
       </el-form-item>
 
-      <el-form-item label="Наименование продукта" prop="productName">
-        <el-input v-model="form.productName" clearable />
+      <el-form-item label="Наименование продукта" prop="productId">
+        <el-select
+          v-model="form.productId"
+          placeholder="Выберите продукт"
+          clearable
+        >
+          <el-option
+            v-for="p in productOptions"
+            :key="p.id"
+            :label="p.product_name"
+            :value="p.id"
+          />
+        </el-select>
       </el-form-item>
 
       <el-form-item label="Техпроцесс" prop="processId">
@@ -34,7 +45,6 @@
         <el-select
           v-model="form.executorIds"
           multiple
-          collapse-tags
           placeholder="Выберите исполнителей"
           clearable
         >
@@ -49,7 +59,6 @@
 
       <el-form-item label="Операция выполнена">
         <el-checkbox v-model="form.isCompleted">
-          Отметить как выполненную
         </el-checkbox>
       </el-form-item>
 
@@ -86,9 +95,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, shallowRef } from 'vue'
+import { ref, onMounted, watch, shallowRef, computed } from 'vue'
 import type { FormInstance } from 'element-plus'
-import { ElMessageBox } from 'element-plus' // для confirm
+import { ElMessageBox } from 'element-plus'
 import useApplicationStore from "@/store";
 
 const store = useApplicationStore();
@@ -97,7 +106,7 @@ const store = useApplicationStore();
 const props = defineProps({
   stockID: { type: Number, required: true },
   userID: { type: Number, required: true },
-  operationID: { type: Number, required: true },
+  operationID: { type: Number || null, required: true }, // допускаем null для создания новой
 });
 
 // --- Локальные состояния ---
@@ -105,46 +114,57 @@ const formRef = ref<FormInstance | undefined>(undefined)
 
 interface FormData {
   operationName: string
-  productName: string
-  processId: number | null
-  executorIds: number[]
+  productId: number | null
+  processId: number | null          // храним ID
+  executorIds: number[]            // храним массив ID
   isCompleted: boolean
-  documentTemplateId: number | null
+  documentTemplateId: number | null // храним ID
 }
 
-const form = shallowRef<FormData>({
+const form = ref<FormData>({
   operationName: '',
-  productName: '',
+  productId: null,
   processId: null,
   executorIds: [],
   isCompleted: false,
   documentTemplateId: null,
 })
 
-// Храним «оригинальную» версию формы, чтобы детектить изменения
 const originalForm = shallowRef<FormData | null>(null)
 
+const productOptions = ref<{ id: number; product_name: string }[]>([])
 const processOptions = ref<{ id: number; process_name: string }[]>([])
 const executorOptions = ref<{ id: number; employee_name: string }[]>([])
 const templateOptions = ref<{ id: number; template_name: string }[]>([])
 
 // --- Мета-данные ---
 const fetchMeta = async () => {
-  if (props.stockID) {
-    const meta = await store.fetchOperationsMeta(props.stockID)
-    processOptions.value = meta.processes
-    executorOptions.value = meta.executors
-    templateOptions.value = meta.doc_templates
-  }
+  if (!props.stockID) return
+  const meta = await store.fetchOperationsMeta(props.stockID)
+  productOptions.value = meta.products
+  processOptions.value = meta.processes
+  executorOptions.value = meta.executors
+  templateOptions.value = meta.doc_templates
 }
 
 // Загрузка операции для редактирования
 const loadOperation = async (id: number) => {
-  // Запрос к API по operationID, получение данных и заполнение form.value
-  // После заполнения обязательно сохраняем копию в originalForm.value
+  const operation = await store.fetchOperationData(id)
+  
+  console.log('operation', operation)
+
+  form.value = {
+    operationName: operation.operationName,
+    productId: operation.productId,
+    processId: operation.processId,
+    executorIds: operation.executorIds,
+    isCompleted: operation.isCompleted,
+    documentTemplateId: operation.documentTemplateId,
+  }
+  originalForm.value = { ...form.value }
 }
 
-// Проверка изменений (поверхностное сравнение полей)
+// Проверка изменений
 const hasChanges = (): boolean => {
   if (!originalForm.value) return false
   const a = form.value
@@ -152,7 +172,7 @@ const hasChanges = (): boolean => {
 
   return (
     a.operationName !== b.operationName ||
-    a.productName !== b.productName ||
+    a.productId !== b.productId ||
     a.processId !== b.processId ||
     JSON.stringify(a.executorIds) !== JSON.stringify(b.executorIds) ||
     a.isCompleted !== b.isCompleted ||
@@ -172,17 +192,16 @@ const handleSave = async () => {
     stockID: props.stockID,
     userID: props.userID,
     operationName: form.value.operationName,
-    productName: form.value.productName,
+    productId: form.value.productId,
     processId: form.value.processId,
     executorIds: form.value.executorIds,
     isCompleted: form.value.isCompleted,
     documentTemplateId: form.value.documentTemplateId,
   }
 
-  // Тут вызывай свой API/стор для сохранения
+  // Вызов API/стора на сохранение
   // await api.saveOperation(payload)
 
-  // После успешного сохранения обновляем оригинал, чтобы «изменений» не было
   originalForm.value = { ...form.value }
 }
 
@@ -197,14 +216,13 @@ const handleDelete = async () => {
 
   if (!confirmed) return
 
-  // Тут вызов API/стора на удаление
+  // Вызов API/стора на удаление
   // await api.deleteOperation(props.operationID)
 
-  // После удаления можно сбросить форму и сообщить, что операция удалена
   originalForm.value = null
   form.value = {
     operationName: '',
-    productName: '',
+    productId: null,
     processId: null,
     executorIds: [],
     isCompleted: false,
@@ -215,8 +233,6 @@ const handleDelete = async () => {
 // Закрытие с проверкой изменений
 const handleClose = async () => {
   if (!hasChanges()) {
-    // Просто закрываем (родитель сам управляет видимостью drawer через v-model)
-    // Для этого компонента достаточно ничего не делать: родитель слушает кнопку и ставит drawerVisible = false
     return
   }
 
@@ -228,11 +244,10 @@ const handleClose = async () => {
 
   if (confirmed === 'confirm') {
     await handleSave()
-    // После сохранения изменений нет — можно спокойно закрыться
   } else if (confirmed === 'cancel') {
-    // Пользователь отказался сохранять — просто закрываемся
+    // Можно сбросить форму до оригинала, если хочешь
+    // form.value = { ...originalForm.value! }
   }
-  // Если пользователь нажал «Не сохранять», можно дополнительно сбросить форму до оригинала, если нужно
 }
 
 onMounted(() => {
@@ -242,15 +257,13 @@ onMounted(() => {
 watch(
   () => props.operationID,
   async (newID) => {
-    if (newID !== null) {
+    if (newID !== null && newID !== undefined) {
       await loadOperation(newID)
-      // После загрузки сохраняем «оригинал»
       originalForm.value = { ...form.value }
     } else {
-      // Сброс для создания новой операции
       form.value = {
         operationName: '',
-        productName: '',
+        productId: null,
         processId: null,
         executorIds: [],
         isCompleted: false,
@@ -262,7 +275,7 @@ watch(
   { immediate: true }
 )
 
-const rules = {} // добавь правила валидации по необходимости
+const rules = {} // добавь правила валидации
 </script>
 
 <style scoped>
