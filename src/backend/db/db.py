@@ -520,11 +520,11 @@ async def select_operation_data(conn: Connection, operation_id: int):
             return None
 
         operation_data = {
-            "operationName": row.name,
-            "productId": row.product_id,         
-            "processId": row.tp_id,
-            "documentTemplateId": row.dnm_id,
-            "isCompleted": bool(row.done),
+            "operationName": row["name"],
+            "productId": row["product_id"],
+            "processId": row["tp_id"],
+            "documentTemplateId": row["dnm_id"],
+            "isCompleted": bool(row["done"]),
         }
 
         await cur.execute(
