@@ -85,6 +85,7 @@ async def get_operations_meta(request: Request):
 async def get_operation_data(request: Request):
     """ получение данных операции """
     operation_id = request.match_info.get("operationID", None)
+    print(f"Operation ID {operation_id}")
     if operation_id is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
