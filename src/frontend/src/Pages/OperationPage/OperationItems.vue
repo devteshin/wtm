@@ -10,26 +10,31 @@
       <el-form-item label="Наименование операции" prop="operationName">
         <el-input v-model="form.operationName" clearable />
       </el-form-item>
-      <el-form-item label="Наименование продукта" prop="productId">
-        <div class="product-select-wrapper" style="display: flex; gap: 8px; align-items: center;">
-          <el-select
-            v-model="form.productId"
-            placeholder="Выберите продукт"
-            clearable
-            filterable
-            style="flex: 1;"
-          >
-            <el-option
-              v-for="p in productOptions"
-              :key="p.id"
-              :label="p.product_name"
-              :value="p.id"
-            />
-          </el-select>
-
-          <el-button type="primary" size="small" @click="openCreateProduct">+ Новый</el-button>
-        </div>
-      </el-form-item>
+      <el-row>
+        <el-col :span="24">
+          <el-form-item label="Наименование продукта" prop="productId">
+            <div class="product-select-wrapper">
+              <el-select
+                v-model="form.productId"
+                placeholder="Выберите продукт"
+                clearable
+                filterable
+                class="product-select"
+              >
+                <el-option
+                  v-for="p in productOptions"
+                  :key="p.id"
+                  :label="p.product_name"
+                  :value="p.id"
+                />
+              </el-select>
+              <el-button type="primary" @click="openCreateProduct">
+                + Новый продукт
+              </el-button>
+            </div>
+          </el-form-item>
+        </el-col>
+      </el-row>
       <el-form-item label="Техпроцесс" prop="processId">
         <el-select
           v-model="form.processId"
@@ -101,7 +106,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, shallowRef, computed } from 'vue'
 import type { FormInstance } from 'element-plus'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import useApplicationStore from "@/store";
 
 const store = useApplicationStore();
@@ -182,7 +187,6 @@ const hasChanges = (): boolean => {
   )
 }
 
-// Сохранение
 const handleSave = async () => {
   const validate = formRef.value?.validate
   if (!validate) return
@@ -191,8 +195,6 @@ const handleSave = async () => {
   if (!isValid) return
 
   const payload = {
-    stockID: props.stockID,
-    userID: props.userID,
     operationName: form.value.operationName,
     productId: form.value.productId,
     processId: form.value.processId,
@@ -201,8 +203,7 @@ const handleSave = async () => {
     documentTemplateId: form.value.documentTemplateId,
   }
 
-  // Вызов API/стора на сохранение
-  // await api.saveOperation(payload)
+   //await store.saveOperation(payload)
 
   originalForm.value = { ...form.value }
 }
@@ -247,32 +248,41 @@ const handleClose = async () => {
   if (confirmed === 'confirm') {
     await handleSave()
   } else if (confirmed === 'cancel') {
-    // Можно сбросить форму до оригинала, если хочешь
+    // Можно сбросить форму до оригинала
     // form.value = { ...originalForm.value! }
   }
 }
 
 const openCreateProduct = async () => {
-  const name = await ElMessageBox.prompt('Введите название нового продукта', 'Новый продукт', {
+  const result = await ElMessageBox.prompt('Введите название нового продукта', 'Новый продукт', {
     confirmButtonText: 'Создать',
     cancelButtonText: 'Отмена',
     inputPattern: /.{2,50}/,
     inputErrorMessage: 'Название должно быть от 2 до 50 символов',
   }).catch(() => null)
 
-  if (!name) return
+  if (!result || !result.value) return
 
-  const newProductID = await store.createMaterial({ name })
-  if (newProductID == 0) {
-    ElMessageBox({ type: "error", message:"Ошибка при создании материала"})
-    return
-  };
-  if (!productOptions.value.map(item => item.id).includes(newProductID)) {
-    productOptions.value.push({ id: newProductID, product_name: name })
-  };
-  form.value.productId = newProductID
+  try {
+    const newProductID = await store.createMaterial({ name: result.value })
+    if (!newProductID) {
+      ElMessageBox({ type: 'error', message: 'Не удалось создать новый продукт' })
+      return
+    }
+
+    const existing = productOptions.value.find(item => item.id === newProductID)
+    if (!existing) {
+      productOptions.value.push({ id: newProductID, product_name: result.value })
+    }
+    form.value.productId = newProductID
+  } catch (e) {
+    console.error('createMaterial error:', e)
+    ElMessageBox({
+      type: 'error',
+      message: 'Произошла ошибка при создании продукта.'
+    })
+  }
 }
-
 onMounted(() => {
   fetchMeta()
 })
@@ -298,10 +308,26 @@ watch(
   { immediate: true }
 )
 
-const rules = {} // добавь правила валидации
+const rules = {
+  operationName: [
+    { required: true, message: 'Не указано наименование операции', trigger: 'blur' },
+    { min: 2, message: 'Название должно быть не короче 2 символов', trigger: 'blur' }
+  ],
+}; 
 </script>
 
 <style scoped>
+.product-select-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.product-select {
+  flex: 1;
+}
+
 .form-footer {
   margin-top: 24px;
   text-align: right;

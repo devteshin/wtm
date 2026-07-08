@@ -163,6 +163,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const updateOperation = (payload: any) => {
+        loading.value = true;
+        return api.updateOperation(payload).finally(() => {
+            loading.value = false;
+        });
+    };
+
     const createArrival = (payload: any) => {
         loading.value = true;
         return api.createArrival(payload).finally(() => {
@@ -247,6 +254,7 @@ export default defineStore("app_store", () => {
         createArrival,
         updateArrival,
         deleteArrival,
+        updateOperation,
         stocks,
         operations,
         operation,
