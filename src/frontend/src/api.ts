@@ -14,6 +14,7 @@ const DNM = "dnm";
 const ARRIVAL = "arrival";
 const ARRIVAL_DELETE = "arrival/delete";
 const ARRIVAL_CREATE = "arrival/create";
+const MATERIAL_CREATE = "material/create";
 const RGW = "rest_gross_weight";
 const TASKS_PROGRESS = "tasks_progress";
 const CHECK_ITEM = "check_item";
@@ -348,6 +349,36 @@ class ClientAPI {
             return false
         }                
         return true;
+    }
+
+    async createMaterial(payload: any) {
+        const url = `${BASE_URL}/${MATERIAL_CREATE}`;
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+
+        try {
+            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+            if (!response.ok) {
+                const responseBody = await response.text(); // Считываем тело ответа как текст
+                let errorMessage = "";
+                try {
+                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
+                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
+                } catch {
+                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
+                }
+                throw new Error(errorMessage);
+            }
+            else {
+                const newMaterialID = await response.json();
+                return newMaterialID;
+            };
+        } catch (error) {
+            this.handleError(error);
+            return null;
+        }
     }
 
     async createArrival(payload: any) {

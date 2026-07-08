@@ -156,6 +156,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const createMaterial = (payload: any) => {
+        loading.value = true;
+        return api.createMaterial(payload).finally(() => {
+            loading.value = false;
+        });
+    };
+
     const createArrival = (payload: any) => {
         loading.value = true;
         return api.createArrival(payload).finally(() => {
@@ -236,6 +243,7 @@ export default defineStore("app_store", () => {
         updateJobStatus,
         updateJobsStatus,
         updateRestGrossWeight,
+        createMaterial,
         createArrival,
         updateArrival,
         deleteArrival,

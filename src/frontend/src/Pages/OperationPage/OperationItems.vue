@@ -10,22 +10,26 @@
       <el-form-item label="Наименование операции" prop="operationName">
         <el-input v-model="form.operationName" clearable />
       </el-form-item>
-
       <el-form-item label="Наименование продукта" prop="productId">
-        <el-select
-          v-model="form.productId"
-          placeholder="Выберите продукт"
-          clearable
-        >
-          <el-option
-            v-for="p in productOptions"
-            :key="p.id"
-            :label="p.product_name"
-            :value="p.id"
-          />
-        </el-select>
-      </el-form-item>
+        <div class="product-select-wrapper" style="display: flex; gap: 8px; align-items: center;">
+          <el-select
+            v-model="form.productId"
+            placeholder="Выберите продукт"
+            clearable
+            filterable
+            style="flex: 1;"
+          >
+            <el-option
+              v-for="p in productOptions"
+              :key="p.id"
+              :label="p.product_name"
+              :value="p.id"
+            />
+          </el-select>
 
+          <el-button type="primary" size="small" @click="openCreateProduct">+ Новый</el-button>
+        </div>
+      </el-form-item>
       <el-form-item label="Техпроцесс" prop="processId">
         <el-select
           v-model="form.processId"
@@ -150,8 +154,6 @@ const fetchMeta = async () => {
 // Загрузка операции для редактирования
 const loadOperation = async (id: number) => {
   const operation = await store.fetchOperationData(id)
-  
-  console.log('operation', operation)
 
   form.value = {
     operationName: operation.operationName,
@@ -250,6 +252,27 @@ const handleClose = async () => {
   }
 }
 
+const openCreateProduct = async () => {
+  const name = await ElMessageBox.prompt('Введите название нового продукта', 'Новый продукт', {
+    confirmButtonText: 'Создать',
+    cancelButtonText: 'Отмена',
+    inputPattern: /.{2,50}/,
+    inputErrorMessage: 'Название должно быть от 2 до 50 символов',
+  }).catch(() => null)
+
+  if (!name) return
+
+  const newProductID = await store.createMaterial({ name })
+  if (newProductID == 0) {
+    ElMessageBox({ type: "error", message:"Ошибка при создании материала"})
+    return
+  };
+  if (!productOptions.value.map(item => item.id).includes(newProductID)) {
+    productOptions.value.push({ id: newProductID, product_name: name })
+  };
+  form.value.productId = newProductID
+}
+
 onMounted(() => {
   fetchMeta()
 })
@@ -257,7 +280,7 @@ onMounted(() => {
 watch(
   () => props.operationID,
   async (newID) => {
-    if (newID !== null && newID !== undefined) {
+    if (newID !== null && newID !== undefined && newID !== 0) {
       await loadOperation(newID)
       originalForm.value = { ...form.value }
     } else {

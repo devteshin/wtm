@@ -2,7 +2,7 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound
 
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
-                update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival,
+                update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
                 check_material_item
                 )
 from utils import jsonify
@@ -291,6 +291,22 @@ async def update_jobs_status_handler(request: Request):
             raise HTTPBadRequest(
                 body=str(exc))  # pylint: disable=raise-missing-from
     return HTTPCreated()
+
+async def create_material_handler(request: Request):
+    payload: dict = await request.json()
+    material_name = payload.get("name", None)
+
+    if material_name is None:
+        raise HTTPBadRequest()
+    async with request.app["db"].acquire() as conn:
+        try:
+            new_material_id = await get_material_id(conn, material_name)
+            if new_material_id is None:
+                return Response(status=409, text=json.dumps({"new_material_id": 0}), content_type='application/json')            
+        except Exception as exc:
+            raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
+    return Response(status=201, text=json.dumps({"new_material_id": new_material_id}), content_type='application/json')
+
 
 async def create_arrival_handler(request: Request):
     payload: dict = await request.json()
