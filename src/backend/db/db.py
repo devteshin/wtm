@@ -888,6 +888,17 @@ async def get_material_id(conn: Connection, material: str):
             else:
                 return result.get("id", 0)
 
+async def check_operation_name(conn: Connection, operation_id: int, operation_name: str):
+    q = """ SELECT EXISTS (SELECT TRUE FROM operations 
+    WHERE name = %(operation_name)s 
+    AND id <> %(operation_id)s) AS operation_exists 
+    """
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"operation_id": operation_id, "operation_name": operation_name})
+        result = await cur.fetchone()
+
+    return bool(result.get("operation_exists", 0))
+
 
 async def check_doc_number_arrival(conn: Connection, doc_id: int, doc_number: str):
     q = """ SELECT EXISTS (SELECT TRUE FROM arrival_doc WHERE doc_number = %(doc_number)s AND id <> %(doc_id)s) AS doc_number_exists """

@@ -8,6 +8,7 @@ const CHANGE_PASSWORD = "change_password";
 const STOCK = "stock";
 const OPERATION = "operation";
 const OPERATION_UPDATE = "operation/update";
+const CHECK_OPERATION_NAME = "operation/check_name";
 const MATERIAL = "material";
 const DOC = "doc";
 const JOB = "job";
@@ -19,6 +20,7 @@ const MATERIAL_CREATE = "material/create";
 const RGW = "rest_gross_weight";
 const TASKS_PROGRESS = "tasks_progress";
 const CHECK_ITEM = "check_item";
+
 
 type user = {
     can_login: number;
@@ -473,6 +475,27 @@ class ClientAPI {
         return true;
     }
 
+    async checkOperationName(operationID: number, operationName: string) {
+        const url = `${BASE_URL}/${CHECK_OPERATION_NAME}`;
+        const payload = {
+            operationID,
+            operationName,
+        };
+
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+
+        const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+
+        const body = await response.json();
+
+        return body;
+
+
+    }
+
     async checkMaterialItem(materialID: number, taraID: number, taskID: number) {
         const url = `${BASE_URL}/${CHECK_ITEM}`;
         const payload = {
@@ -486,9 +509,6 @@ class ClientAPI {
             ...this.requestHeaders()
         };
         const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-        // if (response.status !== 201) {
-        //     throw new Error(await response.text());
-        // }
 
         const body = await response.json();
 

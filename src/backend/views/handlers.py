@@ -3,7 +3,7 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
-                check_material_item
+                check_material_item, check_operation_name
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -60,6 +60,16 @@ async def get_operations(request: Request):
     async with request.app["db"].acquire() as conn:
         operations = await select_operations(conn, request.user_id, stock_id, active_operation_mode)
     return await jsonify(operations, request)
+
+async def check_operation_name_handler(request: Request):
+    operation_id = request.match_info.get("operationID", None)
+    operation_name = request.match_info.get("operationName", None)
+    if operation_name is None or operation_id is None:
+        raise HTTPBadRequest()
+    async with request.app["db"].acquire() as conn:
+        success = await check_operation_name(conn, operation_id, operation_name)
+    return await jsonify(success, request)
+
 
 async def get_operation(request: Request):
     """ получени списка документов операции """

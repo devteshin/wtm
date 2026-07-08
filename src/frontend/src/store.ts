@@ -163,6 +163,10 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const checkOperationName = (operationID: number, operationName: string) => {
+        return api.checkOperationName(operationID, operationName);
+    };
+
     const updateOperation = (payload: any) => {
         loading.value = true;
         return api.updateOperation(payload).finally(() => {
@@ -247,6 +251,7 @@ export default defineStore("app_store", () => {
         fetchTasksList,
         fetchTask,
         checkMaterialItem,
+        checkOperationName,
         updateJobStatus,
         updateJobsStatus,
         updateRestGrossWeight,
