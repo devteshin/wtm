@@ -475,12 +475,14 @@ class ClientAPI {
         return true;
     }
 
-    async checkOperationName(operationID: number, operationName: string) {
+/*     async checkOperationName(operationID: number, operationName: string) {
         const url = `${BASE_URL}/${CHECK_OPERATION_NAME}`;
         const payload = {
             operationID,
             operationName,
         };
+
+        console.log(payload);
 
         const headers = {
             "Content-Type": "application/json",
@@ -493,6 +495,30 @@ class ClientAPI {
 
         return body;
 
+    }
+ */
+
+    async checkOperationName(params) {
+        this.checkToken();
+
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+            }
+        });
+
+        const url = `${BASE_URL}/${CHECK_OPERATION_NAME}${
+            queryParams.toString() ? `?${queryParams.toString()}` : ''
+        }`;        
+
+        const response = await fetch(url, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
 
     }
 

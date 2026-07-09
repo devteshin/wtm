@@ -39,7 +39,6 @@ def setup_handlers(app: Application):
         ("POST", "/api/arrival/delete", delete_arrival_handler, "delete_arrival_handler"),
         ("POST", "/api/arrival/create", create_arrival_handler, "create_arrival_handler"),
         ("POST", "/api/material/create", create_material_handler, "create_material_handler"),
-        ("POST", "/api/operation/check_name", check_operation_name_handler, "check_operation_name_handler"),
         ("GET", "/api/material/{material}", get_max_tare_id, "get_max_tare_id"),
         ("GET", "/api/stocks", get_stocks, "get_stocks"),
         ("GET", "/api/stock/{stockID}/operations", get_operations, "get_operations"),
@@ -53,6 +52,7 @@ def setup_handlers(app: Application):
         ("GET", "/api/stock/{stockID}/task/{taskID}/material/{materialID}", get_task, "get_task"),
         ("GET", "/api/stock/{stockID}/materials", get_materials_meta, "get_materials_meta"),
         ("GET", "/api/stock/{stockID}/materials_data", get_materials_data, "get_materials_data"),
+        ("GET", "/api/operation/check_name", check_operation_name_handler, "check_operation_name_handler"),
         ("GET", "/api/selection_data", get_selection_data, "get_selection_data"),
         ("PUT", "/api/rest_gross_weight", rest_gross_weight, "rest_gross_weight"),
         ("POST", "/api/check_item", check_material_item_handler, "check_material_item_handler")
