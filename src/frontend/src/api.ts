@@ -528,7 +528,7 @@ class ClientAPI {
             throw new Error(errorBody.message || `HTTP ${response.status}`);
         }
         const body = await response.json();
-        return body.exists;
+        return body;
 
     }
 
