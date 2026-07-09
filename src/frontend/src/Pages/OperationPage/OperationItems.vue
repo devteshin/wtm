@@ -194,7 +194,11 @@ const handleSave = async () => {
   const isValid = await validate()
   if (!isValid) return
 
+  console.log(props.operationID, form.value.operationName);
+
   const isUnique = await store.checkOperationName(props.operationID, form.value.operationName)
+
+  console.log(isUnique);
 
   if (!isUnique){ 
     ElMessage.error('Операция с таким именем уже существует. Выберите другое название.');
