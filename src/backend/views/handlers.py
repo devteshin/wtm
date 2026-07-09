@@ -62,16 +62,13 @@ async def get_operations(request: Request):
     return await jsonify(operations, request)
 
 async def check_operation_name_handler(request: Request):
-    #operation_id = request.match_info.get("operationID", None)
-    #operation_name = request.match_info.get("operationName", None)
     operation_id_str = request.query.get("operationID")
     operation_name = request.query.get("operationName")
-    print(operation_id_str, operation_name)
     if operation_name is None or operation_id_str is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
-        success = await check_operation_name(conn, int(operation_id_str), operation_name)
-    return await jsonify(success, request)
+        exists = await check_operation_name(conn, int(operation_id_str), operation_name)
+    return await jsonify(exists, request)
 
 
 async def get_operation(request: Request):

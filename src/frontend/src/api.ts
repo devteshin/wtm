@@ -498,7 +498,7 @@ class ClientAPI {
     }
  */
 
-    async checkOperationName(params) {
+    async checkOperationName(params: { operationID: number; operationName: string }) {
         this.checkToken();
 
         const queryParams = new URLSearchParams();
@@ -516,9 +516,19 @@ class ClientAPI {
         if (response.status === 403) {
             window.localStorage.removeItem("token");
             location.href = "/login";
+            throw new Error("Unauthorized");
+        }
+        if (!response.ok) {
+            let errorBody;
+            try {
+            errorBody = await response.json();
+            } catch {
+            errorBody = {};
+            }
+            throw new Error(errorBody.message || `HTTP ${response.status}`);
         }
         const body = await response.json();
-        return body;
+        return body.exists;
 
     }
 

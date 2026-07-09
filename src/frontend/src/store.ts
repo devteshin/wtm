@@ -163,8 +163,8 @@ export default defineStore("app_store", () => {
         });
     };
 
-    const checkOperationName = (operationID: number, operationName: string) => {
-        return api.checkOperationName(operationID, operationName);
+    const checkOperationName = (payload: any) => {
+        return api.checkOperationName(payload);
     };
 
     const updateOperation = (payload: any) => {
