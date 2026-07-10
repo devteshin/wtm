@@ -204,6 +204,7 @@ const handleSave = async () => {
   };
 
   const payload = {
+    operationId: props.operationID,
     operationName: form.value.operationName,
     productId: form.value.productId,
     processId: form.value.processId,
@@ -213,7 +214,7 @@ const handleSave = async () => {
   }
 
 
-   //await store.saveOperation(payload)
+   await store.updateOperation(payload)
 
   originalForm.value = { ...form.value }
 }

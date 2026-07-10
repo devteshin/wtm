@@ -537,6 +537,45 @@ async def select_operation_data(conn: Connection, operation_id: int):
 
         return operation_data
 
+def make_executors_values_string(operation_id: int, executor_items: list[int]):
+
+    res_string = ""
+
+    for item in executor_items:
+        item_string = (f",({item}, {operation_id})")
+        res_string = res_string + item_string
+
+    if res_string:
+        res_string = res_string[1:]
+
+    return res_string
+
+
+async def update_operation(conn: Connection, operation_id: int, operation_name: str, product_id: int, process_id: int, executors_id: list[int], is_completed: bool, document_template_id: int):
+
+    async with conn.cursor() as cur:
+        await cur.execute("START TRANSACTION;")
+        try:
+
+            result = await cur.callproc("upsert_operation", [operation_id, operation_name, product_id, document_template_id, process_id, int(is_completed), 1])
+            if result:
+                new_opertion_id = result.get("operation_id")
+
+            executors_values_string = make_executors_values_string(new_opertion_id, executors_id)
+            if executors_values_string:
+                q_insert_executors = """
+                    INSERT INTO operation_executors (operation_id, executor_id)
+                    VALUES
+                """ + executors_values_string
+                await cur.execute(q_insert_executors)
+
+        except Exception as e:
+            await cur.execute("ROLLBACK;")
+            print(f"ERROR \"update_operation\": {e}")
+            return
+        await cur.execute("COMMIT;")
+
+        return    
 
 async def select_operation(conn: Connection, user_id: int, stock_id: int, operation_id: int):
     q = """
