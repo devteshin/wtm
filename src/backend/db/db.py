@@ -565,11 +565,11 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
                 print(new_opertion_id)
                 executors_values_string = make_executors_values_string(new_opertion_id, executors_id)
                 if executors_values_string:
-                    print(q_insert_executors)
                     q_insert_executors = """
                         INSERT INTO operation_executors (operation_id, executor_id)
                         VALUES
                     """ + executors_values_string
+                    print(q_insert_executors)
                     await cur.execute(q_insert_executors)
 
         except Exception as e:
