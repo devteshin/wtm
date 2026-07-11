@@ -566,7 +566,7 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
                 executors_values_string = make_executors_values_string(new_opertion_id, executors_id)
                 if executors_values_string:
                     q_insert_executors = """
-                        INSERT INTO operation_executors (operation_id, executor_id)
+                        INSERT INTO operation_executors (executor_id, operation_id)
                         VALUES
                     """ + executors_values_string
                     print(q_insert_executors)

@@ -358,6 +358,7 @@ async def update_operation_handler(request: Request):
     async with request.app["db"].acquire() as conn:
         try:
             await update_operation(conn, operation_id, operation_name, product_id, process_id, executors_id, is_completed, document_template_id)
+            print("Operation updated successfully")
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
     return HTTPCreated()
