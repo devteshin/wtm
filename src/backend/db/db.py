@@ -557,17 +557,17 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
         await cur.execute("START TRANSACTION;")
         try:
 
-            result = await cur.callproc("upsert_operation", [operation_id, operation_name, product_id, document_template_id, process_id, int(is_completed), 1])
+            await cur.callproc("upsert_operation", [operation_id, operation_name, product_id, document_template_id, process_id, int(is_completed), 1])
+            result = await cur.fetchone()
             if result:
                 new_opertion_id = result.get("operation_id")
-
-            executors_values_string = make_executors_values_string(new_opertion_id, executors_id)
-            if executors_values_string:
-                q_insert_executors = """
-                    INSERT INTO operation_executors (operation_id, executor_id)
-                    VALUES
-                """ + executors_values_string
-                await cur.execute(q_insert_executors)
+                executors_values_string = make_executors_values_string(new_opertion_id, executors_id)
+                if executors_values_string:
+                    q_insert_executors = """
+                        INSERT INTO operation_executors (operation_id, executor_id)
+                        VALUES
+                    """ + executors_values_string
+                    await cur.execute(q_insert_executors)
 
         except Exception as e:
             await cur.execute("ROLLBACK;")

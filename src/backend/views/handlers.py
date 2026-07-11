@@ -343,7 +343,7 @@ async def update_operation_handler(request: Request):
     operation_name = payload.get("operationName", None)
     product_id = payload.get("productId", None)
     process_id = payload.get("processId", None)
-    executors_id = payload.get("executorsId", None)
+    executors_id = payload.get("executorIds", None)
     is_completed = payload.get("isCompleted", None)
     document_template_id = payload.get("documentTemplateId", None)
     print(f"operation id: {payload}")
