@@ -338,6 +338,7 @@ async def create_arrival_handler(request: Request):
 
 async def update_operation_handler(request: Request):
     payload: dict = await request.json()
+    print(payload);
     operation_id = payload.get("operationId", None)
     operation_name = payload.get("operationName", None)
     product_id = payload.get("productId", None)
@@ -345,7 +346,13 @@ async def update_operation_handler(request: Request):
     executors_id = payload.get("executorsId", None)
     is_completed = payload.get("isCompleted", None)
     document_template_id = payload.get("documentTemplateId", None)
-
+    print(f"operation id: {payload}")
+    print(f"is completed :{is_completed}")
+    print(f"id of the template:{document_template_id}")
+    print(f"{executors_id}")
+    print(f"{operation_name}")    
+    print(f"{product_id}")    
+    print(f"{process_id}")    
     if operation_id is None or operation_name is None or product_id is None or process_id is None or executors_id is None or is_completed is None or document_template_id is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:

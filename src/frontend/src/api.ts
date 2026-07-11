@@ -385,6 +385,8 @@ class ClientAPI {
     }
 
     async updateOperation(payload: any) {
+        console.log("Updating operation:", payload);
+
         const url = `${BASE_URL}/${OPERATION_UPDATE}`;
         const headers = {
             "Content-Type": "application/json",

@@ -214,7 +214,8 @@ const handleSave = async () => {
   }
 
 
-   await store.updateOperation(payload)
+  console.log(payload);
+  await store.updateOperation(payload)
 
   originalForm.value = { ...form.value }
 }
