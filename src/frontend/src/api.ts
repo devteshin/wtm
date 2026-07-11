@@ -385,8 +385,6 @@ class ClientAPI {
     }
 
     async updateOperation(payload: any) {
-        console.log("Updating operation:", payload);
-
         const url = `${BASE_URL}/${OPERATION_UPDATE}`;
         const headers = {
             "Content-Type": "application/json",
@@ -407,12 +405,11 @@ class ClientAPI {
                 throw new Error(errorMessage);
             }
             else {
-                const newOperationID = await response.json();
-                return newOperationID;
+               return;
             };
         } catch (error) {
             this.handleError(error);
-            return null;
+            return;
         }
     }
 
