@@ -349,10 +349,12 @@ async def update_operation_handler(request: Request):
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            await update_operation(conn, operation_id, operation_name, product_id, process_id, executors_id, is_completed, document_template_id)
+            updated_operation_id = await update_operation(conn, operation_id, operation_name, product_id, process_id, executors_id, is_completed, document_template_id)
+            if updated_operation_id is None:
+                return Response(status=409, text=json.dumps({"operation_id": 0}), content_type='application/json')
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
-    return HTTPCreated()
+    return Response(status=201, text=json.dumps({"operation_id": updated_operation_id}), content_type='application/json')
 
 
 async def update_arrival_handler(request: Request):

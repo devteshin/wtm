@@ -539,18 +539,15 @@ async def select_operation_data(conn: Connection, operation_id: int):
 
 async def update_operation(conn: Connection, operation_id: int, operation_name: str, product_id: int, process_id: int, executors_id: list[int], is_completed: bool, document_template_id: int):
 
+    new_operation_id = None
     async with conn.cursor() as cur:
-        #await cur.execute("START TRANSACTION;")
         await conn.begin()
         try:
 
             await cur.callproc("upsert_operation", [operation_id, operation_name, product_id, document_template_id, process_id, int(is_completed), 1])
             result = await cur.fetchone()
-            new_operation_id = None
             if result and len(result) > 0:
                 new_operation_id = result.get("operation_id")
-
-            new_operation_id = None
 
             if new_operation_id is None:
                 await conn.rollback()
@@ -561,23 +558,13 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
                 values = [(new_operation_id, eid) for eid in executors_id]
                 await cur.executemany(q_insert_executors, values)
 
-                #executors_values_string = make_executors_values_string(new_operation_id, executors_id)
-                #if executors_values_string:
-                #    q_insert_executors = """
-                #        INSERT INTO operation_executors (executor_id, operation_id)
-                #        VALUES
-                #    """ + executors_values_string
-                #    await cur.execute(q_insert_executors)
-
         except Exception as e:
-            #await cur.execute("ROLLBACK;")
             await conn.rollback()
             print(f"ERROR \"update_operation\": {e}")
             return
-        #await cur.execute("COMMIT;")
         await conn.commit()
 
-        return    
+    return new_operation_id   
 
 
 async def select_operation(conn: Connection, user_id: int, stock_id: int, operation_id: int):

@@ -213,9 +213,11 @@ const handleSave = async () => {
     documentTemplateId: form.value.documentTemplateId,
   }
 
-
-  console.log(payload);
-  await store.updateOperation(payload)
+  const operation_id = await store.updateOperation(payload)
+  if (!operation_id) {
+    ElMessage.error('Ошибка при создании или обновлении операции');
+    return;
+  };
 
   originalForm.value = { ...form.value }
 }

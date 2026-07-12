@@ -405,11 +405,13 @@ class ClientAPI {
                 throw new Error(errorMessage);
             }
             else {
-               return;
+                const data = await response.json();
+                const updated_operation_id = data.updated_operation_id;
+                return updated_operation_id;
             };
         } catch (error) {
             this.handleError(error);
-            return;
+            return null;
         }
     }
 
