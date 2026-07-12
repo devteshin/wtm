@@ -359,17 +359,18 @@ async def update_operation_handler(request: Request):
 
 async def delete_operation_handler(request: Request):
     payload: dict = await request.json()
-    operation_id = payload.get("operationID", None)
+    operation_id = payload.get("operationID")
 
     if operation_id is None:
-        raise HTTPBadRequest()
+        raise HTTPBadRequest(body="operationID is required")
+
     async with request.app["db"].acquire() as conn:
         try:
-            await delete_operation(conn, operation_id)
+            success = await delete_operation(conn, operation_id)
         except Exception as exc:
-            raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
-    return HTTPCreated()
+            raise HTTPBadRequest(body=str(exc))
 
+    return Response(status=200, text=json.dumps({"success": success}), content_type='application/json')
 
 async def update_arrival_handler(request: Request):
     payload: dict = await request.json()
@@ -407,8 +408,6 @@ async def delete_arrival_handler(request: Request):
         try:
             await delete_arrival(conn, doc_id)
         except ItemsConsumptionError as exc:
-            print("delete_arrival_handler")
-            print(str(exc))
             raise HTTPConflict(body=str(exc))  # pylint: disable=raise-missing-from
         except Exception as exc:
             raise HTTPBadRequest(

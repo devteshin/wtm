@@ -146,6 +146,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
+
 // --- Состояния ---
 const formRef = ref<FormInstance | undefined>(undefined)
 const loading = ref(true)                 // общий флаг загрузки мета
@@ -295,9 +299,13 @@ const handleDelete = async () => {
   if (!confirmed) return
 
   try {
-    await store.deleteOperation(currentOperationId.value)
-    
-    // Сбрасываем состояние как для новой операции
+    const success = await store.deleteOperation(currentOperationId.value)
+
+    if (!success) {
+      ElMessage.error('Операция не может быть удалена');
+      return;
+    }
+
     currentOperationId.value = 0
     form.value = {
       operationName: '',
@@ -312,13 +320,13 @@ const handleDelete = async () => {
 
     ElMessage.success('Операция удалена')
   } catch (e) {
-    console.error('deleteOperation error:', e)
     ElMessage.error('Не удалось удалить операцию')
   }
 }
 
 const handleClose = async () => {
   if (!hasChanges()) {
+    emit('close')
     return
   }
 
@@ -330,6 +338,7 @@ const handleClose = async () => {
 
   if (confirmed === 'confirm') {
     await handleSave()
+    emit('close')
   }
 }
 

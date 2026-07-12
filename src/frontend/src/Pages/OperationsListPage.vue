@@ -65,6 +65,7 @@
     v-model="drawerVisible"
     title="Операция"
     :before-close="handleCloseDrawer"
+    @close="onFormClose"
     size="60%"
   >
     <OperationItems
@@ -132,6 +133,11 @@ watch(isActiveOperationMode, async () => {
 const fetchOperations = async () => {
   await store.fetchOperations(props.stockID, isActiveOperationMode.value);
 };
+
+const onFormClose = async () => {
+  drawerVisible.value = false 
+  await store.fetchOperations(props.stockID, isActiveOperationMode.value);
+}
 
 /** Список столбцов для таблицы */
 const columns = [

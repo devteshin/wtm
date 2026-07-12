@@ -172,36 +172,6 @@ class ClientAPI {
         return body;
     }
 
-    async deleteOperation(operationID: number) {
-        const url = `${BASE_URL}/${OPERATION_DELETE}`;
-        const payload = {
-            operationID: operationID,
-        };
-        const headers = {
-            "Content-Type": "application/json",
-            ...this.requestHeaders()
-        };
-
-        try {
-            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-            if (!response.ok) {
-                const responseBody = await response.text(); // Считываем тело ответа как текст
-                let errorMessage = "";
-                try {
-                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
-                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
-                } catch {
-                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
-                }
-                throw new Error(errorMessage);
-            };
-        } catch (error) {
-            this.handleError(error);
-            return false;
-        }
-        return true;
-    }
-
 
     async fetchOperation(stockID: number, operationID: number) {
         this.checkToken();
@@ -401,6 +371,42 @@ class ClientAPI {
             this.handleError(error);
             return null;
         }
+    }
+
+    async deleteOperation(operationID: number) {
+        const url = `${BASE_URL}/${OPERATION_DELETE}`;
+        const payload = {
+            operationID: operationID,
+        };
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+
+        try {
+            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+            if (!response.ok) {
+                const responseBody = await response.text(); // Считываем тело ответа как текст
+                let errorMessage = "";
+                try {
+                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
+                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
+                } catch {
+                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
+                }
+                throw new Error(errorMessage);
+            }
+            else {
+                const data = await response.json();
+                const delete_status = data.success;
+                return delete_status;
+
+            };
+        } catch (error) {
+            this.handleError(error);
+            return false;
+        }
+        return true;
     }
 
     async updateOperation(payload: any) {
