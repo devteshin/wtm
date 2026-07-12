@@ -8,6 +8,7 @@ const CHANGE_PASSWORD = "change_password";
 const STOCK = "stock";
 const OPERATION = "operation";
 const OPERATION_UPDATE = "operation/update";
+const OPERATION_DELETE = "operation/delete";
 const CHECK_OPERATION_NAME = "operation/check_name";
 const MATERIAL = "material";
 const DOC = "doc";
@@ -130,18 +131,6 @@ class ClientAPI {
         return body;
     }
 
-/*     async fetchOperations(stockID: number, activeOperationMode: boolean) {
-        this.checkToken();
-        const modeValue = activeOperationMode ? 1 : 0;
-        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/${ACTIVE_OPERATION}/${modeValue}/operations`, { headers: this.requestHeaders() });
-        if (response.status === 403) {
-            window.localStorage.removeItem("token");
-            location.href = "/login";
-        }
-        const body = await response.json();
-        return body;
-    }
- */
     async fetchOperations(stockID: number, activeOperationMode: boolean) {
     this.checkToken();
 
@@ -174,7 +163,6 @@ class ClientAPI {
 
     async fetchOperationData(operationID: number) {
         this.checkToken();
-        console.log("API", "fetching operation data for ID:", {operationID});
         const response = await fetch(`${BASE_URL}/${OPERATION}/${operationID}/operation_data`, { headers: this.requestHeaders() });
         if (response.status === 403) {
             window.localStorage.removeItem("token");
@@ -183,6 +171,37 @@ class ClientAPI {
         const body = await response.json();
         return body;
     }
+
+    async deleteOperation(operationID: number) {
+        const url = `${BASE_URL}/${OPERATION_DELETE}`;
+        const payload = {
+            operationID: operationID,
+        };
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+
+        try {
+            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+            if (!response.ok) {
+                const responseBody = await response.text(); // Считываем тело ответа как текст
+                let errorMessage = "";
+                try {
+                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
+                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
+                } catch {
+                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
+                }
+                throw new Error(errorMessage);
+            };
+        } catch (error) {
+            this.handleError(error);
+            return false;
+        }
+        return true;
+    }
+
 
     async fetchOperation(stockID: number, operationID: number) {
         this.checkToken();
@@ -476,28 +495,6 @@ class ClientAPI {
         return true;
     }
 
-/*     async checkOperationName(operationID: number, operationName: string) {
-        const url = `${BASE_URL}/${CHECK_OPERATION_NAME}`;
-        const payload = {
-            operationID,
-            operationName,
-        };
-
-        console.log(payload);
-
-        const headers = {
-            "Content-Type": "application/json",
-            ...this.requestHeaders()
-        };
-
-        const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-
-        const body = await response.json();
-
-        return body;
-
-    }
- */
 
     async checkOperationName(params: { operationID: number; operationName: string }) {
         this.checkToken();

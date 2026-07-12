@@ -3,7 +3,7 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
-                check_material_item, check_operation_name, update_operation
+                check_material_item, check_operation_name, update_operation, delete_operation
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -355,6 +355,20 @@ async def update_operation_handler(request: Request):
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
     return Response(status=201, text=json.dumps({"operation_id": updated_operation_id}), content_type='application/json')
+
+
+async def delete_operation_handler(request: Request):
+    payload: dict = await request.json()
+    operation_id = payload.get("operationID", None)
+
+    if operation_id is None:
+        raise HTTPBadRequest()
+    async with request.app["db"].acquire() as conn:
+        try:
+            await delete_operation(conn, operation_id)
+        except Exception as exc:
+            raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
+    return HTTPCreated()
 
 
 async def update_arrival_handler(request: Request):

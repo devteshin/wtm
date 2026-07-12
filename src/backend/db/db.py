@@ -958,6 +958,18 @@ async def check_doc_number_production(conn: Connection, doc_id: int, doc_number:
     return bool(result.get("doc_number_exists", 0))
 
 
+async def delete_operation(conn: Connection, operation_id: int):
+    async with conn.cursor() as cur:
+        await conn.begin()
+        try:
+            await cur.callproc("delete_unused_operation", [operation_id])
+        except Exception as e:
+            await conn.rollback()
+            print(f"ERROR \"delete_operation\": {e}")
+            return
+        await conn.commit()
+
+
 async def delete_arrival(conn: Connection, doc_id: int):
 
     async with conn.cursor() as cur:

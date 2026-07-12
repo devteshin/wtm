@@ -295,7 +295,7 @@ const handleDelete = async () => {
   if (!confirmed) return
 
   try {
-    //await store.deleteOperation(currentOperationId.value) // Убедись, что такой метод есть
+    await store.deleteOperation(currentOperationId.value)
     
     // Сбрасываем состояние как для новой операции
     currentOperationId.value = 0
