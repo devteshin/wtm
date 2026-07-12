@@ -537,20 +537,6 @@ async def select_operation_data(conn: Connection, operation_id: int):
 
         return operation_data
 
-def make_executors_values_string(operation_id: int, executor_items: list[int]):
-
-    res_string = ""
-
-    for item in executor_items:
-        item_string = (f",({item}, {operation_id})")
-        res_string = res_string + item_string
-
-    if res_string:
-        res_string = res_string[1:]
-
-    return res_string
-
-
 async def update_operation(conn: Connection, operation_id: int, operation_name: str, product_id: int, process_id: int, executors_id: list[int], is_completed: bool, document_template_id: int):
 
     async with conn.cursor() as cur:
@@ -563,6 +549,9 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
             new_operation_id = None
             if result and len(result) > 0:
                 new_operation_id = result.get("operation_id")
+
+            new_operation_id = None
+
             if new_operation_id is None:
                 await conn.rollback()
                 raise ValueError("Хранимая процедура upsert_operation не вернула operation_id")
@@ -589,8 +578,6 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
         await conn.commit()
 
         return    
-
-
 
 
 async def select_operation(conn: Connection, user_id: int, stock_id: int, operation_id: int):
@@ -883,7 +870,8 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     async with conn.cursor() as cur:
         await cur.callproc("action_arrival_write_before")
-        await cur.execute("START TRANSACTION;")
+        #await cur.execute("START TRANSACTION;")
+        await conn.begin()
         try:
             await cur.execute(q_get_org_id, {"stock_id": stock_id})
             result = await cur.fetchone()
@@ -900,19 +888,24 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
             await cur.callproc("action_arrival_util_app_update_production", [doc_id])
 
         except Exception as e:
-            await cur.execute("ROLLBACK;")
+            await conn.rollback()
+            #await cur.execute("ROLLBACK;")
             print(f"ERROR \"update_arrival\": {e}")
             return
 
         err_string = await check_arrival_error(conn, "check_consumption_err")
         if err_string:
-            await cur.execute("ROLLBACK;")
+            await conn.rollback()
+            #await cur.execute("ROLLBACK;")
+
             raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
         err_string = await check_arrival_error(conn, "check_extra_input_err")
         if err_string:
-            await cur.execute("ROLLBACK;")
+            await conn.rollback()
+            #await cur.execute("ROLLBACK;")
             raise ItemsConsumptionError(f"Повторный приход по позициям: {err_string}.")
-        await cur.execute("COMMIT;")
+        await conn.commit()
+        #await cur.execute("COMMIT;")
 
 
     return    
@@ -982,20 +975,24 @@ async def delete_arrival(conn: Connection, doc_id: int):
     async with conn.cursor() as cur:
         try:
             await cur.callproc("action_arrival_delete_before")
-            await cur.execute("START TRANSACTION;")
+            #await cur.execute("START TRANSACTION;")
+            await conn.begin()
             await cur.callproc("action_arrival_util_app_delete_production", [doc_id])
             await cur.callproc("action_arrival_delete", [doc_id])
 
         except Exception as e:
-            await cur.execute("ROLLBACK;")
+            await conn.rollback()
+            #await cur.execute("ROLLBACK;")
             print(f"ERROR \"delete_arrival\": {e}")
             return
 
         err_string = await check_arrival_error(conn, "check_consumption_err")
         if err_string:
-            await cur.execute("ROLLBACK;")
+            await conn.rollback()
+            #await cur.execute("ROLLBACK;")
             raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
-        await cur.execute("COMMIT;")
+        await conn.commit()
+        #await cur.execute("COMMIT;")
 
 
 async def check_arrival_error(conn: Connection, err_table_name: str):
