@@ -350,6 +350,7 @@ async def update_operation_handler(request: Request):
     async with request.app["db"].acquire() as conn:
         try:
             updated_operation_id = await update_operation(conn, operation_id, operation_name, product_id, process_id, executors_id, is_completed, document_template_id)
+            print(updated_operation_id)
             if updated_operation_id is None:
                 return Response(status=409, text=json.dumps({"operation_id": 0}), content_type='application/json')
         except Exception as exc:
