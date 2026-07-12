@@ -1,6 +1,14 @@
 <template>
   <div class="operation-items-form">
+    <!-- Состояние загрузки -->
+    <div v-if="loading" class="skeleton-wrapper">
+      <el-skeleton :rows="5" animated />
+      <!-- Можно сделать более точечно, ниже покажу вариант с отдельными скелетами -->
+    </div>
+
+    <!-- Реальная форма -->
     <el-form
+      v-else
       ref="formRef"
       :model="form"
       label-width="200px"
@@ -10,6 +18,7 @@
       <el-form-item label="Наименование операции" prop="operationName">
         <el-input v-model="form.operationName" clearable />
       </el-form-item>
+
       <el-row>
         <el-col :span="24">
           <el-form-item label="Наименование продукта" prop="productId">
@@ -20,6 +29,7 @@
                 clearable
                 filterable
                 class="product-select"
+                :loading="productOptionsLoading"
               >
                 <el-option
                   v-for="p in productOptions"
@@ -27,6 +37,10 @@
                   :label="p.product_name"
                   :value="p.id"
                 />
+                <!-- Скелет для списка опций -->
+                <template v-if="productOptionsLoading">
+                  <el-option :value="0" disabled label="Загрузка..." />
+                </template>
               </el-select>
               <el-button type="primary" @click="openCreateProduct">
                 + Новый продукт
@@ -35,11 +49,13 @@
           </el-form-item>
         </el-col>
       </el-row>
+
       <el-form-item label="Техпроцесс" prop="processId">
         <el-select
           v-model="form.processId"
           placeholder="Выберите техпроцесс"
           clearable
+          :loading="processOptionsLoading"
         >
           <el-option
             v-for="p in processOptions"
@@ -47,6 +63,9 @@
             :label="p.process_name"
             :value="p.id"
           />
+          <template v-if="processOptionsLoading">
+            <el-option :value="0" disabled label="Загрузка..." />
+          </template>
         </el-select>
       </el-form-item>
 
@@ -55,7 +74,7 @@
           v-model="form.executorIds"
           multiple
           placeholder="Выберите исполнителей"
-          clearable
+          :loading="executorOptionsLoading"
         >
           <el-option
             v-for="e in executorOptions"
@@ -63,12 +82,14 @@
             :label="e.employee_name"
             :value="e.id"
           />
+          <template v-if="executorOptionsLoading">
+            <el-option :value="0" disabled label="Загрузка..." />
+          </template>
         </el-select>
       </el-form-item>
 
       <el-form-item label="Операция выполнена">
-        <el-checkbox v-model="form.isCompleted">
-        </el-checkbox>
+        <el-checkbox v-model="form.isCompleted"></el-checkbox>
       </el-form-item>
 
       <el-form-item label="Шаблон документа приёма" prop="documentTemplateId">
@@ -76,6 +97,7 @@
           v-model="form.documentTemplateId"
           placeholder="Выберите шаблон"
           clearable
+          :loading="templateOptionsLoading"
         >
           <el-option
             v-for="t in templateOptions"
@@ -83,11 +105,14 @@
             :label="t.template_name"
             :value="t.id"
           />
+          <template v-if="templateOptionsLoading">
+            <el-option :value="0" disabled label="Загрузка..." />
+          </template>
         </el-select>
       </el-form-item>
     </el-form>
 
-    <div class="form-footer">
+    <div class="form-footer" v-if="!loading">
       <el-button @click="handleClose">Закрыть</el-button>
       <el-button
         v-if="operationID != null"
@@ -104,30 +129,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, shallowRef, computed } from 'vue'
+import { ref, onMounted, watch, shallowRef } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import useApplicationStore from "@/store";
+import useApplicationStore from "@/store"
 
-const store = useApplicationStore();
+const store = useApplicationStore()
 
 // --- Пропсы ---
 const props = defineProps({
   stockID: { type: Number, required: true },
   userID: { type: Number, required: true },
-  operationID: { type: Number || null, required: true }, // допускаем null для создания новой
-});
+  operationID: { type: [Number, null] as unknown as undefined, required: true },
+})
 
-// --- Локальные состояния ---
+// --- Состояния ---
 const formRef = ref<FormInstance | undefined>(undefined)
+const loading = ref(true)                 // общий флаг загрузки мета
 
 interface FormData {
   operationName: string
   productId: number | null
-  processId: number | null          // храним ID
-  executorIds: number[]            // храним массив ID
+  processId: number | null
+  executorIds: number[]
   isCompleted: boolean
-  documentTemplateId: number | null // храним ID
+  documentTemplateId: number | null
 }
 
 const form = ref<FormData>({
@@ -141,25 +167,53 @@ const form = ref<FormData>({
 
 const originalForm = shallowRef<FormData | null>(null)
 
+// Опции и флаги загрузки для каждого селекта (чтобы не блокировать весь UI сразу)
 const productOptions = ref<{ id: number; product_name: string }[]>([])
 const processOptions = ref<{ id: number; process_name: string }[]>([])
 const executorOptions = ref<{ id: number; employee_name: string }[]>([])
 const templateOptions = ref<{ id: number; template_name: string }[]>([])
 
+const productOptionsLoading = ref(false)
+const processOptionsLoading = ref(false)
+const executorOptionsLoading = ref(false)
+const templateOptionsLoading = ref(false)
+
 // --- Мета-данные ---
 const fetchMeta = async () => {
-  if (!props.stockID) return
-  const meta = await store.fetchOperationsMeta(props.stockID)
-  productOptions.value = meta.products
-  processOptions.value = meta.processes
-  executorOptions.value = meta.executors
-  templateOptions.value = meta.doc_templates
+  if (!props.stockID) {
+    loading.value = false
+    return
+  }
+
+  loading.value = true
+
+  try {
+    productOptionsLoading.value = true
+    processOptionsLoading.value = true
+    executorOptionsLoading.value = true
+    templateOptionsLoading.value = true
+
+    const meta = await store.fetchOperationsMeta(props.stockID)
+
+    productOptions.value = meta.products
+    processOptions.value = meta.processes
+    executorOptions.value = meta.executors
+    templateOptions.value = meta.doc_templates
+  } catch (e) {
+    console.error('fetchMeta error:', e)
+    ElMessage.error('Не удалось загрузить справочники')
+  } finally {
+    productOptionsLoading.value = false
+    processOptionsLoading.value = false
+    executorOptionsLoading.value = false
+    templateOptionsLoading.value = false
+    loading.value = false
+  }
 }
 
 // Загрузка операции для редактирования
 const loadOperation = async (id: number) => {
   const operation = await store.fetchOperationData(id)
-
   form.value = {
     operationName: operation.operationName,
     productId: operation.productId,
@@ -194,35 +248,34 @@ const handleSave = async () => {
   const isValid = await validate()
   if (!isValid) return
 
-  console.log(props.operationID, form.value.operationName);
-
-  const nameExsits = await store.checkOperationName({ operationID: props.operationID, operationName: form.value.operationName})
-
-  if (nameExsits){ 
-    ElMessage.error('Операция с таким именем уже существует. Выберите другое название.');
-    return;
-  };
+  const nameExists = await store.checkOperationName({ operationID: props.operationID, operationName: form.value.operationName })
+  if (nameExists) {
+    ElMessage.error('Операция с таким именем уже существует. Выберите другое название.')
+    return
+  }
 
   const payload = {
     operationId: props.operationID,
     operationName: form.value.operationName,
-    productId: form.value.productId,
-    processId: form.value.processId,
+    productId: form.value.productId ?? 0,
+    processId: form.value.processId ?? 0,
     executorIds: form.value.executorIds,
     isCompleted: form.value.isCompleted,
-    documentTemplateId: form.value.documentTemplateId,
+    documentTemplateId: form.value.documentTemplateId ?? 0,
   }
+
+  console.log(payload);
 
   const operation_id = await store.updateOperation(payload)
   if (!operation_id) {
-    ElMessage.error('Ошибка при создании или обновлении операции');
-    return;
-  };
+    ElMessage.error('Ошибка при создании или обновлении операции')
+    return
+  }
 
+  ElMessage.success(`Операция ${form.value.operationName} сохранена`)
   originalForm.value = { ...form.value }
 }
 
-// Удаление
 const handleDelete = async () => {
   if (props.operationID === null) return
   const confirmed = await ElMessageBox.confirm(
@@ -232,9 +285,6 @@ const handleDelete = async () => {
   ).catch(() => false)
 
   if (!confirmed) return
-
-  // Вызов API/стора на удаление
-  // await api.deleteOperation(props.operationID)
 
   originalForm.value = null
   form.value = {
@@ -247,7 +297,6 @@ const handleDelete = async () => {
   }
 }
 
-// Закрытие с проверкой изменений
 const handleClose = async () => {
   if (!hasChanges()) {
     return
@@ -261,9 +310,6 @@ const handleClose = async () => {
 
   if (confirmed === 'confirm') {
     await handleSave()
-  } else if (confirmed === 'cancel') {
-    // Можно сбросить форму до оригинала
-    // form.value = { ...originalForm.value! }
   }
 }
 
@@ -297,14 +343,24 @@ const openCreateProduct = async () => {
     })
   }
 }
+
 onMounted(() => {
   fetchMeta()
 })
 
+const ensureCurrentUserInExecutors = () => {
+  const ids = form.value.executorIds
+  if (!ids.length) {
+    form.value.executorIds = [props.userID]
+  } else if (!ids.includes(props.userID)) {
+    form.value.executorIds = [props.userID, ...ids]
+  }
+}
+
 watch(
   () => props.operationID,
   async (newID) => {
-    if (newID !== null && newID !== undefined && newID !== 0) {
+    if (typeof newID === 'number' && newID !== 0 && newID !== null) {
       await loadOperation(newID)
       originalForm.value = { ...form.value }
     } else {
@@ -317,7 +373,16 @@ watch(
         documentTemplateId: null,
       }
       originalForm.value = null
+      ensureCurrentUserInExecutors()
     }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => form.value.executorIds,
+  () => {
+    ensureCurrentUserInExecutors()
   },
   { immediate: true }
 )
@@ -327,21 +392,22 @@ const rules = {
     { required: true, message: 'Не указано наименование операции', trigger: 'blur' },
     { min: 2, message: 'Название должно быть не короче 2 символов', trigger: 'blur' }
   ],
-}; 
+}
 </script>
 
 <style scoped>
+.skeleton-wrapper {
+  padding: 20px;
+}
 .product-select-wrapper {
   display: flex;
   gap: 8px;
   align-items: center;
   width: 100%;
 }
-
 .product-select {
   flex: 1;
 }
-
 .form-footer {
   margin-top: 24px;
   text-align: right;

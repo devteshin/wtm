@@ -406,8 +406,7 @@ class ClientAPI {
             }
             else {
                 const data = await response.json();
-                const operation_id = data.updated_operation_id;
-                console.log(`Updated operation ID: ${operation_id}`);
+                const operation_id = data.operation_id;
                 return operation_id;
             };
         } catch (error) {

@@ -554,6 +554,7 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
                 raise ValueError("Хранимая процедура upsert_operation не вернула operation_id")
 
             if executors_id:
+                await cur.execute("DELETE FROM operation_executors WHERE operation_id = %(operation_id)s", {"operation_id":new_operation_id})
                 q_insert_executors = "INSERT INTO operation_executors (operation_id, executor_id) VALUES (%s, %s)"
                 values = [(new_operation_id, eid) for eid in executors_id]
                 await cur.executemany(q_insert_executors, values)
