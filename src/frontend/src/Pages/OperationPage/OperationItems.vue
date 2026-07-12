@@ -115,7 +115,7 @@
     <div class="form-footer" v-if="!loading">
       <el-button @click="handleClose">Закрыть</el-button>
       <el-button
-        v-if="operationID != null"
+        v-if="currentOperationId > 0"
         type="danger"
         @click="handleDelete"
       >
@@ -136,12 +136,15 @@ import useApplicationStore from "@/store"
 
 const store = useApplicationStore()
 
+const currentOperationId = ref<number>(0);
 // --- Пропсы ---
-const props = defineProps({
-  stockID: { type: Number, required: true },
-  userID: { type: Number, required: true },
-  operationID: { type: [Number, null] as unknown as undefined, required: true },
-})
+interface Props {
+  stockID: number
+  userID: number
+  operationID: number | null
+}
+
+const props = defineProps<Props>()
 
 // --- Состояния ---
 const formRef = ref<FormInstance | undefined>(undefined)
@@ -214,10 +217,14 @@ const fetchMeta = async () => {
 // Загрузка операции для редактирования
 const loadOperation = async (id: number) => {
   const operation = await store.fetchOperationData(id)
+
+  const productId = operation.productId === 0 ? null : operation.productId
+  const processId = operation.processId === 0 ? null : operation.processId
+
   form.value = {
     operationName: operation.operationName,
-    productId: operation.productId,
-    processId: operation.processId,
+    productId,
+    processId,
     executorIds: operation.executorIds,
     isCompleted: operation.isCompleted,
     documentTemplateId: operation.documentTemplateId,
@@ -248,14 +255,14 @@ const handleSave = async () => {
   const isValid = await validate()
   if (!isValid) return
 
-  const nameExists = await store.checkOperationName({ operationID: props.operationID, operationName: form.value.operationName })
+  const nameExists = await store.checkOperationName({ operationID: currentOperationId.value, operationName: form.value.operationName })
   if (nameExists) {
     ElMessage.error('Операция с таким именем уже существует. Выберите другое название.')
     return
   }
 
   const payload = {
-    operationId: props.operationID,
+    operationId: currentOperationId.value,
     operationName: form.value.operationName,
     productId: form.value.productId ?? 0,
     processId: form.value.processId ?? 0,
@@ -272,12 +279,13 @@ const handleSave = async () => {
     return
   }
 
-  ElMessage.success(`Операция ${form.value.operationName} сохранена`)
+  currentOperationId.value = operation_id
   originalForm.value = { ...form.value }
+  ElMessage.success(`Операция ${form.value.operationName} сохранена`)
 }
 
 const handleDelete = async () => {
-  if (props.operationID === null) return
+  if (currentOperationId.value == 0) return
   const confirmed = await ElMessageBox.confirm(
     'Вы уверены, что хотите удалить эту операцию?',
     'Подтверждение удаления',
@@ -286,14 +294,26 @@ const handleDelete = async () => {
 
   if (!confirmed) return
 
-  originalForm.value = null
-  form.value = {
-    operationName: '',
-    productId: null,
-    processId: null,
-    executorIds: [],
-    isCompleted: false,
-    documentTemplateId: null,
+  try {
+    //await store.deleteOperation(currentOperationId.value) // Убедись, что такой метод есть
+    
+    // Сбрасываем состояние как для новой операции
+    currentOperationId.value = 0
+    form.value = {
+      operationName: '',
+      productId: null,
+      processId: null,
+      executorIds: [],
+      isCompleted: false,
+      documentTemplateId: null,
+    }
+    originalForm.value = null
+    ensureCurrentUserInExecutors()
+
+    ElMessage.success('Операция удалена')
+  } catch (e) {
+    console.error('deleteOperation error:', e)
+    ElMessage.error('Не удалось удалить операцию')
   }
 }
 
@@ -344,8 +364,11 @@ const openCreateProduct = async () => {
   }
 }
 
+
+
 onMounted(() => {
   fetchMeta()
+  currentOperationId.value = props.operationID ?? 0
 })
 
 const ensureCurrentUserInExecutors = () => {
@@ -361,9 +384,11 @@ watch(
   () => props.operationID,
   async (newID) => {
     if (typeof newID === 'number' && newID !== 0 && newID !== null) {
+      currentOperationId.value = newID
       await loadOperation(newID)
       originalForm.value = { ...form.value }
     } else {
+      currentOperationId.value = 0
       form.value = {
         operationName: '',
         productId: null,
