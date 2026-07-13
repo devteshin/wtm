@@ -96,6 +96,31 @@ const selectedTareIds = computed(() => {
     return doc_raw_materials.value.filter(item => item.material === selectedBaseMaterial.value?.material).map(item => item.tare_id);
 });
 
+const doc_raw_materials_with_totals = computed(() => {
+  
+  const items = doc_raw_materials.value;
+
+  if (!items || items.length === 0) {
+    return [];
+  }
+
+  if (items.length === 1) {
+    return [...items];
+  }
+
+  const totalNetWeight = items.reduce((acc, curr) => acc + (curr.net_weight ?? 0), 0);
+
+  return [
+    ...items,
+    {
+      material: `Итого ${items.length} позиций`,          
+      tare_id: null,
+      net_weight: totalNetWeight,
+    },
+  ];  
+
+});  
+
 const loadGridNumbers = async () => {
   //gridNumbers.value = Array.from({ length: 1000 }, (_, i) => i + 1);
   //return
@@ -170,8 +195,6 @@ const loadGridNumbers = async () => {
         doc_material_list.value = doc_items.value.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})
     };
 
-    console.log(doc_raw_materials.value);
-
     doc_changed = false
 
      watch(doc_number, () => {doc_changed = true});
@@ -179,14 +202,7 @@ const loadGridNumbers = async () => {
      watch(doc_items, () => {doc_changed = true}, {deep: true});
      watch(doc_raw_materials, () => {doc_changed = true}, {deep: true});
 
-    // updateDrawerWidth();
-    // window.addEventListener('resize', updateDrawerWidth);
-    // console.log(drawerWidth.value);     
 
-});
-
-onBeforeUnmount(() => {
-  // window.removeEventListener('resize', updateDrawerWidth);
 });
 
 const deleteDoc = async () =>  {
@@ -395,6 +411,15 @@ async function addMaterialToRawMaterialsTable(from: number, to: number) {
 };
 
 const handleDeleteRow = (row: frontend.IRawMaterial) => {
+  if (row.tare_id === null) {
+    ElMessageBox.confirm('Удалить все материалы?', 'Подтверждение', {
+        confirmButtonText: 'Да',
+        cancelButtonText: 'Нет',
+        type: 'warning'
+    }).then(() => {
+        doc_raw_materials.value = [];
+    });
+  } else {
     ElMessageBox.confirm(`Удалить материал: ${row.material} , номер: ${row.tare_id}?`, 'Подтверждение', {
         confirmButtonText: 'Да',
         cancelButtonText: 'Нет',
@@ -402,6 +427,7 @@ const handleDeleteRow = (row: frontend.IRawMaterial) => {
     }).then(() => {
         doc_raw_materials.value = doc_raw_materials.value.filter(r => r !== row);
     });
+  };    
 };
 
 const drawerVisible = ref(false);
@@ -412,8 +438,7 @@ const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
     return;
   }
 
-  // Проверяем дубликаты по tare_id + material_id (или по tare_id — зависит от твоей бизнес-логики)
-  const existingIds = new Set(
+    const existingIds = new Set(
     doc_raw_materials.value.map(i => `${i.material_id}_${i.tare_id}`)
   );
 
@@ -432,15 +457,6 @@ const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
   drawerVisible.value = false;
 };
 
-// const drawerWidth = ref(1200);
-
-// const updateDrawerWidth = () => {
-//   const w = window.innerWidth;
-//   console.log(w);
-//   if (w <= 768) drawerWidth.value = 400;
-//   else if (w <= 1280) drawerWidth.value = 1000;
-//   else drawerWidth.value = 1000;
-// };
 
 const drawerSize = computed<number>(() => {
   const w = window.innerWidth;
@@ -453,6 +469,11 @@ const drawerSize = computed<number>(() => {
   }
   return Math.floor(0.9 * w);
 });
+
+const onDrawerClose = () => {
+  drawerVisible.value = false;
+  reportStore.isOperationDocAutoGenerateReport = false;
+};
 
 </script>
 
@@ -492,7 +513,6 @@ const drawerSize = computed<number>(() => {
                         <el-button type="success" plain @click="closeDoc">Закрыть</el-button>
                         <el-button type="danger" plain @click="deleteDoc">Удалить</el-button>
                         <el-button type="success" plain @click="addMaterial">Добавить продукт</el-button>
-                        <el-button type="primary" plain @click="openSelection">Подбор материалов</el-button>
                     </div>
                 </div>
 
@@ -502,9 +522,12 @@ const drawerSize = computed<number>(() => {
                 <!-- Разделитель -->
                 <div class="divider"></div>
 
-                <!-- Текст заголовка таблицы -->
                 <div class="table-title-wrapper">
                     <el-text class="table-title">Материалы списанные на операцию</el-text>
+                </div>
+
+                <div class="button-row">
+                  <el-button type="primary" plain @click="openSelection">Подбор материалов</el-button>
                 </div>
 
                 <div v-if="!isGridMode" class="raw-material-picker-block">
@@ -577,7 +600,8 @@ const drawerSize = computed<number>(() => {
                 <div v-if="doc_raw_materials.length > 0" class="table-area">
                     <div class="table-wrapper">
                         <el-table
-                            :data="doc_raw_materials"
+                            :data="doc_raw_materials_with_totals"
+                            :row-class-name="({ row }) => (row.material?.includes( 'Итого') ? 'total-row' : '')"
                             style="width: 100%"
                             border
                         >
@@ -638,12 +662,12 @@ const drawerSize = computed<number>(() => {
       title="Подбор материалов"
       direction="rtl"
       :size="drawerSize"
-      @close="() => drawerVisible = false"
+      @close="onDrawerClose"
     >
        <MaterialPage
         :stockID="props.stockID"
         @selection-confirmed="onSelectionConfirmed"
-        @close="() => drawerVisible = false"
+        @close="onDrawerClose"
       />
        
       <!-- <DebugDrawerContent /> -->
@@ -716,6 +740,11 @@ const drawerSize = computed<number>(() => {
   display: inline-block;
   font-weight: 500;
   color: #333;
+}
+
+:deep(.el-table tr.total-row) {
+  font-weight: bold;
+  background-color: #f5f7fa !important;
 }
 
 /* Блок подбора материалов */

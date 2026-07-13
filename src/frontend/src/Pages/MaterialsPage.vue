@@ -644,7 +644,6 @@ onMounted(async () => {
     if (!reportStore.detailedSelectionColumns.length) {
       reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value];
     }
-    isOperationDocMode.value = reportStore.isOperationDocAutoGenerateReport;
   } finally {
     store.loading = false;
   }
@@ -897,6 +896,11 @@ const makeSelectionIndReport = async () => {
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
   const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
   const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
+
+  if (indicators_list.length == 0) {
+    reportStore.setSelectionIndTableData([]);
+    return;
+  }
 
   try {
     await store.fetchSelectionData({
@@ -1169,7 +1173,7 @@ watch(
     if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
       await handleMakeReport();
     };  
-    reportStore.isOperationDocAutoGenerateReport = false;
+    isOperationDocMode.value = true;
   },
   { immediate: true }
 );
