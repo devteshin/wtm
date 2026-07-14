@@ -152,7 +152,9 @@ const emit = defineEmits<{
 
 // --- Состояния ---
 const formRef = ref<FormInstance | undefined>(undefined)
-const loading = ref(true)                 // общий флаг загрузки мета
+const loading = ref(true)                 
+
+let taskId = 0;
 
 interface FormData {
   operationName: string
@@ -218,12 +220,12 @@ const fetchMeta = async () => {
   }
 }
 
-// Загрузка операции для редактирования
 const loadOperation = async (id: number) => {
   const operation = await store.fetchOperationData(id)
 
   const productId = operation.productId === 0 ? null : operation.productId
   const processId = operation.processId === 0 ? null : operation.processId
+  taskId = operation.taskId;
 
   form.value = {
     operationName: operation.operationName,
@@ -273,6 +275,7 @@ const handleSave = async () => {
     executorIds: form.value.executorIds,
     isCompleted: form.value.isCompleted,
     documentTemplateId: form.value.documentTemplateId ?? 0,
+    taskId: taskId
   }
 
   console.log(payload);

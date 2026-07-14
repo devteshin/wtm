@@ -528,16 +528,30 @@ async def select_operation_data(conn: Connection, operation_id: int):
         }
 
         await cur.execute(
+            """
+            SELECT ptd.id AS task_id FROM production_task_doc AS ptd 
+            INNER JOIN operations AS o ON o.id = ptd.operation AND o.id = %(operation_id)s
+            WHERE ptd.type = 0 AND ptd.doc_number = o.name
+            """,
+            {"operation_id": operation_id},
+        )
+        result = await cur.fetchone()
+        if result:
+            operation_data["taskId"] = result["task_id"]
+        else:    
+            operation_data["taskId"] = 0
+
+
+        await cur.execute(
             "SELECT executor_id FROM operation_executors WHERE operation_id = %(operation_id)s",
             {"operation_id": operation_id},
         )
         executors_raw = await cur.fetchall()
-        print(executors_raw)
         operation_data["executorIds"] = [e["executor_id"] for e in executors_raw]
 
         return operation_data
 
-async def update_operation(conn: Connection, operation_id: int, operation_name: str, product_id: int, process_id: int, executors_id: list[int], is_completed: bool, document_template_id: int):
+async def update_operation(conn: Connection, operation_id: int, operation_name: str, product_id: int, process_id: int, executors_id: list[int], is_completed: bool, document_template_id: int, task_id: int):
 
     new_operation_id = None
     async with conn.cursor() as cur:
@@ -558,6 +572,9 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
                 q_insert_executors = "INSERT INTO operation_executors (operation_id, executor_id) VALUES (%s, %s)"
                 values = [(new_operation_id, eid) for eid in executors_id]
                 await cur.executemany(q_insert_executors, values)
+
+            if task_id:
+                await cur.execute("UPDATE production_task_doc SET doc_number = %(operation_name)s WHERE id = %(task_id)s", {"operation_name":operation_name}, {"task_id":task_id})
 
         except Exception as e:
             await conn.rollback()

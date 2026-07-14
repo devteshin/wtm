@@ -345,11 +345,12 @@ async def update_operation_handler(request: Request):
     executors_id = payload.get("executorIds", None)
     is_completed = payload.get("isCompleted", None)
     document_template_id = payload.get("documentTemplateId", None)
-    if operation_id is None or operation_name is None or product_id is None or process_id is None or executors_id is None or is_completed is None or document_template_id is None:
+    task_id = payload.get("taskId", None)
+    if operation_id is None or operation_name is None or product_id is None or process_id is None or executors_id is None or is_completed is None or document_template_id is None or task_id is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            updated_operation_id = await update_operation(conn, operation_id, operation_name, product_id, process_id, executors_id, is_completed, document_template_id)
+            updated_operation_id = await update_operation(conn, operation_id, operation_name, product_id, process_id, executors_id, is_completed, document_template_id, task_id)
             if updated_operation_id is None:
                 return Response(status=409, text=json.dumps({"operation_id": 0}), content_type='application/json')
         except Exception as exc:

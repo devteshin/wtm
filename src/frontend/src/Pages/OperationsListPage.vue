@@ -79,16 +79,35 @@
       Недостаточно данных для отображения формы
     </div>
   </el-drawer>
+
+    <el-drawer
+      v-model="selectionDrawerVisible"
+      title="Подбор материалов"
+      direction="rtl"
+      :size="drawerSize"
+      @close="selectionDrawerVisible = false"
+    >
+       <MaterialPage
+        :stockID="props.stockID"
+        @selection-confirmed="onSelectionConfirmed"
+        @close="selectionDrawerVisible = false"
+      />
+       
+      <!-- <DebugDrawerContent /> -->
+    </el-drawer>    
+
+
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { onMounted } from "vue";
 import useApplicationStore from "@/store";
 import { useRouter } from "vue-router";
 import OperationItems from "../Pages/OperationPage/OperationItems.vue";
 
 import { Plus, Edit } from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
 
 const props = defineProps({
   /** ID склада */
@@ -100,6 +119,7 @@ const store = useApplicationStore();
 
 // Состояние drawer
 const drawerVisible = ref(false);
+const selectionDrawerVisible = ref(false);
 const currentOperationID = ref<number | null>(null);
 
 const isActiveOperationMode = ref(true);
@@ -152,6 +172,46 @@ const columns = [
     width: "200",
   },
 ];
+
+const drawerSize = computed<number>(() => {
+  const w = window.innerWidth;
+  console.log(w);
+  if (w <= 768) {
+    return Math.floor(0.98 * w);       
+  }
+  if (w <= 1280) {
+    return Math.floor(0.95 * w);
+  }
+  return Math.floor(0.9 * w);
+});
+
+const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
+  if (!items.length) {
+    ElMessage.warning('Ничего не выбрано');
+    return;
+  }
+
+/*   const existingIds = new Set(
+    doc_raw_materials.value.map(i => `${i.material_id}_${i.tare_id}`)
+  );
+
+  const newItems = items.filter(
+    item => !existingIds.has(`${item.material_id}_${item.tare_id}`)
+  );
+
+  if (newItems.length === 0) {
+    ElMessage.info('Все выбранные позиции уже есть в документе');
+    drawerVisible.value = false;
+    return;
+  }
+
+  doc_raw_materials.value = [...doc_raw_materials.value, ...newItems];
+  ElMessage.success(`Добавлено ${newItems.length} позиций`);
+  drawerVisible.value = false;
+ */
+};
+
+
 </script>
 
 <style scoped>

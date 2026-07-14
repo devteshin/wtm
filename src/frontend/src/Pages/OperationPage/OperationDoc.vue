@@ -527,7 +527,7 @@ const onDrawerClose = () => {
                 </div>
 
                 <div class="button-row">
-                  <el-button type="primary" plain @click="openSelection">Подбор материалов</el-button>
+                  <el-button type="primary" plain @click="openSelection">Подбор материалов по остаткам</el-button>
                 </div>
 
                 <div v-if="!isGridMode" class="raw-material-picker-block">
