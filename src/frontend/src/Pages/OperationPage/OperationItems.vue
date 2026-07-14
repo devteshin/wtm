@@ -268,6 +268,7 @@ const handleSave = async () => {
   }
 
   const payload = {
+    stockId: props.stockID,
     operationId: currentOperationId.value,
     operationName: form.value.operationName,
     productId: form.value.productId ?? 0,

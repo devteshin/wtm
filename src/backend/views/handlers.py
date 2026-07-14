@@ -338,6 +338,7 @@ async def create_arrival_handler(request: Request):
 
 async def update_operation_handler(request: Request):
     payload: dict = await request.json()
+    stock_id = payload.get("stockId", None)
     operation_id = payload.get("operationId", None)
     operation_name = payload.get("operationName", None)
     product_id = payload.get("productId", None)
@@ -346,11 +347,11 @@ async def update_operation_handler(request: Request):
     is_completed = payload.get("isCompleted", None)
     document_template_id = payload.get("documentTemplateId", None)
     task_id = payload.get("taskId", None)
-    if operation_id is None or operation_name is None or product_id is None or process_id is None or executors_id is None or is_completed is None or document_template_id is None or task_id is None:
+    if stock_id is None or operation_id is None or operation_name is None or product_id is None or process_id is None or executors_id is None or is_completed is None or document_template_id is None or task_id is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            updated_operation_id = await update_operation(conn, operation_id, operation_name, product_id, process_id, executors_id, is_completed, document_template_id, task_id)
+            updated_operation_id = await update_operation(conn, stock_id, operation_id, operation_name, product_id, process_id, executors_id, is_completed, document_template_id, task_id)
             if updated_operation_id is None:
                 return Response(status=409, text=json.dumps({"operation_id": 0}), content_type='application/json')
         except Exception as exc:

@@ -551,7 +551,7 @@ async def select_operation_data(conn: Connection, operation_id: int):
 
         return operation_data
 
-async def update_operation(conn: Connection, operation_id: int, operation_name: str, product_id: int, process_id: int, executors_id: list[int], is_completed: bool, document_template_id: int, task_id: int):
+async def update_operation(conn: Connection, stock_id: int, operation_id: int, operation_name: str, product_id: int, process_id: int, executors_id: list[int], is_completed: bool, document_template_id: int, task_id: int):
 
     new_operation_id = None
     async with conn.cursor() as cur:
@@ -574,7 +574,7 @@ async def update_operation(conn: Connection, operation_id: int, operation_name: 
                 await cur.executemany(q_insert_executors, values)
 
             if task_id:
-                await cur.execute("UPDATE production_task_doc SET doc_number = %(operation_name)s WHERE id = %(task_id)s", {"operation_name":operation_name}, {"task_id":task_id})
+                await cur.callproc("app_upsert_task_doc", [task_id, operation_id, stock_id])
 
         except Exception as e:
             await conn.rollback()
