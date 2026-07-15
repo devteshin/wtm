@@ -274,7 +274,7 @@
                     </span>
                   </div>
                 </el-form-item>
-                <el-form-item v-if="isSelectionDetailedMode && isOperationDocMode" style="margin-top: 16px;">
+                <el-form-item v-if="isSelectionDetailedMode && (isOperationDocMode || isOperationListMode)" style="margin-top: 16px;">
                   <div style="display: flex; gap: 8px; justify-content: flex-end;">
                     <el-button @click="handleDrawerClose">Отмена</el-button>
                     <el-button type="primary" @click="handleApplySelection">Применить выбор</el-button>
@@ -325,6 +325,7 @@ const reportStore = useMaterialsReportStore()
 const isAutoSelectionUpdate = ref(false);
 const hasFooter = computed(() => isSelectionControlEnabled.value);
 const isOperationDocMode =ref(false);
+const isOperationListMode =ref(false);
 
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
@@ -1177,6 +1178,20 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  () => reportStore.isOperationListAutoGenerateReport,
+  async (newValue) => {
+    if (!newValue) return;
+
+    if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
+      await handleMakeReport();
+    };  
+    isOperationListMode.value = true;
+  },
+  { immediate: true }
+);
+
 
 </script>
 

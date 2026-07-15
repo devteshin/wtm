@@ -3,7 +3,7 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
-                check_material_item, check_operation_name, update_operation, delete_operation
+                check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -335,6 +335,25 @@ async def create_arrival_handler(request: Request):
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
     return Response(status=201, text=json.dumps({"new_doc_id": new_doc_id}), content_type='application/json')
+
+async def update_task_handler(request: Request):
+    payload: dict = await request.json()
+    stock_id = payload.get("stockId", None)
+    operation_id = payload.get("operationId", None)
+    task_id = payload.get("taskId", None)
+    task_items: list[dict] = payload.get("task_items", [])
+    if stock_id is None or operation_id is None or task_id is None or task_items is None:
+        raise HTTPBadRequest()
+    async with request.app["db"].acquire() as conn:
+        try:
+            updated_task_id = await update_operation_task(conn, stock_id, operation_id, task_id, task_items)
+            if updated_task_id is None:
+                return Response(status=409, text=json.dumps({"operation_id": 0}), content_type='application/json')
+        except Exception as exc:
+            raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
+    return Response(status=201, text=json.dumps({"task_id": updated_task_id}), content_type='application/json')
+
+
 
 async def update_operation_handler(request: Request):
     payload: dict = await request.json()

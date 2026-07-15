@@ -554,6 +554,28 @@ async def select_operation_data(conn: Connection, operation_id: int):
 
         return operation_data
 
+async def update_operation_task(conn: Connection, stock_id: int, operation_id: int, task_id: int, task_items: list[dict]):
+
+    if not task_id:
+        return None
+
+    async with conn.cursor() as cur:
+        await conn.begin()
+        try:
+                # task_items_tmp
+                await cur.callproc("app_upsert_task_doc", [task_id, operation_id, stock_id])
+                await cur.execute("SELECT @out_task_doc_id AS task_doc_id")
+                result = await cur.fetchone()
+                task_doc_id = result.get("task_doc_id") if result else None
+
+        except Exception as e:
+            await conn.rollback()
+            print(f"ERROR \"update_operation_task\": {e}")
+            return
+        await conn.commit()
+
+    return task_doc_id  
+
 async def update_operation(conn: Connection, stock_id: int, operation_id: int, operation_name: str, product_id: int, process_id: int, executors_id: list[int], is_completed: bool, document_template_id: int, task_id: int):
 
     new_operation_id = None
@@ -576,8 +598,8 @@ async def update_operation(conn: Connection, stock_id: int, operation_id: int, o
                 values = [(new_operation_id, eid) for eid in executors_id]
                 await cur.executemany(q_insert_executors, values)
 
-            if task_id:
-                await cur.callproc("app_upsert_task_doc", [task_id, operation_id, stock_id])
+            #if task_id:
+                #await cur.callproc("app_upsert_task_doc", [task_id, operation_id, stock_id])
 
         except Exception as e:
             await conn.rollback()

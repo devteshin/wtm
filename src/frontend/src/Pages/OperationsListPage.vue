@@ -102,6 +102,7 @@
 import { computed, ref, watch } from "vue";
 import { onMounted } from "vue";
 import useApplicationStore from "@/store";
+import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import { useRouter } from "vue-router";
 import OperationItems from "../Pages/OperationPage/OperationItems.vue";
 import MaterialPage from '../Pages/MaterialsPage.vue';
@@ -116,6 +117,7 @@ const props = defineProps({
 
 const router = useRouter();
 const store = useApplicationStore();
+const reportStore = useMaterialsReportStore()
 
 // Состояние drawer
 const drawerVisible = ref(false);
@@ -191,9 +193,22 @@ const drawerSize = computed<number>(() => {
   return Math.floor(0.9 * w);
 });
 
+function setContextMaterialsSelection() {
+  if (props.stockID != null) {
+    reportStore.selectedStore = [props.stockID];
+  };
+  reportStore.isSelectionDetailedMode = true;
+  reportStore.isDetailedMode = true;
+  reportStore.isSelectionEnabled = true;
+  reportStore.isSelectionControlEnabled = true;
+  reportStore.isOnlyNonZeroMode = true;
+}; 
+
 const openSelectionDrawer = () => {
-  drawerVisible.value = false          // закрываем операцию
-  selectionDrawerVisible.value = true // открываем подбор
+  drawerVisible.value = false
+  reportStore.isOperationListAutoGenerateReport = true;
+  setContextMaterialsSelection();
+  selectionDrawerVisible.value = true 
 };
 
 const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
@@ -201,6 +216,12 @@ const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
     ElMessage.warning('Ничего не выбрано');
     return;
   }
+
+  console.log('Items:', items);
+
+  selectionDrawerVisible.value = false;
+  drawerVisible.value = true 
+
 
 /*   const existingIds = new Set(
     doc_raw_materials.value.map(i => `${i.material_id}_${i.tare_id}`)

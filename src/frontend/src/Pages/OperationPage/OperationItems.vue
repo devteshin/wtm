@@ -88,10 +88,6 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Операция выполнена">
-        <el-checkbox v-model="form.isCompleted"></el-checkbox>
-      </el-form-item>
-
       <el-form-item label="Шаблон документа приёма" prop="documentTemplateId">
         <el-select
           v-model="form.documentTemplateId"
@@ -110,23 +106,28 @@
           </template>
         </el-select>
       </el-form-item>
+
+      <el-form-item label="Операция выполнена">
+        <el-checkbox v-model="form.isCompleted"></el-checkbox>
+      </el-form-item>
+
     </el-form>
 
     <div class="form-footer" v-if="!loading">
       <el-button @click="handleClose">Закрыть</el-button>
       <el-button
-        v-if="currentOperationId > 0 && !isTaskItemsBlocked"
-        type="primary"
-        @click="onOpenMaterialSelection"
-      >
-        Задание
-      </el-button>
-      <el-button
         v-if="currentOperationId > 0"
         type="danger"
         @click="handleDelete"
       >
-        Удалить
+        Удалить операцию
+      </el-button>
+      <el-button
+        v-if="currentOperationId > 0 && !isTaskItemsBlocked"
+        type="primary"
+        @click="onOpenMaterialSelection"
+      >
+        {{ taskId ? 'Изменить задание' : 'Добавить новое задание' }}
       </el-button>
       <el-button type="primary" @click="handleSave">
         Сохранить
@@ -236,7 +237,7 @@ const loadOperation = async (id: number) => {
   const processId = operation.processId === 0 ? null : operation.processId
   taskId = operation.taskId;
   isTaskItemsBlocked = operation.isTaskItemsBlocked;
-
+  
   form.value = {
     operationName: operation.operationName,
     productId,
