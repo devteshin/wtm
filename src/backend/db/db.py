@@ -530,7 +530,8 @@ async def select_operation_data(conn: Connection, operation_id: int):
 
         await cur.execute(
             """
-            SELECT ptd.id AS task_id FROM production_task_doc AS ptd 
+            SELECT ptd.id AS task_id, IF(ptd.parent_doc_id = 1 OR ptd.arrival_doc_id = 1, 1, 0) AS is_task_items_blocked 
+            FROM production_task_doc AS ptd 
             INNER JOIN operations AS o ON o.id = ptd.operation AND o.id = %(operation_id)s
             WHERE ptd.type = 0 AND ptd.doc_number = o.name
             """,
@@ -539,9 +540,10 @@ async def select_operation_data(conn: Connection, operation_id: int):
         result = await cur.fetchone()
         if result:
             operation_data["taskId"] = result["task_id"]
+            operation_data["isTaskItemsBlocked"] = bool(result["is_task_items_blocked"])
         else:    
             operation_data["taskId"] = 0
-
+            operation_data["isTaskItemsBlocked"] = False
 
         await cur.execute(
             "SELECT executor_id FROM operation_executors WHERE operation_id = %(operation_id)s",

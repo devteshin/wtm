@@ -115,7 +115,7 @@
     <div class="form-footer" v-if="!loading">
       <el-button @click="handleClose">Закрыть</el-button>
       <el-button
-        v-if="currentOperationId > 0"
+        v-if="currentOperationId > 0 && !isTaskItemsBlocked"
         type="primary"
         @click="onOpenMaterialSelection"
       >
@@ -163,6 +163,7 @@ const formRef = ref<FormInstance | undefined>(undefined)
 const loading = ref(true)                 
 
 let taskId = 0;
+let isTaskItemsBlocked = false;
 
 interface FormData {
   operationName: string
@@ -234,6 +235,7 @@ const loadOperation = async (id: number) => {
   const productId = operation.productId === 0 ? null : operation.productId
   const processId = operation.processId === 0 ? null : operation.processId
   taskId = operation.taskId;
+  isTaskItemsBlocked = operation.isTaskItemsBlocked;
 
   form.value = {
     operationName: operation.operationName,
