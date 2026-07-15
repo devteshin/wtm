@@ -253,7 +253,7 @@ WHERE
     AND
     ptd.stock = %(stock_id)s
     AND
-    ptd.done = 0
+    o.done = 0
 """
 
     q_categories_materials = """
@@ -771,13 +771,12 @@ async def select_stocks(conn: Connection, user_id: int):
 SELECT
     s.id
     , s.name
-    , SUM(IF(ptd.done = 0 AND pte.executor_id = %(user_id)s, 1, 0)) tasks_count
+    , SUM(IF(o.done = 0 AND pte.executor_id = %(user_id)s, 1, 0)) tasks_count
 FROM
     stock s
-LEFT JOIN production_task_doc ptd ON
-    ptd.stock = s.id
-LEFT JOIN production_task_executor pte ON
-    pte.doc_id = ptd.id
+LEFT JOIN production_task_doc ptd ON ptd.stock = s.id
+LEFT JOIN operations AS o ON o.id = ptd.operation
+LEFT JOIN production_task_executor pte ON pte.doc_id = ptd.id
 WHERE
     s.app IS TRUE
 GROUP BY
