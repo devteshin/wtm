@@ -116,6 +116,13 @@
       <el-button @click="handleClose">Закрыть</el-button>
       <el-button
         v-if="currentOperationId > 0"
+        type="primary"
+        @click="onOpenMaterialSelection"
+      >
+        Задание
+      </el-button>
+      <el-button
+        v-if="currentOperationId > 0"
         type="danger"
         @click="handleDelete"
       >
@@ -147,7 +154,8 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  (e: 'close'): void
+  (e: 'close'): void,
+  (e: 'open-material-selection'):void
 }>()
 
 // --- Состояния ---
@@ -328,6 +336,12 @@ const handleDelete = async () => {
   }
 }
 
+const onOpenMaterialSelection = () => {
+  console.log('Opening material selection');
+  emit('open-material-selection')
+}
+
+
 const handleClose = async () => {
   if (!hasChanges()) {
     emit('close')
@@ -341,9 +355,9 @@ const handleClose = async () => {
   ).catch(() => 'cancel')
 
   if (confirmed === 'confirm') {
-    await handleSave()
-    emit('close')
+    await handleSave();
   }
+  emit('close');
 }
 
 const openCreateProduct = async () => {

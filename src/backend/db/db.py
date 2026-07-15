@@ -474,7 +474,8 @@ async def select_operations(conn: Connection, user_id: int, stock_id: int, activ
             a.operation = o.id
         WHERE 
             executor_id = %(user_id)s 
-            AND o.done <> %(active_operation_mode)s   
+            AND o.done <> %(active_operation_mode)s
+        ORDER BY o.name       
     """
     operations = []
     async with conn.cursor() as cur:

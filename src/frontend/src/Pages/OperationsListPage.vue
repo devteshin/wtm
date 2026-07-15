@@ -60,7 +60,6 @@
     </el-main>
   </el-container>
 
-  <!-- Drawer для редактирования/создания операции -->
   <el-drawer
     v-model="drawerVisible"
     title="Операция"
@@ -70,31 +69,31 @@
   >
     <OperationItems
       v-if="currentOperationID !== null && store.currentUser?.id !== undefined"
-      :operationID="currentOperationID!"
+      :key="currentOperationID + '_' + drawerVisible"
+      :operationID="currentOperationID"
       :stockID="props.stockID"
       :userID="Number(store.currentUser?.id)"
       @close="drawerVisible = false"
+      @open-material-selection="openSelectionDrawer"
     />
     <div v-else class="empty-state">
       Недостаточно данных для отображения формы
     </div>
   </el-drawer>
 
-    <el-drawer
-      v-model="selectionDrawerVisible"
-      title="Подбор материалов"
-      direction="rtl"
-      :size="drawerSize"
-      @close="selectionDrawerVisible = false"
-    >
+  <el-drawer
+    v-model="selectionDrawerVisible"
+    title="Подбор материалов"
+    direction="rtl"
+    :size="drawerSize"
+    @close="onSelectionFormClose"
+  >
        <MaterialPage
-        :stockID="props.stockID"
-        @selection-confirmed="onSelectionConfirmed"
-        @close="selectionDrawerVisible = false"
-      />
-       
-      <!-- <DebugDrawerContent /> -->
-    </el-drawer>    
+      :stockID="props.stockID"
+      @selection-confirmed="onSelectionConfirmed"
+      @close="selectionDrawerVisible = false"
+    />
+  </el-drawer>    
 
 
 </template>
@@ -105,6 +104,7 @@ import { onMounted } from "vue";
 import useApplicationStore from "@/store";
 import { useRouter } from "vue-router";
 import OperationItems from "../Pages/OperationPage/OperationItems.vue";
+import MaterialPage from '../Pages/MaterialsPage.vue';
 
 import { Plus, Edit } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
@@ -159,6 +159,12 @@ const onFormClose = async () => {
   await store.fetchOperations(props.stockID, isActiveOperationMode.value);
 }
 
+const onSelectionFormClose = async () => {
+  selectionDrawerVisible.value = false;
+  drawerVisible.value = true 
+}
+
+
 /** Список столбцов для таблицы */
 const columns = [
   {
@@ -184,6 +190,11 @@ const drawerSize = computed<number>(() => {
   }
   return Math.floor(0.9 * w);
 });
+
+const openSelectionDrawer = () => {
+  drawerVisible.value = false          // закрываем операцию
+  selectionDrawerVisible.value = true // открываем подбор
+};
 
 const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
   if (!items.length) {

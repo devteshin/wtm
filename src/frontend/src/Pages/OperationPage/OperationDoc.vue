@@ -265,7 +265,7 @@ const openSelection = async () =>  {
 };
 
 function setContextMaterialsSelection() {
-  if (raw_materials_options.value.length >0){
+  if (raw_materials_options.value.length > 0){
     const newselectedMaterials = raw_materials_options.value.filter(item => !reportStore.selectedMaterial.includes(item.material_id)).map(item => item.material_id);
     reportStore.selectedMaterial = [...reportStore.selectedMaterial, ...newselectedMaterials];
   };  
