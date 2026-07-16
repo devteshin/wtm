@@ -342,6 +342,11 @@ async def update_task_handler(request: Request):
     operation_id = payload.get("operationId", None)
     task_id = payload.get("taskId", None)
     task_items: list[dict] = payload.get("taskItems", [])
+    print(f"Received update for {payload}")
+    print(stock_id)
+    print(operation_id)
+    print(task_id)
+    print(task_items)
     if stock_id is None or operation_id is None or task_id is None or task_items is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:

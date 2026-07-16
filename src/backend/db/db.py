@@ -583,6 +583,8 @@ def build_task_items_values(task_items: list[dict]) -> list[tuple]:
 
 async def update_operation_task(conn: Connection, stock_id: int, operation_id: int, task_id: int, task_items: list[dict]):
 
+    print(stock_id, operation_id, task_id, task_items)
+    
     if not task_id:
         return None
 
