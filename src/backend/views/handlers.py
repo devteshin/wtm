@@ -341,17 +341,17 @@ async def update_task_handler(request: Request):
     stock_id = payload.get("stockId", None)
     operation_id = payload.get("operationId", None)
     task_id = payload.get("taskId", None)
-    task_items: list[dict] = payload.get("task_items", [])
+    task_items: list[dict] = payload.get("taskItems", [])
     if stock_id is None or operation_id is None or task_id is None or task_items is None:
         raise HTTPBadRequest()
     async with request.app["db"].acquire() as conn:
         try:
-            updated_task_id = await update_operation_task(conn, stock_id, operation_id, task_id, task_items)
-            if updated_task_id is None:
-                return Response(status=409, text=json.dumps({"operation_id": 0}), content_type='application/json')
+            task_id = await update_operation_task(conn, stock_id, operation_id, task_id, task_items)
+            if task_id is None:
+                return Response(status=409, text=json.dumps({"task_id": 0}), content_type='application/json')
         except Exception as exc:
             raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
-    return Response(status=201, text=json.dumps({"task_id": updated_task_id}), content_type='application/json')
+    return Response(status=201, text=json.dumps({"task_id": task_id}), content_type='application/json')
 
 
 

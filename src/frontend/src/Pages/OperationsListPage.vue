@@ -125,6 +125,8 @@ const selectionDrawerVisible = ref(false);
 const currentOperationID = ref<number | null>(null);
 
 const isActiveOperationMode = ref(true);
+let updated_task_id = 0;
+let updated_operation_id = 0;
 
 /** Открытие drawer с нужным operationID */
 const openDrawer = (operationID: number) => {
@@ -194,7 +196,7 @@ const drawerSize = computed<number>(() => {
 });
 
 function setContextMaterialsSelection() {
-  if (props.stockID != null) {
+  if (props.stockID) {
     reportStore.selectedStore = [props.stockID];
   };
   reportStore.isSelectionDetailedMode = true;
@@ -204,20 +206,45 @@ function setContextMaterialsSelection() {
   reportStore.isOnlyNonZeroMode = true;
 }; 
 
-const openSelectionDrawer = () => {
+const openSelectionDrawer = (taskId: number, operationId: number) => {
+  updated_task_id= taskId,
+  updated_operation_id= operationId,
   drawerVisible.value = false
   reportStore.isOperationListAutoGenerateReport = true;
   setContextMaterialsSelection();
   selectionDrawerVisible.value = true 
 };
 
-const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
+const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
   if (!items.length) {
     ElMessage.warning('Ничего не выбрано');
     return;
   }
 
+  console.log('updated_task_id:', updated_task_id);
+  console.log('updated_operation_id:', updated_operation_id);
+
+  if (!updated_task_id || !updated_operation_id) {
+    return;
+  }
+
   console.log('Items:', items);
+
+  const payload = {
+    stockId: props.stockID,
+    operationId: updated_operation_id,
+    taskId: updated_task_id,
+    taskItems: items
+  }
+
+  console.log(payload);
+
+  const task_id = await store.updateTask(payload)
+  if (!task_id) {
+    ElMessage.error('Ошибка при создании или обновлении задания')
+    return
+  }
+
 
   selectionDrawerVisible.value = false;
   drawerVisible.value = true 

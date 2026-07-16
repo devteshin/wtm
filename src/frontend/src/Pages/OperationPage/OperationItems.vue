@@ -156,7 +156,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: 'close'): void,
-  (e: 'open-material-selection'):void
+  (e: 'open-material-selection', taskId: number, operationId: number): void
 }>()
 
 // --- Состояния ---
@@ -341,7 +341,7 @@ const handleDelete = async () => {
 
 const onOpenMaterialSelection = () => {
   console.log('Opening material selection');
-  emit('open-material-selection')
+  emit('open-material-selection', taskId, currentOperationId.value)
 }
 
 

@@ -174,6 +174,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const updateTask = (payload: any) => {
+        loading.value = true;
+        return api.updateTask(payload).finally(() => {
+            loading.value = false;
+        });
+    };
+
     const deleteOperation = (payload: any) => {
         loading.value = true;
         return api.deleteOperation(payload).finally(() => {
@@ -269,6 +276,7 @@ export default defineStore("app_store", () => {
         deleteArrival,
         updateOperation,
         deleteOperation,
+        updateTask,
         stocks,
         operations,
         operation,

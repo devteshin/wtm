@@ -9,6 +9,7 @@ const STOCK = "stock";
 const OPERATION = "operation";
 const OPERATION_UPDATE = "operation/update";
 const OPERATION_DELETE = "operation/delete";
+const OPERATION_UPDATE_TASK = "operation/update_task";
 const CHECK_OPERATION_NAME = "operation/check_name";
 const MATERIAL = "material";
 const DOC = "doc";
@@ -439,6 +440,39 @@ class ClientAPI {
             return null;
         }
     }
+
+    async updateTask(payload: any) {
+        const url = `${BASE_URL}/${OPERATION_UPDATE_TASK}`;
+        const headers = {
+            "Content-Type": "application/json",
+            ...this.requestHeaders()
+        };
+
+        try {
+            const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+            if (!response.ok) {
+                const responseBody = await response.text(); // Считываем тело ответа как текст
+                let errorMessage = "";
+                try {
+                    const errorData = JSON.parse(responseBody); // Пробуем распарсить текст как JSON
+                    errorMessage = errorData.message || "Неизвестная ошибка"; // Получаем сообщение об ошибке
+                } catch {
+                    errorMessage = responseBody || "Неизвестная ошибка"; // Если не удалось распарсить как JSON, используем текст
+                }
+                throw new Error(errorMessage);
+            }
+            else {
+                const data = await response.json();
+                const task_id = data.task_id;
+                return task_id;
+            };
+        } catch (error) {
+            this.handleError(error);
+            return null;
+        }
+    }
+
+
 
     async createArrival(payload: any) {
         const url = `${BASE_URL}/${ARRIVAL_CREATE}`;

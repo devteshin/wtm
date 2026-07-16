@@ -603,7 +603,8 @@ async def update_operation_task(conn: Connection, stock_id: int, operation_id: i
 
                 q_insert_task_items = "INSERT INTO task_items_tmp (key_material, tare_amount, net_weight, material, tare_id, doc_id) VALUES (%s, %s, %s, %s, %s, %s)"
                 values = build_task_items_values(task_items)
-                await cur.executemany(q_insert_task_items, values)
+                if values:
+                    await cur.executemany(q_insert_task_items, values)
 
                 await cur.callproc("app_upsert_task_doc", [task_id, operation_id, stock_id])
                 await cur.execute("SELECT @out_task_doc_id AS task_doc_id")
