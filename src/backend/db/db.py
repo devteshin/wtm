@@ -605,11 +605,13 @@ async def update_operation_task(conn: Connection, stock_id: int, operation_id: i
                 values = build_task_items_values(task_items)
                 if values:
                     await cur.executemany(q_insert_task_items, values)
+                    print(f"Task items inserted for task {values]}")
 
                 await cur.callproc("app_upsert_task_doc", [task_id, operation_id, stock_id])
                 await cur.execute("SELECT @out_task_doc_id AS task_doc_id")
                 result = await cur.fetchone()
                 task_doc_id = result.get("task_doc_id") if result else None
+                print(f"Task document ID: {task_doc_id}")
 
         except Exception as e:
             await conn.rollback()
