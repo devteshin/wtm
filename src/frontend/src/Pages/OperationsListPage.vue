@@ -224,7 +224,7 @@ const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
   console.log('updated_task_id:', updated_task_id);
   console.log('updated_operation_id:', updated_operation_id);
 
-  if (!updated_task_id || !updated_operation_id) {
+  if (!updated_operation_id) {
     return;
   }
 
