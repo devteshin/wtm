@@ -554,15 +554,57 @@ async def select_operation_data(conn: Connection, operation_id: int):
 
         return operation_data
 
+
+def build_task_items_values(task_items: list[dict]) -> list[tuple]:
+    values = []
+    for i, item in enumerate(task_items):
+        material_id = item.get("material_id")
+        tare_id = item.get("tare_id")
+        net_weight = item.get("net_weight")
+
+        if material_id is None or tare_id is None:
+            raise ValueError(f"task_items[{i}] missing material_id or tare_id")
+        if net_weight is None:
+            raise ValueError(f"task_items[{i}] missing net_weight")
+
+        material_id_str = str(material_id)
+        tare_id_str = str(tare_id)
+
+        key_material = f"{material_id_str}_{tare_id_str}"
+        values.append((
+            key_material,
+            1,              # tare_amount
+            net_weight,     
+            material_id,    
+            tare_id,        
+            0               # doc_id
+        ))
+    return values
+
 async def update_operation_task(conn: Connection, stock_id: int, operation_id: int, task_id: int, task_items: list[dict]):
 
     if not task_id:
         return None
 
     async with conn.cursor() as cur:
+        await cur.execute("DROP TABLE IF EXISTS task_items_tmp")
         await conn.begin()
         try:
                 # task_items_tmp
+                await cur.execute("""CREATE TEMPORARY TABLE task_items_tmp (
+                    key_material VARCHAR(255),
+                    tare_amount INT,
+                    net_weight FLOAT,
+                    material INT,
+                    tare_id INT,
+                    doc_id INT
+                );
+                """)
+
+                q_insert_task_items = "INSERT INTO task_items_tmp (key_material, tare_amount, net_weight, material, tare_id, doc_id) VALUES (%s, %s, %s, %s, %s, %s)"
+                values = build_task_items_values(task_items)
+                await cur.executemany(q_insert_task_items, values)
+
                 await cur.callproc("app_upsert_task_doc", [task_id, operation_id, stock_id])
                 await cur.execute("SELECT @out_task_doc_id AS task_doc_id")
                 result = await cur.fetchone()
