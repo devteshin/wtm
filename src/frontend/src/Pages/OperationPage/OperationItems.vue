@@ -127,7 +127,7 @@
         type="primary"
         @click="onOpenMaterialSelection"
       >
-        {{ taskId ? 'Открыть задание' : 'Добавить новое задание' }}
+        {{ taskId ? 'Открыть подбор материалов' : 'Добавить новое задание' }}
       </el-button>
       <el-button type="primary" @click="handleSave">
         Сохранить

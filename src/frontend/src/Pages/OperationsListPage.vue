@@ -199,18 +199,31 @@ function setContextMaterialsSelection(task_items: frontend.ITaskItemsKeyMaterial
   if (props.stockID) {
     reportStore.selectedStore = [props.stockID];
   };
+  reportStore.isSelectionDetailedMode = true;
+  reportStore.isSelectionEnabled = true;
+  reportStore.isSelectionControlEnabled = true;
+  reportStore.isOnlyNonZeroMode = true;
+
   if (task_items.length > 0)  {
-    reportStore.isSelectionDetailedMode = true;
-    reportStore.isDetailedMode = true;
     reportStore.isSelectionEnabled = true;
-    reportStore.isSelectionControlEnabled = true;
-    reportStore.isOnlyNonZeroMode = true;
+    reportStore.isDetailedMode = true;
     reportStore.isOperationListAutoGenerateReport = true;
-    //const newSelectionData = [ ...task_items ];
-    reportStore.setSelectionData([ ...task_items ])
-    console.log("reportStore.setSelectionData", reportStore.setSelectionData);
+    reportStore.selectedMaterial = [...new Set(task_items.map(item => item.material_id)) ]
+    reportStore.setSelectionData(
+      task_items.map(item => ({
+      key_material: item.key_material,
+      stock_id: props.stockID
+    }))
+    );
+
   } else {
-    //reportStore.setTableData([])
+    reportStore.setTableData([]);
+    reportStore.setSelectionTableData([]);
+    reportStore.setSelectionData([]);
+    reportStore.selectedMaterial = [];
+    reportStore.isSelectionEnabled = false;
+    reportStore.isDetailedMode = false;
+    reportStore.isOperationListAutoGenerateReport = false;
   };
   
 }; 

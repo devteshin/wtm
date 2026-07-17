@@ -30,7 +30,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const detailedColumns = ref<any[]>([]);
   const selectionColumns = ref<any[]>([]);
   const detailedSelectionColumns = ref<any[]>([]);
-  const selectedTableData = ref<any[]>([]); // выбранные строки текущей таблицы материалов
+  //const selectedTableData = ref<any[]>([]); // выбранные строки текущей таблицы материалов
   const selectionData = ref<any[]>([]); // хранит выбранные строки в формате таблицы материалов (tableData) 
   
   // Действия
@@ -92,7 +92,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     tableData.value = [];
     selectionTableData.value = [];
     selectionIndTableData.value = [];
-    selectedTableData.value = [];
+    //selectedTableData.value = [];
     selectionData.value = [];
   };
 
@@ -122,9 +122,9 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         if (data.selectionIndTableData) {
           selectionIndTableData.value = data.selectionIndTableData;
         }
-        if (data.selectedTableData) {
-          selectedTableData.value = data.selectedTableData;
-        }
+        //if (data.selectedTableData) {
+        //  selectedTableData.value = data.selectedTableData;
+        //}
         if(data.selectionData) {
           selectionData.value = data.selectionData;
         }
@@ -157,7 +157,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
       detailedColumns: detailedColumns.value,
       selectionColumns: selectionColumns.value,
       detailedSelectionColumns: detailedSelectionColumns.value,
-      selectedTableData: selectedTableData.value,
+      //selectedTableData: selectedTableData.value,
       selectionData: selectionData.value,
       timestamp: Date.now()
     };
@@ -179,10 +179,10 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     saveToStorage(); // Автосохранение при обновлении данных
   };
 
-  const setSelectedTableData = (data: any[]) => {
-    selectedTableData.value = data;
-    saveToStorage(); // Автосохранение при обновлении выбранных данных
-  };
+  //const setSelectedTableData = (data: any[]) => {
+  //  selectedTableData.value = data;
+  //  saveToStorage(); // Автосохранение при обновлении выбранных данных
+  //};
 
   const setSelectionData = (data: any[]) => {
     selectionData.value = data;
@@ -206,7 +206,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     tableData,
     selectionTableData,
     selectionIndTableData,
-    selectedTableData,
+    //selectedTableData,
     selectionData,
     basicColumns,
     detailedColumns,
@@ -220,7 +220,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     setTableData,
     setSelectionTableData,
     setSelectionIndTableData,
-    setSelectedTableData,
+    //setSelectedTableData,
     setSelectionData
   };
 });

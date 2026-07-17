@@ -379,34 +379,7 @@ const tableCondition = computed({
 const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
 
-/* const prepareSelectionToAdd = (selectionToAdd: typeof reportStore.tableData[number][]) => {
-  const elements: string[] = reportStore.tableCondition.map(item => item.element);
-
-  return selectionToAdd.map((row) => {
-    const newRow = { ...row }; // Клонируем строку
-
-
-    elements.forEach((element) => {
-      const percentFieldName = `${element}_percent`;
-      const weightFieldName = `${element}_weight`;
-
-      const percent = Number(row[percentFieldName]) ?? 0;
-      const restWeight = Number(row.rest_net_weight) ?? 0;
-
-      if (!isNaN(percent) && !isNaN(restWeight) && restWeight !== 0) {
-        newRow[weightFieldName] = percent * restWeight / 100;
-      } else {
-        newRow[weightFieldName] = 0;
-      }
-    });
-    newRow['key_material'] = `${findMaterialIdByName(newRow.material)}_${newRow.tare_id}`;
-    newRow['stock_id'] = findStockIdByName(newRow.stock_name);
-
-    return newRow;
-  });
-};
- */
-const updateSelectionData = () => {
+/* const updateSelectionData = () => {
   const selectionToAdd: typeof reportStore.tableData[number][] = [];
   const selectionToRemove: typeof reportStore.tableData[number][] = [];
   let rowInSelection = false;
@@ -432,12 +405,10 @@ const updateSelectionData = () => {
 
   // Добавление новых выбранных строк
   if (selectionToAdd.length > 0) {
-    //const processedSelection = prepareSelectionToAdd(selectionToAdd); // Подготовка данных для добавления
     const currentSelection = reportStore.selectionData;
     reportStore.setSelectionData([
       ...currentSelection,
       ...selectionToAdd
-      //...processedSelection
     ]);
   }
 
@@ -453,6 +424,52 @@ const updateSelectionData = () => {
 
 
 };  
+ */
+const updateSelectionData = (selection: any[]) => {
+  const selectionToAdd: typeof reportStore.tableData[number][] = [];
+  const selectionToRemove: typeof reportStore.tableData[number][] = [];
+  let rowInSelection = false;
+  let rowInSelected = false;
+
+  const selectedKeys = new Set(
+    selection.map(row => getRowKey(row))
+  );
+  const selectionKeys = new Set(
+    reportStore.selectionData.map(row => getRowKey(row))
+  );
+
+  reportStore.tableData.forEach((row) => {
+    rowInSelection = selectionKeys.has(getRowKey(row));
+    rowInSelected = selectedKeys.has(getRowKey(row));
+    if (rowInSelected && !rowInSelection) {
+        selectionToAdd.push(row);
+      }
+      else if (!rowInSelected && rowInSelection) {
+        selectionToRemove.push(row);
+      }
+    });
+
+  // Добавление новых выбранных строк
+  if (selectionToAdd.length > 0) {
+    const currentSelection = reportStore.selectionData;
+    reportStore.setSelectionData([
+      ...currentSelection,
+      ...selectionToAdd
+    ]);
+  }
+
+  // Удаление строк, которые больше не выбраны
+  if (selectionToRemove.length > 0) {
+    const currentSelection = reportStore.selectionData;
+    const keysToRemove = new Set(selectionToRemove.map(row => getRowKey(row)));
+    const updatedSelectionData = currentSelection.filter(
+      row => !keysToRemove.has(getRowKey(row))
+    );
+    reportStore.setSelectionData(updatedSelectionData);
+  }
+
+};  
+
 
 const handleDeleteSelectionTableRow = async (row: any) => {
   if (reportStore.selectionData.length === 0) {  
@@ -472,9 +489,17 @@ const handleDeleteSelectionTableRow = async (row: any) => {
       );
       reportStore.setSelectionData([]);
     } else {
-      reportStore.selectionData = reportStore.selectionData.filter(
-        (item) => item.material !== row.material
-      );
+      if (reportStore.isSelectionDetailedMode) {
+        console.log("row", row);
+        reportStore.selectionData = reportStore.selectionData.filter(
+          (item) => !(item.key_material === row.key_material && item.stock_id === row.stock_id)
+        );
+      } else {
+        console.log("row", row);
+        reportStore.selectionData = reportStore.selectionData.filter(
+          (item) => !(item.material === row.material && item.stock_name === row.stock_name)
+        );
+      };
     }
 
     restoreSelection();
@@ -498,9 +523,9 @@ const handleDeleteSelectionTableRow = async (row: any) => {
 };
 
 const handleSelectionChange = async (selection: any[]) => {
-  reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
+  //reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
     if (!isAutoSelectionUpdate.value) {
-      updateSelectionData();
+      updateSelectionData(selection);
       try {
           await makeSelectionReport();
         } catch (error) {
@@ -673,11 +698,16 @@ onUnmounted(() => {
 
 
 const getRowKey = (row: any): string => {
-  const stockName = row.stock_name || 'unknown';
-  const material = row.material || 'unknown';
-  const tareId = row.tare_id || 'unknown';
+  //const stockName = row.stock_name || 'unknown';
+  //const material = row.material || 'unknown';
+  //const tareId = row.tare_id || 'unknown';
 
-  return `${stockName}_${material}_${tareId}`;
+  //return `${stockName}_${material}_${tareId}`;
+  const key_material = row.key_material || 'unknown';
+  const stock_id = row.stock_id || 'unknown';
+  return `${key_material}_${stock_id}`;
+
+  
 };
 
 const isRowSelectable = (row: any): boolean => {
@@ -689,7 +719,7 @@ const tableRef = ref<any>(null);
 const restoreSelection = () => {
     // Проверка доступности выбора
   if (!isSelectionEnabled.value) {
-    //console.log('Selection is disabled, skipping restore');
+    console.log('Selection is disabled, skipping restore');
     return;
   }
 
@@ -702,14 +732,14 @@ const restoreSelection = () => {
     console.warn('No table data available, skipping restoreSelection');
     return;
   }
-  if (!reportStore.selectedTableData?.length) {
-    console.log('No selected data to restore');
-    return;
-  }
+  //if (!reportStore.selectedTableData?.length) {
+  //  console.log('No selected data to restore');
+  //  return;
+  //}
 
   isAutoSelectionUpdate.value = true; // Блокируем обновление
 
-  //console.log('Proceeding with selection restoration...');
+  console.log('Proceeding with selection restoration...');
   tableRef.value.clearSelection();
 
   const selectionKeys = new Set(
