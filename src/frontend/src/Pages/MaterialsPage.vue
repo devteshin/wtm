@@ -940,6 +940,8 @@ const makeSelectionReport = async () => {
   const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
   const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
 
+  console.log("reportStore.selectionData", reportStore.selectionData);
+
   try {
     await store.fetchSelectionData({
       stock_list: stock_list,
@@ -949,9 +951,11 @@ const makeSelectionReport = async () => {
       element_order: elementOrder()
     });
 
-    console.log(store.selection_data);
+    console.log("store.selection_data", store.selection_data);
+
 
     if (store.selection_data && Array.isArray(store.selection_data)) {
+      //reportStore.setSelectionData([ ...store.selection_data ]);
       reportStore.selectionTableData = store.selection_data;
       if (reportStore.selectionTableData.length > 1) {
         total_rest_net_weight = reportStore.selectionTableData.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
@@ -966,8 +970,12 @@ const makeSelectionReport = async () => {
           }
         ]);
       };
+    } else {
+      //reportStore.setSelectionData([]);
     };
-    console.log(reportStore.selectionTableData);
+
+  console.log("reportStore.selectionData - after", reportStore.selectionData);
+
 
   } catch (error) {
     console.error('Ошибка при формировании отчёта:', error);
@@ -1175,6 +1183,7 @@ watch(
       await handleMakeReport();
     };  
     isOperationDocMode.value = true;
+    reportStore.isOperationDocAutoGenerateReport = false;
   },
   { immediate: true }
 );
@@ -1182,12 +1191,16 @@ watch(
 watch(
   () => reportStore.isOperationListAutoGenerateReport,
   async (newValue) => {
+      console.log("isOperationListAutoGenerateReport", newValue);
+
     if (!newValue) return;
 
     if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
+      console.log("Generating Report...");
       await handleMakeReport();
     };  
     isOperationListMode.value = true;
+    reportStore.isOperationListAutoGenerateReport = false;
   },
   { immediate: true }
 );

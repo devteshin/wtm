@@ -577,14 +577,11 @@ def build_task_items_values(task_items: list[dict]) -> list[tuple]:
             net_weight,     
             material_id,    
             tare_id,        
-            0               # doc_id
+            0               # doc_id далее SP app_upsert_task_doc установит нужный doc_id
         ))
     return values
 
 async def update_operation_task(conn: Connection, stock_id: int, operation_id: int, task_id: int, task_items: list[dict]):
-
-    print(stock_id, operation_id, task_id, task_items)
-
     if not operation_id:
         return None
 
@@ -592,7 +589,6 @@ async def update_operation_task(conn: Connection, stock_id: int, operation_id: i
         await cur.execute("DROP TABLE IF EXISTS task_items_tmp")
         await conn.begin()
         try:
-                # task_items_tmp
                 await cur.execute("""CREATE TEMPORARY TABLE task_items_tmp (
                     key_material VARCHAR(255),
                     tare_amount INT,
@@ -607,13 +603,11 @@ async def update_operation_task(conn: Connection, stock_id: int, operation_id: i
                 values = build_task_items_values(task_items)
                 if values:
                     await cur.executemany(q_insert_task_items, values)
-                    print(f"Task items inserted for task {values}")
 
                 await cur.callproc("app_upsert_task_doc", [task_id, operation_id, stock_id])
                 await cur.execute("SELECT @out_task_doc_id AS task_doc_id")
                 result = await cur.fetchone()
                 task_doc_id = result.get("task_doc_id") if result else None
-                print(f"Task document ID: {task_doc_id}")
 
         except Exception as e:
             await conn.rollback()

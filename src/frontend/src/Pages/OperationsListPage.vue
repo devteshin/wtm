@@ -204,6 +204,7 @@ function setContextMaterialsSelection() {
   reportStore.isSelectionEnabled = true;
   reportStore.isSelectionControlEnabled = true;
   reportStore.isOnlyNonZeroMode = true;
+  
 }; 
 
 const openSelectionDrawer = (taskId: number, operationId: number) => {

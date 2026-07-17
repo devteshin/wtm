@@ -127,7 +127,7 @@
         type="primary"
         @click="onOpenMaterialSelection"
       >
-        {{ taskId ? 'Изменить задание' : 'Добавить новое задание' }}
+        {{ taskId ? 'Открыть задание' : 'Добавить новое задание' }}
       </el-button>
       <el-button type="primary" @click="handleSave">
         Сохранить
@@ -237,6 +237,7 @@ const loadOperation = async (id: number) => {
   const processId = operation.processId === 0 ? null : operation.processId
   taskId = operation.taskId;
   isTaskItemsBlocked = operation.isTaskItemsBlocked;
+  //taskItems = operation.taskItems;
   
   form.value = {
     operationName: operation.operationName,
