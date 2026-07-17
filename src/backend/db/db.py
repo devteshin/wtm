@@ -521,6 +521,13 @@ async def select_operation_data(conn: Connection, operation_id: int):
         }
 
         await cur.execute(
+            "SELECT executor_id FROM operation_executors WHERE operation_id = %(operation_id)s",
+            {"operation_id": operation_id},
+        )
+        executors_raw = await cur.fetchall()
+        operation_data["executorIds"] = [e["executor_id"] for e in executors_raw]
+
+        await cur.execute(
             """
             SELECT ptd.id AS task_id, IF(ptd.parent_doc_id = 1 OR ptd.arrival_doc_id = 1, 1, 0) AS is_task_items_blocked 
             FROM production_task_doc AS ptd 
@@ -537,12 +544,20 @@ async def select_operation_data(conn: Connection, operation_id: int):
             operation_data["taskId"] = 0
             operation_data["isTaskItemsBlocked"] = False
 
-        await cur.execute(
-            "SELECT executor_id FROM operation_executors WHERE operation_id = %(operation_id)s",
-            {"operation_id": operation_id},
-        )
-        executors_raw = await cur.fetchall()
-        operation_data["executorIds"] = [e["executor_id"] for e in executors_raw]
+        operation_data["taskItemsKeyMaterial"] = []
+        if operation_data["taskId"]:
+            await cur.execute(
+                """
+                SELECT key_material FROM selection AS s
+                LEFT JOIN production_task_fact AS ptf ON ptf.selection_id = s.id
+                WHERE s.pt_doc_id = %(task_id)s AND ptf.selection_id IS NULL
+                """,
+                {"task_id": operation_data["taskId"]},
+            )
+            key_material_raw = await cur.fetchall()
+            operation_data["taskItemsKeyMaterial"] = [item["key_material"] for item in key_material_raw]
+
+
 
         return operation_data
 

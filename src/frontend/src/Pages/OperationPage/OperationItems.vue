@@ -165,6 +165,7 @@ const loading = ref(true)
 
 let taskId = 0;
 let isTaskItemsBlocked = false;
+let taskItemsKeyMaterial = [];
 
 interface FormData {
   operationName: string
@@ -237,8 +238,10 @@ const loadOperation = async (id: number) => {
   const processId = operation.processId === 0 ? null : operation.processId
   taskId = operation.taskId;
   isTaskItemsBlocked = operation.isTaskItemsBlocked;
-  //taskItems = operation.taskItems;
+  taskItemsKeyMaterial = operation.taskItemsKeyMaterial;
   
+  console.log("operation", operation);
+
   form.value = {
     operationName: operation.operationName,
     productId,
