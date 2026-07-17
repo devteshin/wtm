@@ -74,6 +74,14 @@ declare namespace frontend {
         element_order?: string;
     }
 
+    export type ITaskItemKeyMaterial = {
+    key_material: string;
+    material_id: number;
+    };
+
+    export type ITaskItemsKeyMaterial = ITaskItemKeyMaterial[];
+
+
     /** Операции */
     export type IOperations = {
         id: number

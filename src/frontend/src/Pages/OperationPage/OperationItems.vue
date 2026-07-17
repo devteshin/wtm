@@ -141,6 +141,7 @@ import { ref, onMounted, watch, shallowRef } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import useApplicationStore from "@/store"
+import { strict } from 'assert'
 
 const store = useApplicationStore()
 
@@ -154,9 +155,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
+
 const emit = defineEmits<{
   (e: 'close'): void,
-  (e: 'open-material-selection', taskId: number, operationId: number): void
+  (e: 'open-material-selection', taskId: number, operationId: number, taskItemsKeyMaterial: frontend.ITaskItemsKeyMaterial): void
 }>()
 
 // --- Состояния ---
@@ -165,7 +167,7 @@ const loading = ref(true)
 
 let taskId = 0;
 let isTaskItemsBlocked = false;
-let taskItemsKeyMaterial = [];
+let taskItemsKeyMaterial: frontend.ITaskItemsKeyMaterial = [];
 
 interface FormData {
   operationName: string
@@ -345,7 +347,7 @@ const handleDelete = async () => {
 
 const onOpenMaterialSelection = () => {
   console.log('Opening material selection');
-  emit('open-material-selection', taskId, currentOperationId.value)
+  emit('open-material-selection', taskId, currentOperationId.value, taskItemsKeyMaterial)
 }
 
 

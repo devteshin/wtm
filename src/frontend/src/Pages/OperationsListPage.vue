@@ -195,24 +195,32 @@ const drawerSize = computed<number>(() => {
   return Math.floor(0.9 * w);
 });
 
-function setContextMaterialsSelection() {
+function setContextMaterialsSelection(task_items: frontend.ITaskItemsKeyMaterial) {
   if (props.stockID) {
     reportStore.selectedStore = [props.stockID];
   };
-  reportStore.isSelectionDetailedMode = true;
-  reportStore.isDetailedMode = true;
-  reportStore.isSelectionEnabled = true;
-  reportStore.isSelectionControlEnabled = true;
-  reportStore.isOnlyNonZeroMode = true;
+  if (task_items.length > 0)  {
+    reportStore.isSelectionDetailedMode = true;
+    reportStore.isDetailedMode = true;
+    reportStore.isSelectionEnabled = true;
+    reportStore.isSelectionControlEnabled = true;
+    reportStore.isOnlyNonZeroMode = true;
+    reportStore.isOperationListAutoGenerateReport = true;
+    //const newSelectionData = [ ...task_items ];
+    reportStore.setSelectionData([ ...task_items ])
+    console.log("reportStore.setSelectionData", reportStore.setSelectionData);
+  } else {
+    //reportStore.setTableData([])
+  };
   
 }; 
 
-const openSelectionDrawer = (taskId: number, operationId: number) => {
+const openSelectionDrawer = (taskId: number, operationId: number, taskItemsKeyMaterial: frontend.ITaskItemsKeyMaterial) => {
   updated_task_id= taskId,
   updated_operation_id= operationId,
   drawerVisible.value = false
-  reportStore.isOperationListAutoGenerateReport = true;
-  setContextMaterialsSelection();
+  
+  setContextMaterialsSelection(taskItemsKeyMaterial);
   selectionDrawerVisible.value = true 
 };
 

@@ -548,16 +548,13 @@ async def select_operation_data(conn: Connection, operation_id: int):
         if operation_data["taskId"]:
             await cur.execute(
                 """
-                SELECT key_material FROM selection AS s
+                SELECT key_material, s.material AS material_id FROM selection AS s
                 LEFT JOIN production_task_fact AS ptf ON ptf.selection_id = s.id
                 WHERE s.pt_doc_id = %(task_id)s AND ptf.selection_id IS NULL
                 """,
                 {"task_id": operation_data["taskId"]},
             )
-            key_material_raw = await cur.fetchall()
-            operation_data["taskItemsKeyMaterial"] = [item["key_material"] for item in key_material_raw]
-
-
+            operation_data["taskItemsKeyMaterial"] = await cur.fetchall()
 
         return operation_data
 
