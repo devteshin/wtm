@@ -379,7 +379,7 @@ const tableCondition = computed({
 const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
 
-const prepareSelectionToAdd = (selectionToAdd: typeof reportStore.tableData[number][]) => {
+/* const prepareSelectionToAdd = (selectionToAdd: typeof reportStore.tableData[number][]) => {
   const elements: string[] = reportStore.tableCondition.map(item => item.element);
 
   return selectionToAdd.map((row) => {
@@ -405,7 +405,7 @@ const prepareSelectionToAdd = (selectionToAdd: typeof reportStore.tableData[numb
     return newRow;
   });
 };
-
+ */
 const updateSelectionData = () => {
   const selectionToAdd: typeof reportStore.tableData[number][] = [];
   const selectionToRemove: typeof reportStore.tableData[number][] = [];
@@ -432,11 +432,12 @@ const updateSelectionData = () => {
 
   // Добавление новых выбранных строк
   if (selectionToAdd.length > 0) {
-    const processedSelection = prepareSelectionToAdd(selectionToAdd); // Подготовка данных для добавления
+    //const processedSelection = prepareSelectionToAdd(selectionToAdd); // Подготовка данных для добавления
     const currentSelection = reportStore.selectionData;
     reportStore.setSelectionData([
       ...currentSelection,
-      ...processedSelection
+      ...selectionToAdd
+      //...processedSelection
     ]);
   }
 
@@ -940,22 +941,40 @@ const makeSelectionReport = async () => {
   const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
   const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
 
-  console.log("reportStore.selectionData", reportStore.selectionData);
-
   try {
+
+    // даже если это сводный режим формирования подбора, то все равно формируем запрос в режиме детализации для верификации данных
+    // в selectionData (selectionData - это результат интерактивного подбора, его нужно верифицировать остатками).
+    // Нужно чтобы детальный запрос выполнялся даже в сводном режиме именно для верификации. Только таким образом можно 
+    // очистить selectionData от данных, по которым уже нет остатков. Иначе они застрянут в selectionData.Так как таблица подбора
+    // формируется только по данным которые есть в остатках.
     await store.fetchSelectionData({
       stock_list: stock_list,
       indicators: indicators_list,
       key_material_list: key_material_list,
-      query_type: isSelectionDetailedMode.value ? 'detailed' : 'selection',
+      query_type: 'detailed',
       element_order: elementOrder()
     });
+    if (store.selection_data && Array.isArray(store.selection_data)) {
+      reportStore.setSelectionData([ ...store.selection_data ]);
+    } else {
+      reportStore.setSelectionData([]);
+      return; // нет данных для подбора все очистили, можно выходить
+    };
 
-    console.log("store.selection_data", store.selection_data);
+    if (!isSelectionDetailedMode.value) {
+      // если соводный режим формирования подбора - выполняем запрос для получения сводных данных
+      await store.fetchSelectionData({
+        stock_list: stock_list,
+        indicators: indicators_list,
+        key_material_list: key_material_list,
+        query_type: 'selection',
+        element_order: elementOrder()
+      });
+    }
 
 
     if (store.selection_data && Array.isArray(store.selection_data)) {
-      //reportStore.setSelectionData([ ...store.selection_data ]);
       reportStore.selectionTableData = store.selection_data;
       if (reportStore.selectionTableData.length > 1) {
         total_rest_net_weight = reportStore.selectionTableData.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
@@ -970,11 +989,7 @@ const makeSelectionReport = async () => {
           }
         ]);
       };
-    } else {
-      //reportStore.setSelectionData([]);
     };
-
-  console.log("reportStore.selectionData - after", reportStore.selectionData);
 
 
   } catch (error) {
@@ -1024,7 +1039,8 @@ const makeMaterialReport = async () => {
       element_order: elementOrder()
     });
 
-    
+    console.log("store.materials_data", store.materials_data);
+
     if (store.materials_data && Array.isArray(store.materials_data)) {
       reportStore.tableData = store.materials_data;
       if (reportStore.tableData.length > 1) {

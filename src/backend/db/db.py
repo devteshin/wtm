@@ -33,14 +33,6 @@ async def select_materials_data(
     element_order: str = ''
     ):
 
-    print(materials)
-    print(stocks)
-    print(material_groups)
-    print(indicators)
-    print(indicator_conditions)
-    print(detailed_mode)
-    print(only_non_zero_mode)
-
     if isinstance(only_non_zero_mode, str):
         only_non_zero_mode_int = 1 if only_non_zero_mode.lower() in ('true', '1') else 0
     else:

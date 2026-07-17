@@ -27,8 +27,10 @@ declare namespace frontend {
 
     export type IMaterialsData = {
         stock_name: string
+        stock_id: number
         material: string
         material_id: number
+        key_material: string
         tare_type: string
         tare_id: number
         tare_mark: string
