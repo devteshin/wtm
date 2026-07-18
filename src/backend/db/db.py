@@ -485,13 +485,7 @@ async def select_operations_meta(conn: Connection, user_id: int, stock_id: int):
         await cur.execute("SELECT id, name AS template_name FROM doc_num_modifier")
         doc_templates = await cur.fetchall()
     material_list = await select_materials_list(conn)
-    operations_meta["products"] =  [
-            {
-                "id": item["id"],
-                "product_name": item["name"],
-            }
-            for item in material_list
-    ]
+    operations_meta["products"] =  material_list
     operations_meta["processes"] = processes
     operations_meta["executors"] = executors
     operations_meta["doc_templates"] = doc_templates

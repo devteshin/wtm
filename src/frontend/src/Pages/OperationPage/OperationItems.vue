@@ -3,7 +3,6 @@
     <!-- Состояние загрузки -->
     <div v-if="loading" class="skeleton-wrapper">
       <el-skeleton :rows="5" animated />
-      <!-- Можно сделать более точечно, ниже покажу вариант с отдельными скелетами -->
     </div>
 
     <!-- Реальная форма -->
@@ -59,9 +58,11 @@
                   :value="p.id"
                   :disabled="p.id === -1"
                 />
-                <template v-if="productOptionsLoading">
+
+<!--                 <template v-if="productOptionsLoading">
                   <el-option :value="0" disabled label="Загрузка..." />
                 </template>
+ -->
               </el-select>              
 
               <el-button type="primary" @click="openCreateProduct">
@@ -382,7 +383,7 @@ const handleProductSearch = async (material_substring: string) => {
     productOptions.value = []
     return
   }
-
+  console.log("material_substring", material_substring);
   productOptionsLoading.value = true
   try {
     const result = await store.searchMaterials(material_substring, 100)
