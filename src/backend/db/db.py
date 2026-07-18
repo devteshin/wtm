@@ -495,7 +495,7 @@ async def select_operation_data(conn: Connection, operation_id: int):
     async with conn.cursor() as cur:
         await cur.execute(
             """
-            SELECT NAME, product_id, IFNULL(m.material, '') AS product_name, dnm_id, tp_id, done
+            SELECT name, product_id, IFNULL(m.material, '') AS product_name, dnm_id, tp_id, done
             FROM operations AS o
             LEFT JOIN material AS m ON m.id = o.product_id
             WHERE o.id = %(operation_id)s
