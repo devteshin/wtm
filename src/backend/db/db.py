@@ -484,8 +484,8 @@ async def select_operations_meta(conn: Connection, user_id: int, stock_id: int):
         executors = await cur.fetchall()
         await cur.execute("SELECT id, name AS template_name FROM doc_num_modifier")
         doc_templates = await cur.fetchall()
-    material_list = await select_materials_list(conn)
-    operations_meta["products"] =  material_list
+    #material_list = await select_materials_list(conn)
+    #operations_meta["products"] =  material_list
     operations_meta["processes"] = processes
     operations_meta["executors"] = executors
     operations_meta["doc_templates"] = doc_templates
@@ -495,9 +495,10 @@ async def select_operation_data(conn: Connection, operation_id: int):
     async with conn.cursor() as cur:
         await cur.execute(
             """
-            SELECT name, product_id, dnm_id, tp_id, done
-            FROM operations
-            WHERE id = %(operation_id)s
+            SELECT NAME, product_id, IFNULL(m.material, '') AS product_name, dnm_id, tp_id, done
+            FROM operations AS o
+            LEFT JOIN material AS m ON m.id = o.product_id
+            WHERE o.id = %(operation_id)s
             """,
             {"operation_id": operation_id},
         )
@@ -509,6 +510,7 @@ async def select_operation_data(conn: Connection, operation_id: int):
         operation_data = {
             "operationName": row["name"],
             "productId": row["product_id"],
+            "productName": row["product_name"],
             "processId": row["tp_id"],
             "documentTemplateId": row["dnm_id"],
             "isCompleted": bool(row["done"]),

@@ -235,31 +235,22 @@ const fetchMeta = async () => {
   const start = performance.now()
 
   try {
-    productOptionsLoading.value = true
     processOptionsLoading.value = true
     executorOptionsLoading.value = true
     templateOptionsLoading.value = true
 
     const meta = await store.fetchOperationsMeta(props.stockID)
 
-    const end = performance.now()
-    console.log('[fetchMeta] API time:', (end - start).toFixed(2), 'ms')    
-
-    const assignStart = performance.now()
-
-    //productOptions.value = meta.products
     processOptions.value = meta.processes
     executorOptions.value = meta.executors
     templateOptions.value = meta.doc_templates
 
     const assignEnd = performance.now()
-    console.log('[fetchMeta] Assignment time:', (assignEnd - assignStart).toFixed(2), 'ms')
     
   } catch (e) {
     console.error('fetchMeta error:', e)
     ElMessage.error('Не удалось загрузить справочники')
   } finally {
-    productOptionsLoading.value = false
     processOptionsLoading.value = false
     executorOptionsLoading.value = false
     templateOptionsLoading.value = false
@@ -277,6 +268,10 @@ const loadOperation = async (id: number) => {
   taskItemsKeyMaterial = operation.taskItemsKeyMaterial;
   
   console.log("operation", operation);
+
+  if (productId) {
+    productOptions.value.push({id: productId, name: operation.productName});
+  }
 
   form.value = {
     operationName: operation.operationName,
