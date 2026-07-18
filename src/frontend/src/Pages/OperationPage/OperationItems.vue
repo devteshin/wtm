@@ -31,12 +31,13 @@
                 class="product-select"
                 :loading="productOptionsLoading"
               >
-                <el-option
+                 <el-option
                   v-for="p in productOptions"
                   :key="p.id"
                   :label="p.product_name"
                   :value="p.id"
                 />
+                <!-- <el-option :value="0" disabled label="[Рендер отключен для теста]" />     -->
                 <!-- Скелет для списка опций -->
                 <template v-if="productOptionsLoading">
                   <el-option :value="0" disabled label="Загрузка..." />
@@ -209,6 +210,8 @@ const fetchMeta = async () => {
 
   loading.value = true
 
+  const start = performance.now()
+
   try {
     productOptionsLoading.value = true
     processOptionsLoading.value = true
@@ -217,10 +220,19 @@ const fetchMeta = async () => {
 
     const meta = await store.fetchOperationsMeta(props.stockID)
 
+    const end = performance.now()
+    console.log('[fetchMeta] API time:', (end - start).toFixed(2), 'ms')    
+
+    const assignStart = performance.now()
+
     productOptions.value = meta.products
     processOptions.value = meta.processes
     executorOptions.value = meta.executors
     templateOptions.value = meta.doc_templates
+
+    const assignEnd = performance.now()
+    console.log('[fetchMeta] Assignment time:', (assignEnd - assignStart).toFixed(2), 'ms')
+    
   } catch (e) {
     console.error('fetchMeta error:', e)
     ElMessage.error('Не удалось загрузить справочники')
@@ -385,9 +397,16 @@ const openCreateProduct = async () => {
       ElMessageBox({ type: 'error', message: 'Не удалось создать новый продукт' })
       return
     }
-
     const existing = productOptions.value.find(item => item.id === newProductID)
-    if (!existing) {
+    if (existing) {
+      const confirmed = await ElMessageBox.confirm(
+        'Такой продукт уже есть в списке. Выбрать этот прудукт?',
+        'Подтверждение выбора',
+        { confirmButtonText: 'Да', cancelButtonText: 'Нет', type: 'warning' }
+      ).catch(() => false)
+      if (!confirmed) return
+
+    } else {
       productOptions.value.push({ id: newProductID, product_name: result.value })
     }
     form.value.productId = newProductID

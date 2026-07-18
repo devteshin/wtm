@@ -1005,7 +1005,7 @@ async def get_material_id(conn: Connection, material: str):
             result = await cur.fetchone()
             return result.get("id", 0)
         else:
-            if result.get("kind", None) == MATERIAL_KIND_PROBE:
+            if result.get("kind", 0) == MATERIAL_KIND_PROBE:
                 return 0
             else:
                 return result.get("id", 0)

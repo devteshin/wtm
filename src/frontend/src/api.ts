@@ -366,7 +366,7 @@ class ClientAPI {
             }
             else {
                 const newMaterialID = await response.json();
-                return newMaterialID;
+                return newMaterialID.new_material_id;
             };
         } catch (error) {
             this.handleError(error);
