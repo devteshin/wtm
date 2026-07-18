@@ -139,7 +139,8 @@ async def get_materials_meta(request: Request):
 
 async def search_materials_handler(request: Request):
     material_substring = request.query.get("material_substring")
-    limit = request.query.get("limit", 100)
+    limit_str = request.query.get("limit")
+    limit = int(limit_str)
 
     materials_list = []
     async with request.app["db"].acquire() as conn:

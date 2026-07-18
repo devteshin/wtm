@@ -47,9 +47,10 @@
                 placeholder="Начните вводить название продукта"
                 clearable
                 filterable
+                remote
                 class="product-select"
                 :loading="productOptionsLoading"
-                @search="handleProductSearch"
+                :remote-method="handleProductSearch"
               >
                 <el-option
                   v-for="p in productOptions"
@@ -246,7 +247,7 @@ const fetchMeta = async () => {
 
     const assignStart = performance.now()
 
-    productOptions.value = meta.products
+    //productOptions.value = meta.products
     processOptions.value = meta.processes
     executorOptions.value = meta.executors
     templateOptions.value = meta.doc_templates
@@ -379,11 +380,12 @@ const handleDelete = async () => {
 }
 
 const handleProductSearch = async (material_substring: string) => {
+  console.log("material_substring", material_substring);
+
   if (material_substring.length < 2) {
     productOptions.value = []
     return
   }
-  console.log("material_substring", material_substring);
   productOptionsLoading.value = true
   try {
     const result = await store.searchMaterials(material_substring, 100)
