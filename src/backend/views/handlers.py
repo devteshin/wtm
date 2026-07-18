@@ -3,7 +3,7 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
-                check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task
+                check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -136,6 +136,21 @@ async def get_materials_meta(request: Request):
     async with request.app["db"].acquire() as conn:
         materials_meta = await select_materials_meta(conn, request.user_id, stock_id)
     return await jsonify(materials_meta, request)
+
+async def search_materials_handler(request: Request):
+    material_substring = request.query.get("material_substring")
+    limit = request.query.get("limit", 100)
+
+    materials_list = []
+    async with request.app["db"].acquire() as conn:
+        materials_list = await search_materials(
+            conn,
+            material_substring=material_substring,
+            limit=limit
+        )
+
+    return await jsonify(materials_list, request)
+
 
 async def get_materials_data(request: Request):
     stock_id = request.match_info.get("stockID", None)

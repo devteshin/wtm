@@ -12,6 +12,7 @@ const OPERATION_DELETE = "operation/delete";
 const OPERATION_UPDATE_TASK = "operation/update_task";
 const CHECK_OPERATION_NAME = "operation/check_name";
 const MATERIAL = "material";
+const SEARCH_MATERIAL = "search_materials";
 const DOC = "doc";
 const JOB = "job";
 const DNM = "dnm";
@@ -132,6 +133,25 @@ class ClientAPI {
         return body;
     }
 
+    async searchMaterials(material_substring: string, limit: number) {
+    this.checkToken();
+
+    const params = new URLSearchParams({
+        material_substring: material_substring,
+        limit: String(limit),
+    });
+
+    const url = `${BASE_URL}/${SEARCH_MATERIAL}?${params.toString()}`;
+
+    const response = await fetch(url, { headers: this.requestHeaders() });
+    if (response.status === 403) {
+        window.localStorage.removeItem("token");
+        location.href = "/login";
+    }
+
+    return response.json();
+    }
+
     async fetchOperations(stockID: number, activeOperationMode: boolean) {
     this.checkToken();
 
@@ -139,8 +159,6 @@ class ClientAPI {
     const query = `?activeOperationMode=${activeOperationMode ? '1' : '0'}`;
 
     const url = path + query;
-
-    console.log('URL:', url);
 
     const response = await fetch(url, { headers: this.requestHeaders() });
     if (response.status === 403) {

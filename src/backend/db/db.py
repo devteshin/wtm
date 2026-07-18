@@ -117,12 +117,12 @@ WHERE FIND_IN_SET((SELECT organization_id FROM stock WHERE id = %(stock_id)s), o
 
 async def select_materials_list(conn: Connection):
     q_material = """
-SELECT 
-    id
-    , material as name
-    FROM material
-WHERE kind = 0    
-ORDER BY material    
+        SELECT 
+            id
+            , material as name
+            FROM material
+        WHERE kind = 0    
+        ORDER BY material    
     """
     async with conn.cursor() as cur:
         await cur.execute(q_material)
@@ -1009,6 +1009,36 @@ async def get_material_id(conn: Connection, material: str):
                 return 0
             else:
                 return result.get("id", 0)
+
+
+async def search_materials(conn: Connection, material_substring: str, limit: int):
+    if not material_substring:
+        return []
+    
+    async with conn.cursor() as cur:
+
+        q = """
+            SELECT id, material as name AS product_name
+            FROM material
+            WHERE kind = 0
+            AND material LIKE %(material_substring)s
+            ORDER BY material
+            LIMIT %(limit)s
+        """
+        await cur.execute(q, {"material_substring": material_substring, "limit": limit + 1})
+        material_list = await cur.fetchall()
+
+        if len(material_list) > limit:
+            return  [
+                    {
+                        "id": -1,
+                        "name": f"Найдено более {limit} совпадений — слишком много для списка.",
+                    }
+                ]
+        else:
+            return material_list
+
+
 
 async def check_operation_name(conn: Connection, operation_id: int, operation_name: str):
     q = """ SELECT EXISTS (SELECT TRUE FROM operations 

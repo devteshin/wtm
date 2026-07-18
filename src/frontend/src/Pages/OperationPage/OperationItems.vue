@@ -23,7 +23,8 @@
         <el-col :span="24">
           <el-form-item label="Наименование продукта" prop="productId">
             <div class="product-select-wrapper">
-              <el-select
+
+<!--               <el-select
                 v-model="form.productId"
                 placeholder="Выберите продукт"
                 clearable
@@ -37,12 +38,32 @@
                   :label="p.product_name"
                   :value="p.id"
                 />
-                <!-- <el-option :value="0" disabled label="[Рендер отключен для теста]" />     -->
-                <!-- Скелет для списка опций -->
                 <template v-if="productOptionsLoading">
                   <el-option :value="0" disabled label="Загрузка..." />
                 </template>
               </el-select>
+ -->
+              <el-select
+                v-model="form.productId"
+                placeholder="Начните вводить название продукта"
+                clearable
+                filterable
+                class="product-select"
+                :loading="productOptionsLoading"
+                @search="handleProductSearch"
+              >
+                <el-option
+                  v-for="p in productOptions"
+                  :key="p.id"
+                  :label="p.name"
+                  :value="p.id"
+                  :disabled="p.id === -1"
+                />
+                <template v-if="productOptionsLoading">
+                  <el-option :value="0" disabled label="Загрузка..." />
+                </template>
+              </el-select>              
+
               <el-button type="primary" @click="openCreateProduct">
                 + Новый продукт
               </el-button>
@@ -142,7 +163,6 @@ import { ref, onMounted, watch, shallowRef } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import useApplicationStore from "@/store"
-import { strict } from 'assert'
 
 const store = useApplicationStore()
 
@@ -191,7 +211,7 @@ const form = ref<FormData>({
 const originalForm = shallowRef<FormData | null>(null)
 
 // Опции и флаги загрузки для каждого селекта (чтобы не блокировать весь UI сразу)
-const productOptions = ref<{ id: number; product_name: string }[]>([])
+const productOptions = ref<{ id: number; name: string }[]>([])
 const processOptions = ref<{ id: number; process_name: string }[]>([])
 const executorOptions = ref<{ id: number; employee_name: string }[]>([])
 const templateOptions = ref<{ id: number; template_name: string }[]>([])
@@ -357,6 +377,24 @@ const handleDelete = async () => {
   }
 }
 
+const handleProductSearch = async (material_substring: string) => {
+  if (material_substring.length < 2) {
+    productOptions.value = []
+    return
+  }
+
+  productOptionsLoading.value = true
+  try {
+    const result = await store.searchMaterials(material_substring, 100)
+    productOptions.value = result
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('Ошибка при поиске продуктов')
+  } finally {
+    productOptionsLoading.value = false
+  }
+}
+
 const onOpenMaterialSelection = () => {
   console.log('Opening material selection');
   emit('open-material-selection', taskId, currentOperationId.value, taskItemsKeyMaterial)
@@ -407,7 +445,7 @@ const openCreateProduct = async () => {
       if (!confirmed) return
 
     } else {
-      productOptions.value.push({ id: newProductID, product_name: result.value })
+      productOptions.value.push({ id: newProductID, name: result.value })
     }
     form.value.productId = newProductID
   } catch (e) {

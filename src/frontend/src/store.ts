@@ -23,6 +23,8 @@ export default defineStore("app_store", () => {
     const arrival = ref<frontend.IArrival | null>(null);
     /** данные материалов для отчета по остаткам */
     const materials_meta = ref<frontend.IMaterialsMeta | null>(null);
+    /** список материалов id, name */
+    const materials_list = ref<frontend.IMaterial | null>(null);
     /** остатки материалов для отчета по остаткам */
     const materials_data = ref<frontend.IMaterialsData | null>(null);
     /** подбор материалов */
@@ -101,6 +103,13 @@ export default defineStore("app_store", () => {
     const fetchOperationsMeta = (stockID: number, with_load=true) => {
         if (with_load) loading.value = true;
         return api.fetchOperationsMeta(stockID).then(body => operation.value = body).finally(() => {
+            if (with_load) loading.value = false;
+        });
+    };
+
+    const searchMaterials = (material_substring: string, limit: number, with_load=true) => {
+        if (with_load) loading.value = true;
+        return api.searchMaterials(material_substring, limit).then(body => materials_list.value = body).finally(() => {
             if (with_load) loading.value = false;
         });
     };
@@ -271,6 +280,7 @@ export default defineStore("app_store", () => {
         updateJobsStatus,
         updateRestGrossWeight,
         createMaterial,
+        searchMaterials,
         createArrival,
         updateArrival,
         deleteArrival,
