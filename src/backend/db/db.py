@@ -1009,17 +1009,19 @@ async def search_materials(conn: Connection, material_substring: str, limit: int
     if not material_substring:
         return []
     
+    pattern = f"%{material_substring}%"
+
     async with conn.cursor() as cur:
 
         q = """
-            SELECT id, material as name AS product_name
+            SELECT id, material as name
             FROM material
             WHERE kind = 0
-            AND material LIKE %(material_substring)s
+            AND material LIKE %(pattern)s
             ORDER BY material
             LIMIT %(limit)s
         """
-        await cur.execute(q, {"material_substring": material_substring, "limit": limit + 1})
+        await cur.execute(q, {"pattern": pattern, "limit": limit + 1})
         material_list = await cur.fetchall()
 
         if len(material_list) > limit:
