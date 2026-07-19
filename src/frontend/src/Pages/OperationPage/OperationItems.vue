@@ -47,10 +47,10 @@
                 placeholder="Начните вводить название продукта"
                 clearable
                 filterable
-                remote
+                :remote="isRemoteSearch"
                 class="product-select"
                 :loading="productOptionsLoading"
-                :remote-method="handleProductSearch"
+                :remote-method="isRemoteSearch ? handleProductSearch : undefined"
               >
                 <el-option
                   v-for="p in productOptions"
@@ -59,12 +59,13 @@
                   :value="p.id"
                   :disabled="p.id === -1"
                 />
-
-<!--                 <template v-if="productOptionsLoading">
+                <template v-if="productOptionsLoading">
                   <el-option :value="0" disabled label="Загрузка..." />
                 </template>
- -->
               </el-select>              
+              <el-button type="primary" @click="loadAllProductOptionsHandler">
+                Все материалы
+              </el-button>
 
               <el-button type="primary" @click="openCreateProduct">
                 + Новый продукт
@@ -187,10 +188,12 @@ const emit = defineEmits<{
 // --- Состояния ---
 const formRef = ref<FormInstance | undefined>(undefined)
 const loading = ref(true)                 
+const isRemoteSearch = ref(true)
 
 let taskId = 0;
 let isTaskItemsBlocked = false;
 let taskItemsKeyMaterial: frontend.ITaskItemsKeyMaterial = [];
+
 
 interface FormData {
   operationName: string
@@ -284,6 +287,27 @@ const loadOperation = async (id: number) => {
   originalForm.value = { ...form.value }
 }
 
+const loadAllProductOptionsHandler = async () => {
+  isRemoteSearch.value = false;
+  await loadProductOptions()
+
+};
+
+const loadProductOptions = async (material_substring: string = '', limit: number = 100) => {
+  productOptionsLoading.value = true
+  try {
+    const result = await store.searchMaterials(material_substring, limit)
+    productOptions.value = result
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('Ошибка при загрузке опций продуктов')
+  } finally {
+    productOptionsLoading.value = false
+  }
+
+};
+
+
 // Проверка изменений
 const hasChanges = (): boolean => {
   if (!originalForm.value) return false
@@ -375,22 +399,12 @@ const handleDelete = async () => {
 }
 
 const handleProductSearch = async (material_substring: string) => {
-  console.log("material_substring", material_substring);
 
   if (material_substring.length < 2) {
     productOptions.value = []
     return
   }
-  productOptionsLoading.value = true
-  try {
-    const result = await store.searchMaterials(material_substring, 100)
-    productOptions.value = result
-  } catch (e) {
-    console.error(e)
-    ElMessage.error('Ошибка при поиске продуктов')
-  } finally {
-    productOptionsLoading.value = false
-  }
+  await loadProductOptions(material_substring, 100)
 }
 
 const onOpenMaterialSelection = () => {

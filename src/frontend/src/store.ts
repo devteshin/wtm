@@ -107,7 +107,7 @@ export default defineStore("app_store", () => {
         });
     };
 
-    const searchMaterials = (material_substring: string, limit: number, with_load=true) => {
+    const searchMaterials = (material_substring: string, limit: number=50, with_load=true) => {
         if (with_load) loading.value = true;
         return api.searchMaterials(material_substring, limit).then(body => materials_list.value = body).finally(() => {
             if (with_load) loading.value = false;
