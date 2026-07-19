@@ -63,8 +63,22 @@
                   <el-option :value="0" disabled label="Загрузка..." />
                 </template>
               </el-select>              
-              <el-button type="primary" @click="loadAllProductOptionsHandler">
-                Все материалы
+
+              <el-button
+                v-if = "isRemoteSearch"
+                type="info"
+                :plain="true"
+                size="small"
+                :loading="productOptionsLoading"
+                :disabled="productOptionsLoading"
+                @click="handleLoadAllProductOptions"
+                >
+                  <template #icon>
+                    <el-icon :size="16">
+                      <folder-opened />
+                    </el-icon>
+                  </template>
+                  Показать все
               </el-button>
 
               <el-button type="primary" @click="openCreateProduct">
@@ -166,6 +180,7 @@ import { ref, onMounted, watch, shallowRef } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import useApplicationStore from "@/store"
+import { FolderOpened } from '@element-plus/icons-vue'
 
 const store = useApplicationStore()
 
@@ -287,7 +302,7 @@ const loadOperation = async (id: number) => {
   originalForm.value = { ...form.value }
 }
 
-const loadAllProductOptionsHandler = async () => {
+const handleLoadAllProductOptions = async () => {
   isRemoteSearch.value = false;
   await loadProductOptions()
 
