@@ -1008,7 +1008,7 @@ async def get_material_id(conn: Connection, material: str):
 
 
 async def search_materials(conn: Connection, material_substring: str, limit: int):
-    if material_substring:
+    if not material_substring:
         material_list = await select_materials_list(conn)
         return material_list
     
