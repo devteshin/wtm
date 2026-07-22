@@ -769,7 +769,7 @@ ORDER BY id
     return tare_options
 
 async def select_shape_options(conn: Connection):
-    q = "SELECT id as shape_id, shape_type FROM material_shape_type WHERE type = 0 ORDER BY id"
+    q = "SELECT id as shape_id, shape_name FROM material_shape_type WHERE type = 0 ORDER BY id"
     shape_options = []
     async with conn.cursor() as cur:
         await cur.execute(q)

@@ -212,7 +212,7 @@ declare namespace frontend {
 
     export type IShapeOptions = {
         shape_id: number
-        shape_type: string
+        shape_name: string
     }
 
     export type IBaseRawMaterial = {
