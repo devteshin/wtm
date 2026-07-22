@@ -739,7 +739,7 @@ WHERE
 
     arrival["tare_options"] = await select_tare_options(conn)
     arrival["shape_options"] = await select_shape_options(conn)
-    arrival["items_shape_data"] = await select_shape_data(conn)
+    arrival["items_shape_data"] = await select_shape_data(conn, doc_id)
 
     # получаем материалы - продукты предыдущих этапов из схемы производства
     arrival["base_raw_materials"] = await select_base_raw_material(conn, arrival["operation"])
