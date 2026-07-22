@@ -709,7 +709,8 @@ async def select_max_tare_id(conn: Connection, material: str):
 async def select_arrival(conn: Connection, doc_id: int):
     q_items = """
 SELECT
-    CONCAT(m.material, '_', tare_id) AS key_material
+    arrival.key_material
+    , CONCAT(m.material, '_', tare_id) AS key_material_str
 	, m.material AS material
 	, tare_id
 	, gross_weight
@@ -735,11 +736,29 @@ WHERE
         await cur.execute(q_items, {"doc_id": doc_id})
         arrival_items = await cur.fetchall()
 
-    arrival["items"] = arrival_items
+    items_shape_data = await select_shape_data(conn, doc_id)
+    print(items_shape_data)
+
+    arrival["items"] = [
+        {
+            "key_material_str": item["key_material_str"],
+            "material": item["material"],
+            "tare_id": item["material"],
+            "gross_weight": item["material"],
+            "tare_type": item["material"],
+            "tare_weight": item["material"],
+            "next_operation_flag": item["material"],
+            "shape_ids": [
+                int(x) for x in items_shape_data.get(item["key_material"], "").split(",")
+            ] if items_shape_data.get(item["key_material"]) else []
+        }
+        for item in arrival_items
+    ]
+ 
+    print(arrival_items)    
 
     arrival["tare_options"] = await select_tare_options(conn)
     arrival["shape_options"] = await select_shape_options(conn)
-    arrival["items_shape_data"] = await select_shape_data(conn, doc_id)
 
     # получаем материалы - продукты предыдущих этапов из схемы производства
     arrival["base_raw_materials"] = await select_base_raw_material(conn, arrival["operation"])
@@ -779,15 +798,19 @@ async def select_shape_options(conn: Connection):
 
 async def select_shape_data(conn: Connection, doc_id: int):
     q_items = """
-    SELECT key_material, shape_id FROM material_shapes
+    SELECT key_material, GROUP_CONCAT(shape_id) AS shape_id_list FROM material_shapes
     WHERE key_material IN (SELECT key_material FROM arrival WHERE doc_id = %(doc_id)s)
+    GROUP BY key_material
     """
-    shape_data = []
+
+    shape_data_dict = {}
     async with conn.cursor() as cur:
         await cur.execute(q_items, {"doc_id": doc_id})
         shape_data = await cur.fetchall()
-
-    return shape_data
+        if len(shape_data):
+            shape_data_dict = {row["key_material"]: row["shape_id_list"] for row in shape_data}
+    
+    return shape_data_dict
 
 
 async def select_arrival_meta(conn: Connection, doc_id: int):

@@ -195,13 +195,14 @@ declare namespace frontend {
     }
 
     export type IArrivalItems = {
-        key_material: string
+        key_material_str: string
         material: string
         tare_id: number
         gross_weight: number
         tare_type: string
         tare_weight: number
         next_operation_flag: string
+        shape_ids: number[]
     }
 
     export type ITareOptions = {
@@ -213,11 +214,6 @@ declare namespace frontend {
     export type IShapeOptions = {
         shape_id: number
         shape_name: string
-    }
-
-    export type IItemsShapeData = {
-        key_material: string
-        shape_id: number
     }
 
     export type IBaseRawMaterial = {
@@ -242,7 +238,6 @@ declare namespace frontend {
         items: Array<IArrivalItems>
         tare_options: Array<ITareOptions>
         shape_options: Array<IShapeOptions>
-        items_shape_data: Array<IItemsShapeData>
     }
 
     export type ILoginPayload = {

@@ -101,9 +101,10 @@ async function addItems(position_num: number, start_num: number) {
       tare_type: tare_default.value,
       tare_weight: getTareWeight(tare_default.value),
       material: material.value,
-      key_material: material.value + '_' + (start_num + i),
-      next_operation_flag: ''
-    };
+      key_material_str: material.value + '_' + (start_num + i),
+      next_operation_flag: '',
+      shape_ids: []
+      };
     newItems.push(item);
   }
 
@@ -143,7 +144,7 @@ const onMaterialChanged = (value: string) => {
   props.items.forEach(item => {
     if (item.material === material.value) {
       item.material = value;
-      item.key_material = value + "_" + item.tare_id;
+      item.key_material_str = value + "_" + item.tare_id;
     };
   });
   var index = props.material_list.indexOf(material.value);
@@ -287,9 +288,9 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column prop="shape_type" label="Вид">
+              <el-table-column prop="shape_ids" label="Вид">
                 <template #default="scope">
-                  <el-select v-model="scope.row.shape_type" :disabled="!shapeColumnEnabled" placeholder="Вид"
+                  <el-select v-model="scope.row.shape_ids" :disabled="!shapeColumnEnabled" placeholder="Вид"
                   clearable multiple >
                     <el-option
                       v-for="item in store.arrival?.shape_options"
