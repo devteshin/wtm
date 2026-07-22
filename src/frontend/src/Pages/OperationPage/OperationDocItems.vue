@@ -289,7 +289,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
               </el-table-column>
               <el-table-column prop="shape_type" label="Вид">
                 <template #default="scope">
-                  <el-select v-model="scope.row.shape_type" :disabled="!shapeColumnEnabled" placeholder="Вид" style="width: 100px"
+                  <el-select v-model="scope.row.shape_type" :disabled="!shapeColumnEnabled" placeholder="Вид"
                   clearable multiple >
                     <el-option
                       v-for="item in store.arrival?.shape_options"

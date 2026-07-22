@@ -739,7 +739,7 @@ WHERE
 
     arrival["tare_options"] = await select_tare_options(conn)
     arrival["shape_options"] = await select_shape_options(conn)
-
+    arrival["items_shape_data"] = await select_shape_data(conn)
 
     # получаем материалы - продукты предыдущих этапов из схемы производства
     arrival["base_raw_materials"] = await select_base_raw_material(conn, arrival["operation"])
@@ -777,6 +777,17 @@ async def select_shape_options(conn: Connection):
 
     return shape_options
 
+async def select_shape_data(conn: Connection, doc_id: int):
+    q_items = """
+    SELECT key_material, shape_id FROM material_shapes
+    WHERE key_material IN (SELECT key_material FROM arrival WHERE doc_id = %(doc_id)s)
+    """
+    shape_data = []
+    async with conn.cursor() as cur:
+        await cur.execute(q_items, {"doc_id": doc_id})
+        shape_data = await cur.fetchall()
+
+    return shape_data
 
 
 async def select_arrival_meta(conn: Connection, doc_id: int):
