@@ -210,6 +210,11 @@ declare namespace frontend {
         tare_type_id: number
     }
 
+    export type IShapeOptions = {
+        shape_id: number
+        shape_type: string
+    }
+
     export type IBaseRawMaterial = {
         material: string
         material_id: number
@@ -231,6 +236,7 @@ declare namespace frontend {
         base_raw_materials: Array<IBaseRawMaterial>
         items: Array<IArrivalItems>
         tare_options: Array<ITareOptions>
+        shape_options: Array<IShapeOptions>
     }
 
     export type ILoginPayload = {

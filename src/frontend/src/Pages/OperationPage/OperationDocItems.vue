@@ -186,6 +186,7 @@ function handleInsertRow(index: number, item: frontend.IArrivalItems) {
 };
 
 const tareColumnEnabled = ref(false);
+const shapeColumnEnabled = ref(false);
 const nextOperationColumnEnabled = ref(false);
 const insertColumnEnabled = ref(false);
 const tableLayout = ref<TableInstance['tableLayout']>('fixed');
@@ -252,6 +253,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
             <el-button type="success" :icon="Check" @click="addItems(add_items_num, start_items_num)" circle style="margin-left: 10px;"/>
           </div>
           <el-checkbox v-model="tareColumnEnabled" label="тара" border />
+          <el-checkbox v-model="shapeColumnEnabled" label="вид материала" border />
           <el-checkbox v-model="nextOperationColumnEnabled" label="следующая операция" border />            
           <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
         </el-header>
@@ -281,6 +283,19 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
                       :key="item.tare_type_id"
                       :label="item.tare_type"
                       :value="item.tare_type"
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column prop="shape_type" label="Вид">
+                <template #default="scope">
+                  <el-select v-model="scope.row.shape_type" :disabled="!shapeColumnEnabled" placeholder="Вид" style="width: 100px"
+                  >
+                    <el-option
+                      v-for="item in store.arrival?.shape_options"
+                      :key="item.shape_id"
+                      :label="item.shape_type"
+                      :value="item.shape_type"
                     />
                   </el-select>
                 </template>
