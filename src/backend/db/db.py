@@ -743,11 +743,11 @@ WHERE
         {
             "key_material_str": item["key_material_str"],
             "material": item["material"],
-            "tare_id": item["material"],
-            "gross_weight": item["material"],
-            "tare_type": item["material"],
-            "tare_weight": item["material"],
-            "next_operation_flag": item["material"],
+            "tare_id": item["tare_id"],
+            "gross_weight": item["gross_weight"],
+            "tare_type": item["tare_type"],
+            "tare_weight": item["tare_weight"],
+            "next_operation_flag": item["next_operation_flag"],
             "shape_ids": [
                 int(x) for x in items_shape_data.get(item["key_material"], "").split(",")
             ] if items_shape_data.get(item["key_material"]) else []
