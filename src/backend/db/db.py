@@ -1036,7 +1036,8 @@ async def get_shape_id_dict(conn: Connection):
     shape_id_dict = {}
 
     async with conn.cursor() as cur:
-        shape_items = await cur.execute("SELECT id, shape_name FROM material_shape_type WHERE type = 0")
+        await cur.execute("SELECT id, shape_name FROM material_shape_type WHERE type = 0")
+        shape_items = await cur.fetchall()
         if len(shape_items):
             shape_id_dict = {row["id"]: row["shape_name"] for row in shape_items}
 
