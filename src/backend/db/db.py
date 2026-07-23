@@ -59,11 +59,6 @@ async def select_selection_data(
     element_order: str = ''
     ):
 
-    print(stock_list)
-    print(indicators)
-    print(key_material_list)
-    print(query_type)
-
     async with conn.cursor() as cur:
 
         try:
@@ -737,7 +732,6 @@ WHERE
         arrival_items = await cur.fetchall()
 
     items_shape_data = await select_shape_data(conn, doc_id)
-    print(items_shape_data)
 
     arrival["items"] = [
         {
@@ -755,8 +749,6 @@ WHERE
         for item in arrival_items
     ]
  
-    print(arrival_items)    
-
     arrival["tare_options"] = await select_tare_options(conn)
     arrival["shape_options"] = await select_shape_options(conn)
 
@@ -904,17 +896,18 @@ ORDER BY
         stocks = await cur.fetchall()
     return stocks
 
-def make_arrival_items_string(doc_id: int, material_id_dict: dict, arrival_items: list[dict]):
+def make_arrival_items_string(doc_id: int, material_id_dict: dict, shape_id_dict: dict, arrival_items: list[dict]):
 
     res_string = ""
 
     for item in arrival_items:
         item_net_weight = item["gross_weight"] - item["tare_weight"]
-        item_next_operation_flag = item["next_operation_flag"] if item["next_operation_flag"] != "" else "NULL"    
+        item_next_operation_flag = item["next_operation_flag"] if item["next_operation_flag"] != "" else "NULL"
+        item_material_mark = ', '.join(str(shape_id_dict.get(x, x)) for x in item["shape_ids"])   
 
         item_string = (f",({material_id_dict[item["material"]]},{item["tare_id"]},'{item["tare_type"]}',1"
         f",{item["gross_weight"]},{item_net_weight},{item["gross_weight"]},{item_net_weight}"
-        f",'{material_id_dict[item["material"]]}_{item["tare_id"]}',{doc_id},{item_next_operation_flag})")
+        f",'{material_id_dict[item["material"]]}_{item["tare_id"]}',{doc_id},{item_next_operation_flag}, {item_material_mark})")
 
         res_string = res_string + item_string
 
@@ -956,6 +949,8 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
     if material_id_dict is None:
         raise MaterialError(f"Ошибка при формировании кода материала.")
 
+    shape_id_dict = await get_shape_id_dict(conn)
+
     q_get_org_id = """
         select organization_id from stock where id = %(stock_id)s
     """
@@ -970,13 +965,14 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         from arrival_doc where id = %(doc_id)s
     """
 
-    arrival_values_string = make_arrival_items_string(doc_id, material_id_dict, arrival_items)
+    arrival_values_string = make_arrival_items_string(doc_id, material_id_dict, shape_id_dict, arrival_items)
     if arrival_values_string:
         q_insert_arrival_tmp = """
             INSERT INTO arrival_tmp (material, tare_id, tare_type, tare_amount, gross_weight_arrival
-            , net_weight_arrival, gross_weight, net_weight, key_material, doc_id, next_operation_flag)
+            , net_weight_arrival, gross_weight, net_weight, key_material, doc_id, next_operation_flag, material_mark)
             VALUES
         """ + arrival_values_string
+        print(q_insert_arrival_tmp)
 
     production_values_string = make_production_items_string(production_items)
     if production_values_string:
@@ -1035,6 +1031,17 @@ async def get_material_id_dict(conn: Connection, arrival_items: list[dict]):
         if material_id_dict[item] == 0:
             return None
     return material_id_dict
+
+async def get_shape_id_dict(conn: Connection):
+    shape_id_dict = {}
+
+    async with conn.cursor() as cur:
+        shape_items = await cur.execute("SELECT id, shape_name FROM material_shape_type WHERE type = 0")
+        if len(shape_items):
+            shape_id_dict = {row["id"]: row["shape_name"] for row in shape_items}
+
+    return shape_id_dict
+
 
 async def get_material_id(conn: Connection, material: str):
     q = "select id, kind from material where material = %(material)s"
