@@ -221,6 +221,33 @@ async function fillDownShapeIdsSingle(index: number, sourceRow: frontend.IArriva
   pageRows[index + 1].shape_ids = [...sourceRow.shape_ids];
 }
 
+async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArrivalItems) {
+  const pageRows = paginatedItems.value;
+  const rowsBelowCount = pageRows.length - (index + 1);
+
+  if (rowsBelowCount <= 0) {
+    return;
+  }
+
+  const confirmText = `Заполнить значения во всех строках ниже?`;
+
+  try {
+    const action = await ElMessageBox.confirm(confirmText, 'Подтверждение', {
+      confirmButtonText: 'Да',
+      cancelButtonText: 'Отмена',
+      type: 'warning',
+    });
+
+    if (action === 'confirm') {
+      fillDownShapeIds(index, sourceRow); // твой существующий метод
+    }
+  } catch (err) {
+    // пользователь нажал «Отмена» или закрыл окно — ничего не делаем
+    return;
+  }
+}
+
+
 </script>
 
 <template v-if="store.isAuth">
@@ -333,23 +360,27 @@ async function fillDownShapeIdsSingle(index: number, sourceRow: frontend.IArriva
                 <template #default="scope">
                   <div style="display: flex; gap: 4px; align-items: center;">
                     <!-- Заполнить только следующую строку -->
-                    <el-button
-                      size="small"
-                      type="primary"
-                      :disabled="!hasNextRow(scope.$index)"
-                      @click="fillDownShapeIdsSingle(scope.$index, scope.row)"
-                    >
-                      <ArrowRight style="width: 14px; height: 14px;" />
-                    </el-button>
+                     <el-tooltip content="Заполнить следующую строку" placement="top">
+                       <el-button
+                         size="small"
+                         type="primary"
+                         :disabled="!hasNextRow(scope.$index)"
+                         @click="fillDownShapeIdsSingle(scope.$index, scope.row)"
+                       >
+                         <ArrowRight style="width: 14px; height: 14px;" />
+                       </el-button>
+                     </el-tooltip>
 
                     <!-- Заполнить до конца видимой страницы -->
-                    <el-button
-                      size="small"
-                      :disabled="!hasMoreRows(scope.$index)"
-                      @click="fillDownShapeIds(scope.$index, scope.row)"
-                    >
-                      <CaretBottom style="width: 14px; height: 14px;" />
-                    </el-button>
+                    <el-tooltip content="Заполнить все строки ниже на странице" placement="top">
+                      <el-button
+                        size="small"
+                        :disabled="!hasMoreRows(scope.$index)"
+                        @click="handleFillDownWithConfirm(scope.$index, scope.row)"
+                      >
+                        <CaretBottom style="width: 14px; height: 14px;" />
+                      </el-button>
+                    </el-tooltip>
                   </div>
                 </template>
               </el-table-column>              
