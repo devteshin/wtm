@@ -255,13 +255,13 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
       <el-container>
         <el-header height="10%" >
           <div class="form-row">
-            Продукт:
             <el-input disabled
               v-model="material" 
-              style="max-width: 345px"
+              style="max-width: 420px"
               >
+              <template #prepend>Продукт</template>
             </el-input>
-            <el-button type="primary" :icon="Edit" @click="dialogVisible = true" circle style="margin-left: 10px;" />
+            <el-button type="primary" :icon="Edit" @click="dialogVisible = true" style="margin-left: 10px;" />
             <DialogNewMaterial
               v-model:dialogVisible="dialogVisible"
               :initial-value="operation_material"
@@ -306,7 +306,7 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
                 :value="item.tare_type"
               />
             </el-select>
-            <el-button type="success" :icon="Check" @click="addItems(add_items_num, start_items_num)" circle style="margin-left: 10px;"/>
+            <el-button type="success" :icon="Check" @click="addItems(add_items_num, start_items_num)" style="margin-left: 10px;"/>
           </div>
           <el-checkbox v-model="tareColumnEnabled" label="тара" border />
           <el-checkbox v-model="shapeColumnEnabled" label="вид материала" border />
