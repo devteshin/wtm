@@ -11,6 +11,7 @@ import {
   Check,
   Edit
 } from '@element-plus/icons-vue';
+import { ArrowRight, CaretBottom } from '@element-plus/icons-vue';
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -35,6 +36,11 @@ const currentPage = ref(1);
 const pageSize = ref(20);
 const totalItems = ref(0);
 
+const tareColumnEnabled = ref(false);
+const shapeColumnEnabled = ref(false);
+const nextOperationColumnEnabled = ref(false);
+const insertColumnEnabled = ref(false);
+const tableLayout = ref<TableInstance['tableLayout']>('fixed');
 
 onMounted(async () => {
   if (props.material) {
@@ -186,12 +192,34 @@ function handleInsertRow(index: number, item: frontend.IArrivalItems) {
   }
 };
 
-const tareColumnEnabled = ref(false);
-const shapeColumnEnabled = ref(false);
-const nextOperationColumnEnabled = ref(false);
-const insertColumnEnabled = ref(false);
-const tableLayout = ref<TableInstance['tableLayout']>('fixed');
-//const tableLayout = ref<TableInstance['tableLayout']>('auto');
+function fillDownShapeIds(index: number, sourceRow: frontend.IArrivalItems) {
+  const pageRows = paginatedItems.value;
+
+  for (let i = index + 1; i < pageRows.length; i++) {
+    pageRows[i].shape_ids = [...sourceRow.shape_ids];
+  }
+}
+
+function hasNextRow(index: number) {
+  const rows = paginatedItems.value;
+  return index + 1 < rows.length;
+}
+
+function hasMoreRows(index: number) {
+  const rows = paginatedItems.value;
+  // «до конца страницы» имеет смысл, если после текущей есть хотя бы одна строка
+  return index + 1 < rows.length;
+}
+
+async function fillDownShapeIdsSingle(index: number, sourceRow: frontend.IArrivalItems) {
+  const pageRows = paginatedItems.value;
+
+  if (index + 1 >= pageRows.length) {
+    return; // следующей строки нет
+  }
+
+  pageRows[index + 1].shape_ids = [...sourceRow.shape_ids];
+}
 
 </script>
 
@@ -301,9 +329,33 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column prop="next_operation_flag" label="След. этап">
+              <el-table-column v-if="shapeColumnEnabled" label="" width="120">
                 <template #default="scope">
-                  <el-select v-model="scope.row.next_operation_flag" :disabled="!nextOperationColumnEnabled" placeholder="" clearable style="width: 100px"
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <!-- Заполнить только следующую строку -->
+                    <el-button
+                      size="small"
+                      type="primary"
+                      :disabled="!hasNextRow(scope.$index)"
+                      @click="fillDownShapeIdsSingle(scope.$index, scope.row)"
+                    >
+                      <ArrowRight style="width: 14px; height: 14px;" />
+                    </el-button>
+
+                    <!-- Заполнить до конца видимой страницы -->
+                    <el-button
+                      size="small"
+                      :disabled="!hasMoreRows(scope.$index)"
+                      @click="fillDownShapeIds(scope.$index, scope.row)"
+                    >
+                      <CaretBottom style="width: 14px; height: 14px;" />
+                    </el-button>
+                  </div>
+                </template>
+              </el-table-column>              
+              <el-table-column v-if="nextOperationColumnEnabled" prop="next_operation_flag" label="След. этап" width="100">
+                <template #default="scope">
+                  <el-select v-model="scope.row.next_operation_flag" :disabled="!nextOperationColumnEnabled" placeholder="" clearable
                     @change="onNextOperationFlagChange(scope.row.next_operation_flag, scope.row)" 
                   >
                     <el-option
@@ -315,7 +367,7 @@ const tableLayout = ref<TableInstance['tableLayout']>('fixed');
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column label="">
+              <el-table-column v-if="insertColumnEnabled" label="" width="50">
                 <template #default="scope">
                   <el-button size="small" @click="handleInsertRow(scope.$index, scope.row)" :disabled="!insertColumnEnabled">
                     +
