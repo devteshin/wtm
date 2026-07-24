@@ -983,7 +983,6 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     async with conn.cursor() as cur:
         await cur.callproc("action_arrival_write_before")
-        #await cur.execute("START TRANSACTION;")
         await conn.begin()
         try:
             await cur.execute(q_get_org_id, {"stock_id": stock_id})
@@ -997,28 +996,24 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
             if production_values_string:
                 await cur.execute(q_insert_production_tmp)
             await cur.callproc("action_arrival_write", [doc_id, 0])
-            await cur.callproc("action_arrival_util_ind_transmit", [org_id, doc_id])
-            await cur.callproc("action_arrival_util_app_update_production", [doc_id])
+            await cur.callproc("action_arrival_util_app_update_production", [doc_id]) # здесь важен порядок - сначала production 
+            await cur.callproc("action_arrival_util_ind_transmit", [org_id, doc_id]) # затем трансляция полказателей
 
         except Exception as e:
             await conn.rollback()
-            #await cur.execute("ROLLBACK;")
             print(f"ERROR \"update_arrival\": {e}")
             return
 
         err_string = await check_arrival_error(conn, "check_consumption_err")
         if err_string:
             await conn.rollback()
-            #await cur.execute("ROLLBACK;")
 
             raise ItemsConsumptionError(f"Есть списание по позициям: {err_string}.")
         err_string = await check_arrival_error(conn, "check_extra_input_err")
         if err_string:
             await conn.rollback()
-            #await cur.execute("ROLLBACK;")
             raise ItemsConsumptionError(f"Повторный приход по позициям: {err_string}.")
         await conn.commit()
-        #await cur.execute("COMMIT;")
 
 
     return    
