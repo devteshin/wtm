@@ -73,14 +73,7 @@ async def select_selection_data(
 
 
 async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
-    q_stock = """
-SELECT 
-    id
-    , name 
-    FROM stock
-WHERE organization_id = 
-    (SELECT organization_id FROM stock WHERE id = %(stock_id)s)    
-    """
+    q_stock = "SELECT id, name FROM stock"
 
     q_element = """
 SELECT 
@@ -91,7 +84,6 @@ SELECT
     , umi
     , type
     FROM element
-WHERE FIND_IN_SET((SELECT organization_id FROM stock WHERE id = %(stock_id)s), organization_id)
     ORDER BY code    
     """
     async with conn.cursor() as cur:
@@ -876,12 +868,12 @@ async def select_stocks(conn: Connection, user_id: int):
 SELECT
     s.id
     , s.name
-    , SUM(IF(o.done = 0 AND pte.executor_id = %(user_id)s, 1, 0)) tasks_count
+    , SUM(IF(o.done = 0 AND oe.executor_id = %(user_id)s, 1, 0)) tasks_count
 FROM
     stock s
 LEFT JOIN production_task_doc ptd ON ptd.stock = s.id
 LEFT JOIN operations AS o ON o.id = ptd.operation
-LEFT JOIN production_task_executor pte ON pte.doc_id = ptd.id
+LEFT JOIN operation_executors oe ON oe.operation_id = o.id
 WHERE
     s.app IS TRUE
 GROUP BY
@@ -951,10 +943,6 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
 
     shape_id_dict = await get_shape_id_dict(conn)
 
-    q_get_org_id = """
-        select organization_id from stock where id = %(stock_id)s
-    """
-    
     q_insert_doc_tmp = """
         insert into arrival_doc_tmp 
         (
@@ -985,19 +973,13 @@ async def update_arrival(conn: Connection, stock_id: int, doc_id: int, doc_numbe
         await cur.callproc("action_arrival_write_before")
         await conn.begin()
         try:
-            await cur.execute(q_get_org_id, {"stock_id": stock_id})
-            result = await cur.fetchone()
-            if result is None:
-                print("Не установлена организация")    
-            org_id = result.get("organization_id", 1)
             await cur.execute(q_insert_doc_tmp, {"doc_number": doc_number, "doc_date": doc_date, "doc_id": doc_id})
             if arrival_values_string:
                 await cur.execute(q_insert_arrival_tmp)
             if production_values_string:
                 await cur.execute(q_insert_production_tmp)
             await cur.callproc("action_arrival_write", [doc_id, 0])
-            await cur.callproc("action_arrival_util_app_update_production", [doc_id]) # здесь важен порядок - сначала production 
-            await cur.callproc("action_arrival_util_ind_transmit", [org_id, doc_id]) # затем трансляция полказателей
+            await cur.callproc("action_arrival_util_app_update_production", [doc_id])
 
         except Exception as e:
             await conn.rollback()
