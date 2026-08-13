@@ -90,6 +90,11 @@ const routes = computed(() => {
             path: `/stock/${route.params.stockID as string}/materials`,
             icon: "MessageBox"
         });
+        menuRoutes.push({
+            label: "Производство",
+            path: `/stock/${route.params.stockID as string}/production`,
+            icon: "MessageBox"
+        });
     }
     return menuRoutes;
 });

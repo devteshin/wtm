@@ -73,7 +73,7 @@ async def select_selection_data(
 
 
 async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
-    q_stock = "SELECT id, name FROM stock"
+    q_stock = "SELECT id, name FROM stock WHERE app = 1"
 
     q_element = """
 SELECT 

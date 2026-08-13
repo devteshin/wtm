@@ -23,25 +23,6 @@
           <el-form-item label="Наименование продукта" prop="productId">
             <div class="product-select-wrapper">
 
-<!--               <el-select
-                v-model="form.productId"
-                placeholder="Выберите продукт"
-                clearable
-                filterable
-                class="product-select"
-                :loading="productOptionsLoading"
-              >
-                 <el-option
-                  v-for="p in productOptions"
-                  :key="p.id"
-                  :label="p.product_name"
-                  :value="p.id"
-                />
-                <template v-if="productOptionsLoading">
-                  <el-option :value="0" disabled label="Загрузка..." />
-                </template>
-              </el-select>
- -->
               <el-select
                 v-model="form.productId"
                 placeholder="Начните вводить название продукта"
