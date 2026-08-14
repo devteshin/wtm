@@ -69,10 +69,10 @@
               clearable
               multiple
               filterable
-              :remote="isRemoteSearch"
+              :remote="isRemoteSearchProduct"
               class="product-select"
               :loading="productOptionsLoading"
-              :remote-method="isRemoteSearch ? handleProductSearch : undefined"
+              :remote-method="isRemoteSearchProduct ? handleProductSearch : undefined"
             >
               <el-option
                 v-for="p in productOptions"
@@ -87,7 +87,7 @@
             </el-select>
 
             <el-button
-              v-if="isRemoteSearch"
+              v-if="isRemoteSearchProduct"
               type="info"
               plain
               size="small"
@@ -152,7 +152,7 @@ const materialOptions = ref<{ id: number; name: string }[]>([])
 const materialOptionsLoading = ref(false)
 
 // --- Состояния для селекта Продукт ---
-const isRemoteSearch = ref(true)
+const isRemoteSearchProduct = ref(true)
 const productOptions = ref<{ id: number; name: string }[]>([])
 const productOptionsLoading = ref(false)
 
@@ -177,22 +177,26 @@ onMounted(async () => {
   store.loading = true
 
   try {
-/*     if (!store.materials_meta) {
-      await store.fetchMaterialsMeta(props.stockID)
-    }
- */
-    reportStore.loadFromStorage()
+//     if (!store.materials_meta) {
+//      await store.fetchMaterialsMeta(props.stockID)
+//    }
 
-    // Инициализируем оба списка пустым (поиск начнётся при вводе)
-    //await loadProductOptions()
-    //await loadMaterialOptions()
+    await store.fetchMaterialsMeta(props.stockID)
+ 
+    reportStore.loadFromStorage()
+    if (selectedProduct.value.length) {
+      productOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedProduct.value.includes(item.id)) || [];
+    }
+    if (selectedMaterial.value.length) {
+      materialOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedMaterial.value.includes(item.id)) || [];
+    }
+
   } finally {
     store.loading = false
     isSkeletonLoading.value = false
   }
 })
 
-// --- Логика селекта Материал (remote + кнопка) ---
 const loadMaterialOptions = async (material_substring: string = '', limit: number = 100) => {
   materialOptionsLoading.value = true
   try {
@@ -218,7 +222,6 @@ const handleLoadAllMaterialOptions = async () => {
   await loadMaterialOptions('', 500)
 }
 
-// --- Логика селекта Продукт (без изменений) ---
 const loadProductOptions = async (material_substring: string = '', limit: number = 100) => {
   productOptionsLoading.value = true
   try {
@@ -240,7 +243,7 @@ const handleProductSearch = async (material_substring: string) => {
 }
 
 const handleLoadAllProductOptions = async () => {
-  isRemoteSearch.value = false
+  isRemoteSearchProduct.value = false
   await loadProductOptions('', 500)
 }
 
