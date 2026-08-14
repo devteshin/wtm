@@ -16,9 +16,9 @@ export default defineStore("app_store", () => {
     const checkToken = () => api.checkToken();
 
     /** список операций */
-    const operations = ref<Array<frontend.IOperations>>([]);
+    const operations = ref<Array<frontend.IOperationsList>>([]);
     /** список документов операции */
-    const operation = ref<Array<frontend.IOperation>>([]);
+    const operation = ref<Array<frontend.IOperationDoc>>([]);
     /** документ приема из производства */
     const arrival = ref<frontend.IArrival | null>(null);
     /** данные материалов для отчета по остаткам */

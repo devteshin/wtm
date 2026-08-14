@@ -140,7 +140,7 @@ const handleCloseDrawer = (done: (flag?: boolean) => void) => {
 };
 
 /** Обработчик нажатия строки таблицы — переход на операцию */
-const handleRowClick = (row: frontend.IOperations) => {
+const handleRowClick = (row: frontend.IOperationsList) => {
   router.push(`/stock/${props.stockID}/operation/${row.id}`);
 };
 

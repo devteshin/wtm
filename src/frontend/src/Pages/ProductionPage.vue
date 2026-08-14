@@ -18,6 +18,25 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="Техпроцесс" prop="processId">
+          <el-select
+            v-model="selectedProcess"
+            placeholder="Выберите техпроцесс"
+            clearable
+            :loading="processOptionsLoading"
+          >
+            <el-option
+              v-for="p in processOptions"
+              :key="p.id"
+              :label="p.process_name"
+              :value="p.id"
+            />
+            <template v-if="processOptionsLoading">
+              <el-option :value="0" disabled label="Загрузка..." />
+            </template>
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="Материал">
           <div class="product-select-wrapper">
             <el-select

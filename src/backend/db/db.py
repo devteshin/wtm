@@ -74,43 +74,41 @@ async def select_selection_data(
 
 async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
     q_stock = "SELECT id, name FROM stock WHERE app = 1"
-
-    q_element = """
-SELECT 
-    code
-    , name 
-    , min_value
-    , max_value
-    , umi
-    , type
-    FROM element
-    ORDER BY code    
-    """
+    q_element = "SELECT code, name, min_value, max_value, umi, type FROM element ORDER BY code"
+    q_process = "SELECT id, process_name AS name FROM technical_process ORDER BY process_name"
+    q_operations = "SELECT id, name FROM operations ORDER BY name"
+    q_processing_schemes = "SELECT id, name FROM production_sequences ORDER BY name"
     async with conn.cursor() as cur:
-        await cur.execute(q_stock, {"stock_id": stock_id})
+        await cur.execute(q_stock)
         stock_list = await cur.fetchall()
 
-        await cur.execute(q_element, {"stock_id": stock_id})
+        await cur.execute(q_element)
         material_group_list = await cur.fetchall()
+
+        await cur.execute(q_process)
+        process_list = await cur.fetchall()
+
+        await cur.execute(q_operations)
+        operation_list = await cur.fetchall()
+
+        await cur.execute(q_processing_schemes)
+        processing_schemes = await cur.fetchall()
+
 
     material_list = await select_materials_list(conn)
 
     return {
         "material_list": material_list,
         "stock_list": stock_list,
-        "material_group_list": material_group_list
+        "material_group_list": material_group_list,
+        "process_list": process_list,
+        "operation_list": operation_list,
+        "processing_schemes": processing_schemes
     }
 
 
 async def select_materials_list(conn: Connection):
-    q_material = """
-        SELECT 
-            id
-            , material as name
-            FROM material
-        WHERE kind = 0    
-        ORDER BY material    
-    """
+    q_material = "SELECT id, material as name FROM material WHERE kind = 0 ORDER BY material"
     async with conn.cursor() as cur:
         await cur.execute(q_material)
         material_list = await cur.fetchall()

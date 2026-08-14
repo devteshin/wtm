@@ -15,7 +15,7 @@ const props = defineProps({
     operationID: { type: Number, required: true },
 });
 
-const handleRowClick = (row: frontend.IOperation) => router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${row.doc_id}`);
+const handleRowClick = (row: frontend.IOperationDoc) => router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${row.doc_id}`);
 
 function createDoc() {
     router.push(`/stock/${props.stockID}/operation/${props.operationID}/doc/${0}`);

@@ -4,6 +4,24 @@ declare namespace frontend {
         material_list: Array<IMaterial> 
         stock_list: Array<IStock>
         material_group_list: Array<IMaterialGroups>
+        process_list: Array<IProcess>
+        operation_list: Array<IOpertion>
+        processing_schemes: Array<IProcessingSchem>
+    }
+
+    export type IProcessingSchem = {
+        id: number
+        name: string
+    }
+    
+    export type IOpertion = {
+        id: number
+        name: string
+    }
+    
+    export type IProcess = {
+        id: number
+        name: string
     }
 
     export type IMaterial = {
@@ -83,14 +101,14 @@ declare namespace frontend {
 
 
     /** Операции */
-    export type IOperations = {
+    export type IOperationsList = {
         id: number
         operation: string
         doc_count: number
     }
 
     /** Документы операции */
-    export type IOperation = {
+    export type IOperationDoc = {
         doc_id: number
         doc_number: string
         doc_date: string
