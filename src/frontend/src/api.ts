@@ -13,6 +13,7 @@ const OPERATION_UPDATE_TASK = "operation/update_task";
 const CHECK_OPERATION_NAME = "operation/check_name";
 const MATERIAL = "material";
 const SEARCH_MATERIAL = "search_materials";
+const SEARCH_OPERATION = "search_operations";
 const DOC = "doc";
 const JOB = "job";
 const DNM = "dnm";
@@ -73,7 +74,6 @@ class ClientAPI {
             location.href = "/login";
         }
         const body = await response.json();
-        console.log('api', body);
         return body;
     }
 
@@ -135,22 +135,41 @@ class ClientAPI {
     }
 
     async searchMaterials(material_substring: string, limit: number) {
-    this.checkToken();
+        this.checkToken();
 
-    const params = new URLSearchParams({
-        material_substring: material_substring,
-        limit: String(limit),
-    });
+        const params = new URLSearchParams({
+            material_substring: material_substring,
+            limit: String(limit),
+        });
 
-    const url = `${BASE_URL}/${SEARCH_MATERIAL}?${params.toString()}`;
+        const url = `${BASE_URL}/${SEARCH_MATERIAL}?${params.toString()}`;
 
-    const response = await fetch(url, { headers: this.requestHeaders() });
-    if (response.status === 403) {
-        window.localStorage.removeItem("token");
-        location.href = "/login";
+        const response = await fetch(url, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+
+        return response.json();
     }
 
-    return response.json();
+    async searchOperations(operation_substring: string, limit: number) {
+        this.checkToken();
+
+        const params = new URLSearchParams({
+            operation_substring: operation_substring,
+            limit: String(limit),
+        });
+
+        const url = `${BASE_URL}/${SEARCH_OPERATION}?${params.toString()}`;
+
+        const response = await fetch(url, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+
+        return response.json();
     }
 
     async fetchOperations(stockID: number, activeOperationMode: boolean) {

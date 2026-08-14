@@ -114,6 +114,13 @@ export default defineStore("app_store", () => {
         });
     };
 
+    const searchOperations = (operation_substring: string, limit: number=50, with_load=true) => {
+        if (with_load) loading.value = true;
+        return api.searchOperations(operation_substring, limit).then(body => materials_list.value = body).finally(() => {
+            if (with_load) loading.value = false;
+        });
+    };
+
     const fetchOperationData = (operationID: number, with_load=true) => {
         if (with_load) loading.value = true;
         return api.fetchOperationData(operationID).then(body => operation.value = body).finally(() => {
@@ -281,6 +288,7 @@ export default defineStore("app_store", () => {
         updateRestGrossWeight,
         createMaterial,
         searchMaterials,
+        searchOperations,
         createArrival,
         updateArrival,
         deleteArrival,

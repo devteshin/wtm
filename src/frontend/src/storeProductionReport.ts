@@ -7,6 +7,7 @@ export const useProductionReportStore = defineStore('productionReport', () => {
   const selectedMaterial = ref<number[]>([])
   const selectedProduct = ref<number[]>([])
   const selectedProcess = ref<number[]>([])
+  const selectedOperiation = ref<number[]>([])
 
   // Действия
   const setFilters = (filters: Partial<{
@@ -14,6 +15,7 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     selectedMaterial: number[]
     selectedProduct: number[]
     selectedProcess: number[]
+    selectedOperation: number[]
   }>) => {
     if (filters.selectedStore !== undefined) {
       selectedStore.value = filters.selectedStore
@@ -27,6 +29,9 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     if (filters.selectedProcess !== undefined) {
       selectedProcess.value = filters.selectedProcess
     }
+    if (filters.selectedOperation !== undefined) {
+      selectedOperiation.value = filters.selectedOperation
+    }
   }
 
   const resetFilters = () => {
@@ -34,6 +39,7 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     selectedMaterial.value = []
     selectedProduct.value = []
     selectedProcess.value = []
+    selectedOperiation.value = []
   }
 
   const loadFromStorage = () => {
@@ -46,6 +52,7 @@ export const useProductionReportStore = defineStore('productionReport', () => {
           selectedMaterial: data.selectedMaterial || [],
           selectedProduct: data.selectedProduct || [],
           selectedProcess: data.selectedProcess || [],
+          selectedOperation: data.selectedOperation || [],
         })
       }
     } catch (error) {
@@ -59,6 +66,7 @@ export const useProductionReportStore = defineStore('productionReport', () => {
       selectedMaterial: selectedMaterial.value,
       selectedProduct: selectedProduct.value,
       selectedProcess: selectedProcess.value,
+      selectedOperiation: selectedOperiation.value,
       timestamp: Date.now()
     }
     localStorage.setItem('reportProductionFiltersState', JSON.stringify(stateToSave))
@@ -70,6 +78,7 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     selectedMaterial,
     selectedProduct,
     selectedProcess,
+    selectedOperiation,
 
     // Экспортируем действия
     setFilters,

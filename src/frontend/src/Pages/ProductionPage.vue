@@ -23,6 +23,8 @@
             v-model="selectedProcess"
             placeholder="Выберите техпроцесс"
             clearable
+            multiple
+            filterable
             :loading="processOptionsLoading"
           >
             <el-option
@@ -176,6 +178,11 @@ const isRemoteSearchProduct = ref(true)
 const productOptions = ref<{ id: number; name: string }[]>([])
 const productOptionsLoading = ref(false)
 
+// --- Состояния для селекта Операция ---
+const isRemoteSearchOperation = ref(true)
+const operationOptions = ref<{ id: number; name: string }[]>([])
+const operationOptionsLoading = ref(false)
+
 const processOptionsLoading = ref(false)
 
 // --- Computed для фильтров ---
@@ -199,19 +206,23 @@ const selectedProcess = computed({
   set: (value) => reportStore.setFilters({ selectedProcess: value }),
 })
 
+const selectedOperation = computed({
+  get: () => reportStore.selectedOperiation,
+  set: (value) => reportStore.setFilters({ selectedOperation: value }),
+})
+
 onMounted(async () => {
   isSkeletonLoading.value = true
   store.loading = true
   processOptionsLoading.value = true
   productOptionsLoading.value = true
   materialOptionsLoading.value = true
+  operationOptionsLoading.value = true
 
   try {
 
     await store.fetchMaterialsMeta(props.stockID)
  
-    console.log(store.materials_meta);
-
     reportStore.loadFromStorage()
     if (selectedProduct.value.length) {
       productOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedProduct.value.includes(item.id)) || [];
@@ -226,8 +237,36 @@ onMounted(async () => {
     processOptionsLoading.value = false
     productOptionsLoading.value = false
     materialOptionsLoading.value = false
+    operationOptionsLoading.value = false
   }
 })
+
+const loadOperationOptions = async (operation_substring: string = '', limit: number = 100) => {
+  operationOptionsLoading.value = true
+  try {
+    const result = await store.searchOperations(operation_substring, limit)
+    operationOptions.value = result
+  } catch (e) {
+    console.error(e)
+  } finally {
+    operationOptionsLoading.value = false
+  }
+}
+
+const handleOperationSearch = async (operation_substring: string) => {
+  if (operation_substring.length < 2) {
+    operationOptions.value = []
+    return
+  }
+  await loadMaterialOptions(operation_substring, 100)
+}
+
+const handleLoadAllOperationOptions = async () => {
+  isRemoteSearchOperation.value = false
+  await loadOperationOptions('', 500)
+}
+
+
 
 const loadMaterialOptions = async (material_substring: string = '', limit: number = 100) => {
   materialOptionsLoading.value = true

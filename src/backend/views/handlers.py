@@ -3,7 +3,7 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
-                check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials
+                check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -151,6 +151,21 @@ async def search_materials_handler(request: Request):
         )
 
     return await jsonify(materials_list, request)
+
+async def search_operations_handler(request: Request):
+    operation_substring = request.query.get("operation_substring")
+    limit_str = request.query.get("limit")
+    limit = int(limit_str)
+
+    operations_list = []
+    async with request.app["db"].acquire() as conn:
+        operations_list = await search_operations(
+            conn,
+            operation_substring=operation_substring,
+            limit=limit
+        )
+
+    return await jsonify(operations_list, request)
 
 
 async def get_materials_data(request: Request):
