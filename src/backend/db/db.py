@@ -85,19 +85,15 @@ async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
 
         await cur.execute(q_element)
         material_group_list = await cur.fetchall()
-        print(material_group_list)
 
         await cur.execute(q_process)
         process_list = await cur.fetchall()
-        print(process_list)
 
         await cur.execute(q_operations)
         operation_list = await cur.fetchall()
-        print(operation_list)
 
         await cur.execute(q_processing_schemes)
         processing_schemes = await cur.fetchall()
-        print(processing_schemes)
 
     material_list = await select_materials_list(conn)
 
