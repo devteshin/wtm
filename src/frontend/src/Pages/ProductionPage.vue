@@ -39,8 +39,54 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="Операция">
+          <div class="item-remote-select-wrapper">
+            <el-select
+              v-model="selectedOperation"
+              placeholder="Начните вводить название операции"
+              clearable
+              multiple
+              filterable
+              :remote="isRemoteSearchOperation"
+              class="item-remote-select"
+              :loading="operationOptionsLoading"
+              :remote-method="isRemoteSearchOperation ? handleOperationSearch : undefined"
+            >
+              <el-option
+                v-for="o in operationOptions"
+                :key="o.id"
+                :label="o.name"
+                :value="o.id"
+                :disabled="o.id === -1"
+              />
+              <template v-if="operationOptionsLoading">
+                <el-option :value="0" disabled label="Загрузка..." />
+              </template>
+            </el-select>
+
+            <el-button
+              v-if="isRemoteSearchOperation"
+              type="info"
+              plain
+              size="small"
+              :loading="operationOptionsLoading"
+              :disabled="operationOptionsLoading"
+              @click="handleLoadAllOperationOptions"
+            >
+              <template #icon>
+                <el-icon :size="16">
+                  <folder-opened />
+                </el-icon>
+              </template>
+            </el-button>
+          </div>
+        </el-form-item>
+
+
+
+
         <el-form-item label="Материал">
-          <div class="product-select-wrapper">
+          <div class="item-remote-select-wrapper">
             <el-select
               v-model="selectedMaterial"
               placeholder="Начните вводить название материала"
@@ -48,7 +94,7 @@
               multiple
               filterable
               :remote="isRemoteSearchMaterial"
-              class="product-select"
+              class="item-remote-select"
               :loading="materialOptionsLoading"
               :remote-method="isRemoteSearchMaterial ? handleMaterialSearch : undefined"
             >
@@ -83,7 +129,7 @@
         </el-form-item>
 
         <el-form-item label="Продукт">
-          <div class="product-select-wrapper">
+          <div class="item-remote-select-wrapper">
             <el-select
               v-model="selectedProduct"
               placeholder="Начните вводить название продукта"
@@ -91,7 +137,7 @@
               multiple
               filterable
               :remote="isRemoteSearchProduct"
-              class="product-select"
+              class="item-remote-select"
               :loading="productOptionsLoading"
               :disabled="productOptionsLoading"
               :remote-method="isRemoteSearchProduct ? handleProductSearch : undefined"
@@ -230,6 +276,9 @@ onMounted(async () => {
     if (selectedMaterial.value.length) {
       materialOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedMaterial.value.includes(item.id)) || [];
     }
+    if (selectedOperation.value.length) {
+      operationOptions.value = store.materials_meta?.operation_list.filter((item: any)=> selectedOperation.value.includes(item.id)) || [];
+    }
 
   } finally {
     store.loading = false
@@ -258,7 +307,7 @@ const handleOperationSearch = async (operation_substring: string) => {
     operationOptions.value = []
     return
   }
-  await loadMaterialOptions(operation_substring, 100)
+  await loadOperationOptions(operation_substring, 100)
 }
 
 const handleLoadAllOperationOptions = async () => {
@@ -384,13 +433,13 @@ const handleMakeReport = async () => {
   color: #888;
 }
 /* Стили для селекта и кнопки */
-.product-select-wrapper {
+.item-remote-select-wrapper {
   display: flex;
   gap: 8px;
   align-items: center;
   width: 100%;
 }
-.product-select {
+.item-remote-select {
   flex: 1;
 }
 </style>
