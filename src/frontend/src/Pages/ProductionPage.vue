@@ -2,6 +2,21 @@
   <el-container class="page-container">
     <el-aside width="400px" class="sidebar">
       <el-form label-position="top" class="filter-form">
+
+        <el-form-item label="Период">
+          <el-date-picker
+            v-model="selectedPeriod"
+            type="daterange"
+            format="DD.MM.YYYY"
+            value-format="YYYY-MM-DD"
+            range-separator="–"
+            start-placeholder=""
+            end-placeholder=""
+            clearable
+            :default-value="new Date()"
+          />
+        </el-form-item>        
+
         <el-form-item label="Склад">
           <el-select
             v-model="selectedStore"
@@ -18,7 +33,28 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Техпроцесс" prop="processId">
+        <el-form-item label="Схема">
+          <el-select
+            v-model="selectedSchema"
+            placeholder="Выберите техпроцесс"
+            clearable
+            multiple
+            filterable
+            :loading="schemaOptionsLoading"
+          >
+            <el-option
+              v-for="p in store.materials_meta?.processing_schemes"
+              :key="p.id"
+              :label="p.name"
+              :value="p.id"
+            />
+            <template v-if="schemaOptionsLoading">
+              <el-option :value="0" disabled label="Загрузка..." />
+            </template>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="Техпроцесс">
           <el-select
             v-model="selectedProcess"
             placeholder="Выберите техпроцесс"
@@ -230,6 +266,7 @@ const operationOptions = ref<{ id: number; name: string }[]>([])
 const operationOptionsLoading = ref(false)
 
 const processOptionsLoading = ref(false)
+const schemaOptionsLoading = ref(false)
 
 // --- Computed для фильтров ---
 const selectedStore = computed({
@@ -253,8 +290,18 @@ const selectedProcess = computed({
 })
 
 const selectedOperation = computed({
-  get: () => reportStore.selectedOperiation,
+  get: () => reportStore.selectedOperation,
   set: (value) => reportStore.setFilters({ selectedOperation: value }),
+})
+
+const selectedSchema = computed({
+  get: () => reportStore.selectedOperation,
+  set: (value) => reportStore.setFilters({ selectedOperation: value }),
+})
+
+const selectedPeriod = computed({
+  get: () => reportStore.selectedPeriod, // должен быть типа (Date | null)[] | null
+  set: (value) => reportStore.setFilters({ selectedPeriod: value }),
 })
 
 onMounted(async () => {
@@ -264,6 +311,7 @@ onMounted(async () => {
   productOptionsLoading.value = true
   materialOptionsLoading.value = true
   operationOptionsLoading.value = true
+  schemaOptionsLoading.value = true
 
   try {
 
@@ -287,6 +335,7 @@ onMounted(async () => {
     productOptionsLoading.value = false
     materialOptionsLoading.value = false
     operationOptionsLoading.value = false
+    schemaOptionsLoading.value = false
   }
 })
 

@@ -7,7 +7,9 @@ export const useProductionReportStore = defineStore('productionReport', () => {
   const selectedMaterial = ref<number[]>([])
   const selectedProduct = ref<number[]>([])
   const selectedProcess = ref<number[]>([])
-  const selectedOperiation = ref<number[]>([])
+  const selectedOperation = ref<number[]>([])
+  const selectedSchema = ref<number[]>([])
+  const selectedPeriod = ref<[string, string] | null>(null)
 
   // Действия
   const setFilters = (filters: Partial<{
@@ -16,6 +18,8 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     selectedProduct: number[]
     selectedProcess: number[]
     selectedOperation: number[]
+    selectedSchema: number[]
+    selectedPeriod: [string, string] | null
   }>) => {
     if (filters.selectedStore !== undefined) {
       selectedStore.value = filters.selectedStore
@@ -30,7 +34,13 @@ export const useProductionReportStore = defineStore('productionReport', () => {
       selectedProcess.value = filters.selectedProcess
     }
     if (filters.selectedOperation !== undefined) {
-      selectedOperiation.value = filters.selectedOperation
+      selectedOperation.value = filters.selectedOperation
+    }
+    if (filters.selectedSchema !== undefined) {
+      selectedSchema.value = filters.selectedSchema
+    }
+    if (filters.selectedPeriod !== undefined) {
+      selectedPeriod.value = filters.selectedPeriod
     }
   }
 
@@ -39,7 +49,9 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     selectedMaterial.value = []
     selectedProduct.value = []
     selectedProcess.value = []
-    selectedOperiation.value = []
+    selectedOperation.value = []
+    selectedSchema.value = []
+    selectedPeriod.value = null
   }
 
   const loadFromStorage = () => {
@@ -53,6 +65,8 @@ export const useProductionReportStore = defineStore('productionReport', () => {
           selectedProduct: data.selectedProduct || [],
           selectedProcess: data.selectedProcess || [],
           selectedOperation: data.selectedOperation || [],
+          selectedSchema: data.selectedSchema || [],
+          selectedPeriod: data.selectedPeriod || null,
         })
       }
     } catch (error) {
@@ -66,7 +80,9 @@ export const useProductionReportStore = defineStore('productionReport', () => {
       selectedMaterial: selectedMaterial.value,
       selectedProduct: selectedProduct.value,
       selectedProcess: selectedProcess.value,
-      selectedOperiation: selectedOperiation.value,
+      selectedOperation: selectedOperation.value,
+      selectedSchema: selectedSchema.value,
+      selectedPeriod: selectedPeriod.value,
       timestamp: Date.now()
     }
     localStorage.setItem('reportProductionFiltersState', JSON.stringify(stateToSave))
@@ -78,7 +94,9 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     selectedMaterial,
     selectedProduct,
     selectedProcess,
-    selectedOperiation,
+    selectedOperation,
+    selectedSchema,
+    selectedPeriod,  
 
     // Экспортируем действия
     setFilters,
