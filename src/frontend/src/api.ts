@@ -73,6 +73,7 @@ class ClientAPI {
             location.href = "/login";
         }
         const body = await response.json();
+        console.log('api', body);
         return body;
     }
 

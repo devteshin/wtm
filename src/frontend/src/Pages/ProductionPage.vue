@@ -26,9 +26,9 @@
             :loading="processOptionsLoading"
           >
             <el-option
-              v-for="p in processOptions"
+              v-for="p in store.materials_meta?.process_list"
               :key="p.id"
-              :label="p.process_name"
+              :label="p.name"
               :value="p.id"
             />
             <template v-if="processOptionsLoading">
@@ -91,6 +91,7 @@
               :remote="isRemoteSearchProduct"
               class="product-select"
               :loading="productOptionsLoading"
+              :disabled="productOptionsLoading"
               :remote-method="isRemoteSearchProduct ? handleProductSearch : undefined"
             >
               <el-option
@@ -175,6 +176,8 @@ const isRemoteSearchProduct = ref(true)
 const productOptions = ref<{ id: number; name: string }[]>([])
 const productOptionsLoading = ref(false)
 
+const processOptionsLoading = ref(false)
+
 // --- Computed для фильтров ---
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
@@ -191,17 +194,24 @@ const selectedProduct = computed({
   set: (value) => reportStore.setFilters({ selectedProduct: value }),
 })
 
+const selectedProcess = computed({
+  get: () => reportStore.selectedProcess,
+  set: (value) => reportStore.setFilters({ selectedProcess: value }),
+})
+
 onMounted(async () => {
   isSkeletonLoading.value = true
   store.loading = true
+  processOptionsLoading.value = true
+  productOptionsLoading.value = true
+  materialOptionsLoading.value = true
 
   try {
-//     if (!store.materials_meta) {
-//      await store.fetchMaterialsMeta(props.stockID)
-//    }
 
     await store.fetchMaterialsMeta(props.stockID)
  
+    console.log(store.materials_meta);
+
     reportStore.loadFromStorage()
     if (selectedProduct.value.length) {
       productOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedProduct.value.includes(item.id)) || [];
@@ -213,6 +223,9 @@ onMounted(async () => {
   } finally {
     store.loading = false
     isSkeletonLoading.value = false
+    processOptionsLoading.value = false
+    productOptionsLoading.value = false
+    materialOptionsLoading.value = false
   }
 })
 

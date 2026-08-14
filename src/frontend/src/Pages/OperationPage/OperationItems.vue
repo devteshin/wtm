@@ -244,8 +244,6 @@ const fetchMeta = async () => {
     executorOptions.value = meta.executors
     templateOptions.value = meta.doc_templates
 
-    const assignEnd = performance.now()
-    
   } catch (e) {
     console.error('fetchMeta error:', e)
     ElMessage.error('Не удалось загрузить справочники')

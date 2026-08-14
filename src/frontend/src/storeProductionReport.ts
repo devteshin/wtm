@@ -6,12 +6,14 @@ export const useProductionReportStore = defineStore('productionReport', () => {
   const selectedStore = ref<number[]>([])
   const selectedMaterial = ref<number[]>([])
   const selectedProduct = ref<number[]>([])
+  const selectedProcess = ref<number[]>([])
 
   // Действия
   const setFilters = (filters: Partial<{
     selectedStore: number[]
     selectedMaterial: number[]
     selectedProduct: number[]
+    selectedProcess: number[]
   }>) => {
     if (filters.selectedStore !== undefined) {
       selectedStore.value = filters.selectedStore
@@ -22,12 +24,16 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     if (filters.selectedProduct !== undefined) {
       selectedProduct.value = filters.selectedProduct
     }
+    if (filters.selectedProcess !== undefined) {
+      selectedProcess.value = filters.selectedProcess
+    }
   }
 
   const resetFilters = () => {
     selectedStore.value = []
     selectedMaterial.value = []
     selectedProduct.value = []
+    selectedProcess.value = []
   }
 
   const loadFromStorage = () => {
@@ -37,7 +43,9 @@ export const useProductionReportStore = defineStore('productionReport', () => {
         const data = JSON.parse(saved)
         setFilters({
           selectedStore: data.selectedStore || [],
-          selectedMaterial: data.selectedMaterial || []
+          selectedMaterial: data.selectedMaterial || [],
+          selectedProduct: data.selectedProduct || [],
+          selectedProcess: data.selectedProcess || [],
         })
       }
     } catch (error) {
@@ -50,6 +58,7 @@ export const useProductionReportStore = defineStore('productionReport', () => {
       selectedStore: selectedStore.value,
       selectedMaterial: selectedMaterial.value,
       selectedProduct: selectedProduct.value,
+      selectedProcess: selectedProcess.value,
       timestamp: Date.now()
     }
     localStorage.setItem('reportProductionFiltersState', JSON.stringify(stateToSave))
@@ -60,6 +69,7 @@ export const useProductionReportStore = defineStore('productionReport', () => {
     selectedStore,
     selectedMaterial,
     selectedProduct,
+    selectedProcess,
 
     // Экспортируем действия
     setFilters,
