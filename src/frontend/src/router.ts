@@ -60,7 +60,7 @@ const routes: Array<RouteRecordRaw> = [
     },
     {
         path: "/stock/:stockID/production",
-        component: () => import("@/Pages/ProductionPage.vue"),
+        component: () => import("@/Pages/ProductionPage/ProductionPage.vue"),
         props: route => ({
             stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null
         })
