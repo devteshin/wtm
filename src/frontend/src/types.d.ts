@@ -60,6 +60,17 @@ declare namespace frontend {
         [key: string]: number;
     }    
 
+    export type IProductionReportData = {
+        operation_date_in: string
+        process: string
+        operation: string
+        material: string
+        weight_in: number
+        product: string
+        weight_out: number
+        operation_date_out: string;
+    }    
+
     export type ISelectionData = {
         stock_name: string
         material: string
@@ -82,6 +93,17 @@ declare namespace frontend {
         detailed_mode?: string;
         only_non_zero_mode?: boolean;
         element_order?: string;
+    }
+
+    export type IProductionReportQueryParams = {
+        stock_ids?: string;
+        material_ids?: string;
+        product_ids?: string;
+        process_ids?: string;
+        operation_ids?: string;
+        schema_ids?: string;
+        date_start?: string;
+        date_end?: string;
     }
 
     export type ISelectionQueryParams = {

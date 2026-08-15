@@ -27,6 +27,8 @@ export default defineStore("app_store", () => {
     const materials_list = ref<frontend.IMaterial | null>(null);
     /** остатки материалов для отчета по остаткам */
     const materials_data = ref<frontend.IMaterialsData | null>(null);
+    /** данные отчета по производству */
+    const production_report_data = ref<frontend.IProductionReportData | null>(null);
     /** подбор материалов */
     const selection_data = ref<frontend.ISelectionData | null>(null);
     /** подбор материалов - значения показателей подбора */
@@ -45,10 +47,17 @@ export default defineStore("app_store", () => {
 
 
     const doLogin = (payload: frontend.ILoginPayload) => api.doLogin(payload);
+
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsData = (stockID: number, params?: frontend.IMaterialsQueryParams) => {
         return api.fetchMaterialsData(stockID, params).then(body => materials_data.value = body).finally(() => loading.value = false);
     };
+
+    /** запрос к API для получения данных для отчета по производству */
+    const fetchProductionReportData = (params?: frontend.IProductionReportQueryParams) => {
+        return api.fetchProductionReportData(params).then(body => production_report_data.value = body).finally(() => loading.value = false);
+    };
+
     /** запрос к API для получения данных по остаткам материалов подбора */
     const fetchSelectionData = (params?: frontend.ISelectionQueryParams) => {
         let targetRef: Ref<any>;
@@ -271,6 +280,7 @@ export default defineStore("app_store", () => {
         fetchStocks,
         fetchMaterialsMeta,
         fetchMaterialsData,
+        fetchProductionReportData,
         fetchSelectionData,
         fetchOperations,
         fetchOperationsMeta,

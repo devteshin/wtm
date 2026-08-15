@@ -3,7 +3,8 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
-                check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations
+                check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations,
+                select_production_report_data
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -199,6 +200,33 @@ async def get_materials_data(request: Request):
         )
 
     return await jsonify(materials_data, request)
+
+async def get_production_report_data(request: Request):
+    
+    stock_ids = request.query.get("stock_ids")
+    material_ids = request.query.get("material_ids")
+    product_ids = request.query.get("product_ids")
+    process_ids = request.query.get("process_ids")
+    operation_ids = request.query.get("operation_ids")
+    schema_ids = request.query.get("schema_ids")
+    date_start = request.query.get("date_start")
+    date_end = request.query.get("date_end")
+
+    production_report_data = []
+    async with request.app["db"].acquire() as conn:
+        materials_data = await select_production_report_data(
+            conn,
+            stock_ids = stock_ids,
+            material_ids = material_ids,
+            product_ids = product_ids,
+            process_ids = process_ids,
+            operation_ids = operation_ids,
+            schema_ids = schema_ids,
+            date_start = date_start,
+            date_end = date_end
+        )
+
+    return await jsonify(production_report_data, request)
 
 async def get_selection_data(request: Request):
     

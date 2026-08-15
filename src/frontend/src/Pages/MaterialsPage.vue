@@ -379,52 +379,6 @@ const tableCondition = computed({
 const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
 
-/* const updateSelectionData = () => {
-  const selectionToAdd: typeof reportStore.tableData[number][] = [];
-  const selectionToRemove: typeof reportStore.tableData[number][] = [];
-  let rowInSelection = false;
-  let rowInSelected = false;
-
-  const selectedKeys = new Set(
-    reportStore.selectedTableData.map(row => getRowKey(row))
-  );
-  const selectionKeys = new Set(
-    reportStore.selectionData.map(row => getRowKey(row))
-  );
-
-  reportStore.tableData.forEach((row) => {
-    rowInSelection = selectionKeys.has(getRowKey(row));
-    rowInSelected = selectedKeys.has(getRowKey(row));
-    if (rowInSelected && !rowInSelection) {
-        selectionToAdd.push(row);
-      }
-      else if (!rowInSelected && rowInSelection) {
-        selectionToRemove.push(row);
-      }
-    });
-
-  // Добавление новых выбранных строк
-  if (selectionToAdd.length > 0) {
-    const currentSelection = reportStore.selectionData;
-    reportStore.setSelectionData([
-      ...currentSelection,
-      ...selectionToAdd
-    ]);
-  }
-
-  // Удаление строк, которые больше не выбраны
-  if (selectionToRemove.length > 0) {
-    const currentSelection = reportStore.selectionData;
-    const keysToRemove = new Set(selectionToRemove.map(row => getRowKey(row)));
-    const updatedSelectionData = currentSelection.filter(
-      row => !keysToRemove.has(getRowKey(row))
-    );
-    reportStore.setSelectionData(updatedSelectionData);
-  }
-
-
-};  
- */
 const updateSelectionData = (selection: any[]) => {
   const selectionToAdd: typeof reportStore.tableData[number][] = [];
   const selectionToRemove: typeof reportStore.tableData[number][] = [];

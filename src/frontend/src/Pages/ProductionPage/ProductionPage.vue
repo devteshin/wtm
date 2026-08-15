@@ -226,9 +226,10 @@
         <div v-if="isSkeletonLoading" class="skeleton-placeholder">
           <el-skeleton animated />
         </div>
-        <div v-else class="future-components-slot">
-          <p class="text-muted">Место для будущих компонентов</p>
-        </div>
+        <ProductionReportTable
+          ref="reportTableRef"
+          v-else
+        />
       </el-main>
     </el-container>
   </el-container>
@@ -238,8 +239,11 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import useApplicationStore from '@/store'
 import { useProductionReportStore } from '@/storeProductionReport'
+import ProductionReportTable from './ProductionReportTable.vue'
 import { ElMessageBox } from 'element-plus'
 import { FolderOpened } from '@element-plus/icons-vue'
+
+const reportTableRef = ref<typeof ProductionReportTable | null>(null)
 
 const props = defineProps({
   stockID: { type: Number, required: true },
@@ -295,8 +299,8 @@ const selectedOperation = computed({
 })
 
 const selectedSchema = computed({
-  get: () => reportStore.selectedOperation,
-  set: (value) => reportStore.setFilters({ selectedOperation: value }),
+  get: () => reportStore.selectedSchema,
+  set: (value) => reportStore.setFilters({ selectedSchema: value }),
 })
 
 const selectedPeriod = computed({
@@ -418,21 +422,14 @@ const handleLoadAllProductOptions = async () => {
 
 // --- Кнопка «Сформировать» ---
 const handleMakeReport = async () => {
-  try {
-    reportStore.saveToStorage()
+  reportStore.saveToStorage()
 
-    console.log('Формируем отчёт:', {
-      stockIDs: selectedStore.value,
-      materialIDs: selectedMaterial.value,
-      productIDs: selectedProduct.value,
-    })
-
-    // TODO: вызов API / логика формирования отчёта
-  } catch (error) {
-    console.error('Ошибка при формировании отчёта:', error)
-    ElMessageBox.alert('Произошла ошибка при формировании отчёта', 'Ошибка', { type: 'error' })
+  // Вызываем refresh() у дочернего компонента
+  if (reportTableRef.value) {
+    reportTableRef.value.refresh()
   }
 }
+
 </script>
 
 <style scoped>

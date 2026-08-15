@@ -50,6 +50,29 @@ async def select_materials_data(
 
     return report_result
 
+async def select_production_report_data(
+    conn: Connection, 
+            stock_ids: str = '',
+            material_ids: str = '',
+            product_ids: str = '',
+            process_ids: str = '',
+            operation_ids: str = '',
+            schema_ids: str = '',
+            date_start: str = '',
+            date_end: str = ''
+    ):
+
+    async with conn.cursor() as cur:
+        try:
+            await cur.callproc("report_production", [date_start, date_end, stock_ids, schema_ids, process_ids, operation_ids, material_ids, product_ids])
+
+        except Exception as e:
+            print(f"ERROR callproc \"report_production_report_data\": {e}")
+            return report_result
+        report_result = await cur.fetchall()
+
+    return report_result
+
 async def select_selection_data(
     conn: Connection, 
     stock_list: str = '',
