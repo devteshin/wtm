@@ -310,6 +310,7 @@ export default defineStore("app_store", () => {
         operation,
         materials_meta,
         materials_data,
+        production_report_data,
         selection_data,
         raw_materials_data,
         selection_ind_data,
