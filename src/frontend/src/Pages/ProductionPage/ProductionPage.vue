@@ -115,6 +115,22 @@
                 </el-icon>
               </template>
             </el-button>
+
+            <el-button
+              type="info"
+              plain
+              size="small"
+              :disabled="selectedOperation.length === 0"
+              @click="openGraph('operation', selectedOperation)"
+              :title="selectedOperation.length ? 'Показать граф зависимостей' : 'Нет выбранных операций'"
+            >
+              <template #icon>
+                <el-icon :size="16">
+                  <folder-opened />
+                </el-icon>
+              </template>
+            </el-button>
+
           </div>
         </el-form-item>
 
@@ -161,6 +177,22 @@
                 </el-icon>
               </template>
             </el-button>
+
+            <el-button
+              type="info"
+              plain
+              size="small"
+              :disabled="selectedMaterial.length === 0"
+              @click="openGraph('material', selectedMaterial)"
+              :title="selectedMaterial.length ? 'Показать граф зависимостей' : 'Нет выбранных материалов'"
+            >
+              <template #icon>
+                <el-icon :size="16">
+                  <folder-opened />
+                </el-icon>
+              </template>
+            </el-button>
+
           </div>
         </el-form-item>
 
@@ -205,6 +237,22 @@
                 </el-icon>
               </template>
             </el-button>
+
+            <el-button
+              type="info"
+              plain
+              size="small"
+              :disabled="selectedProduct.length === 0"
+              @click="openGraph('product', selectedProduct)"
+              :title="selectedProduct.length ? 'Показать граф зависимостей' : 'Нет выбранных продуктов'"
+            >
+              <template #icon>
+                <el-icon :size="16">
+                  <folder-opened />
+                </el-icon>
+              </template>
+            </el-button>
+
           </div>
         </el-form-item>
 
@@ -223,12 +271,28 @@
 
     <el-container class="right-container">
       <el-main class="content-area">
-        <div v-if="isSkeletonLoading" class="skeleton-placeholder">
-          <el-skeleton animated />
+
+        <!-- Зона графа -->
+        <div v-if="isGraphVisible" class="graph-wrapper">
+          <div class="graph-header">
+            <h3>Граф зависимостей ({{ graphType }})</h3>
+            <el-button type="text" size="small" @click="closeGraph">
+              Закрыть
+            </el-button>
+          </div>
+
+           <ProductionReportGraph
+            :type="graphType!"
+            :ids="graphIds"
+            @close="closeGraph"
+          />
+           
         </div>
+
+        <!-- Таблица отчёта (показывается, когда граф закрыт) -->
         <ProductionReportTable
-          ref="reportTableRef"
           v-else
+          ref="reportTableRef"
           @cell-dblclick="onCellDblClick"
         />
       </el-main>
@@ -241,6 +305,7 @@ import { ref, computed, nextTick, onMounted, Ref } from 'vue'
 import useApplicationStore from '@/store'
 import { useProductionReportStore } from '@/storeProductionReport'
 import ProductionReportTable from './ProductionReportTable.vue'
+import ProductionReportGraph from './ProductionReportGraph.vue'
 import { ElMessageBox } from 'element-plus'
 import { FolderOpened } from '@element-plus/icons-vue'
 
@@ -308,6 +373,10 @@ const selectedPeriod = computed({
   get: () => reportStore.selectedPeriod, // должен быть типа (Date | null)[] | null
   set: (value) => reportStore.setFilters({ selectedPeriod: value }),
 })
+
+const isGraphVisible = ref(false)
+const graphType = ref<'material' | 'product' | 'operation' | null>(null)
+const graphIds = ref<number[]>([])
 
 onMounted(async () => {
   isSkeletonLoading.value = true
@@ -519,6 +588,23 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
 
 }
 
+const openGraph = (type: typeof graphType.value, ids: number[]) => {
+  if (ids.length === 0) {
+    ElMessageBox.alert('Сначала выберите хотя бы один элемент в фильтре.')
+    return
+  }
+  graphType.value = type
+  graphIds.value = ids
+  isGraphVisible.value = true
+}
+
+const closeGraph = () => {
+  isGraphVisible.value = false
+  graphType.value = null
+  graphIds.value = []
+}
+
+
 </script>
 
 <style scoped>
@@ -577,4 +663,23 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
 .item-remote-select {
   flex: 1;
 }
+
+.graph-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e6e9ef;
+  margin-bottom: 12px;
+}
+.graph-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
 </style>

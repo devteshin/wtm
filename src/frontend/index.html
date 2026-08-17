@@ -19,6 +19,25 @@
 
 <body>
   <div id="app"></div>
+
+  <!-- Подключение Mermaid через CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  
+  <!-- Инициализация Mermaid -->
+  <script>
+    window.mermaid = window.mermaid || {};
+    mermaid.initialize({
+      startOnLoad: false,          // не рендерить автоматически, будем вызывать вручную
+      theme: 'default',            // варианты: 'default', 'forest', 'dark', 'neutral'
+      securityLevel: 'loose',      // разрешает HTML-лейблы и ссылки (для внутренней панели ок)
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true
+      }
+    });
+  </script>
+
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 
