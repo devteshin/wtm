@@ -70,7 +70,7 @@ async def select_production_report_data(
             print(f"ERROR callproc \"report_production_report_data\": {e}")
             return report_result
         report_result = await cur.fetchall()
-        print(report_result)
+        #print(report_result)
 
     return report_result
 

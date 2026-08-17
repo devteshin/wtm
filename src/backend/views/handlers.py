@@ -214,7 +214,7 @@ async def get_production_report_data(request: Request):
 
     production_report_data = []
     async with request.app["db"].acquire() as conn:
-        materials_data = await select_production_report_data(
+        production_report_data = await select_production_report_data(
             conn,
             stock_ids = stock_ids,
             material_ids = material_ids,
