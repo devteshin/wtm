@@ -4,38 +4,69 @@
       <el-skeleton animated />
     </div>
 
-    <div v-else-if="!data.length" class="empty-state">
+    <div v-else-if="!store.production_report_data.length" class="empty-state">
       Нет данных по выбранным фильтрам.
     </div>
 
     <el-table
       v-else
-      :data="data"
+      :data="store.production_report_data"
       style="width: 100%"
       border
       stripe
       :height="tableHeight"
     >
-      <el-table-column prop="processing_date" label="Дата переработки" width="120" />
-      <el-table-column prop="process_name" label="Техпроцесс" min-width="140" />
-      <el-table-column prop="operation_name" label="Операция" min-width="160" />
-      <el-table-column prop="material_name" label="Материал" min-width="180" />
-
-      <el-table-column prop="written_off" label="Списано" width="90" align="right">
+      <el-table-column prop="operation_date_in" label="Дата переработки" width="120" />
+      
+      <!-- Техпроцесс -->
+      <el-table-column prop="process" label="Техпроцесс" min-width="140">
         <template #default="scope">
-          {{ scope.row.written_off ?? '-' }}
+          <span class="dbl-click-cell" @dblclick.stop="emitCellDblClick ('process', scope.row.process)">
+            {{ scope.row.process ?? '-' }}
+          </span>
         </template>
       </el-table-column>
 
-      <el-table-column prop="product_name" label="Продукт" min-width="160" />
-
-      <el-table-column prop="accepted" label="Принято" width="90" align="right">
+      <!-- Операция -->
+      <el-table-column prop="operation" label="Операция" min-width="160">
         <template #default="scope">
-          {{ scope.row.accepted ?? '-' }}
+          <span class="dbl-click-cell" @dblclick.stop="emitCellDblClick ('operation', scope.row.operation)">
+            {{ scope.row.operation ?? '-' }}
+          </span>
         </template>
       </el-table-column>
 
-      <el-table-column prop="receipt_date" label="Дата приема" width="120" />
+      <!-- Материал -->
+      <el-table-column prop="material" label="Материал" min-width="180">
+        <template #default="scope">
+          <span class="dbl-click-cell" @dblclick.stop="emitCellDblClick('material', scope.row.material)">
+            {{ scope.row.material ?? '-' }}
+          </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column prop="weight_in" label="Списано" width="90" align="right">
+        <template #default="scope">
+          {{ formatWeight(scope.row.weight_in) }}
+        </template>
+      </el-table-column>
+
+      <!-- Продукт -->
+      <el-table-column prop="product" label="Продукт" min-width="160">
+        <template #default="scope">
+          <span class="dbl-click-cell" @dblclick.stop="emitCellDblClick('product', scope.row.product)">
+            {{ scope.row.product ?? '-' }}
+          </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column prop="weight_out" label="Принято" width="90" align="right">
+        <template #default="scope">
+          {{ formatWeight(scope.row.weight_out) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column prop="operation_date_out" label="Дата приема" width="120" />
     </el-table>
   </div>
 </template>
@@ -56,24 +87,36 @@ const tableHeight = computed(() => {
   return baseHeight > 300 ? baseHeight : 300
 })
 
-// Публичный метод: вызывается из родителя по кнопке «Сформировать»
+const formatWeight = (value: number | null | undefined): string => {
+  if (value == null) return '-'
+  return new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+const emit = defineEmits<{
+  (e: 'cell-dblclick', payload: { column: string; value: string | null | undefined }): void
+}>()
+
+const emitCellDblClick = (column: string, value: string | null | undefined) => {
+  emit('cell-dblclick', { column, value })
+}
+
 const refresh = async () => {
   isLoading.value = true
   try {
-
     await store.fetchProductionReportData({
-          stock_ids: reportStore.selectedStore?.toString() ?? '',
-          material_ids: reportStore.selectedMaterial?.toString() ?? '',
-          product_ids: reportStore.selectedProduct?.toString() ?? '',
-          process_ids: reportStore.selectedProcess?.toString() ?? '',
-          operation_ids: reportStore.selectedOperation?.toString() ?? '',
-          schema_ids: reportStore.selectedSchema?.toString() ?? '',
-          date_start: reportStore.selectedPeriod?.[0] ?? '',
-          date_end: reportStore.selectedPeriod?.[1] ?? '',
-    });
-
-    console.log('reportData', store.production_report_data);
-
+      stock_ids: reportStore.selectedStore?.toString() ?? '',
+      material_ids: reportStore.selectedMaterial?.toString() ?? '',
+      product_ids: reportStore.selectedProduct?.toString() ?? '',
+      process_ids: reportStore.selectedProcess?.toString() ?? '',
+      operation_ids: reportStore.selectedOperation?.toString() ?? '',
+      schema_ids: reportStore.selectedSchema?.toString() ?? '',
+      date_start: reportStore.selectedPeriod?.[0] ?? '',
+      date_end: reportStore.selectedPeriod?.[1] ?? '',
+    })
+    console.log('reportData', store.production_report_data)
   } catch (error) {
     console.error('fetchProductionReportData error:', error)
     data.value = []
@@ -82,7 +125,6 @@ const refresh = async () => {
   }
 }
 
-// Экспортируем метод для вызова из родителя
 defineExpose({ refresh })
 </script>
 
@@ -105,5 +147,11 @@ defineExpose({ refresh })
   justify-content: center;
   color: #888;
   font-style: italic;
+}
+
+.dbl-click-cell {
+  cursor: pointer;
+  /* опционально: можно добавить лёгкое выделение при наведении */
+  user-select: none; /* чтобы не выделялся текст при быстрых кликах */
 }
 </style>

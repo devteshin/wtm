@@ -36,7 +36,7 @@
         <el-form-item label="Схема">
           <el-select
             v-model="selectedSchema"
-            placeholder="Выберите техпроцесс"
+            placeholder="Выберите схему производства"
             clearable
             multiple
             filterable
@@ -229,6 +229,7 @@
         <ProductionReportTable
           ref="reportTableRef"
           v-else
+          @cell-dblclick="onCellDblClick"
         />
       </el-main>
     </el-container>
@@ -236,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, Ref } from 'vue'
 import useApplicationStore from '@/store'
 import { useProductionReportStore } from '@/storeProductionReport'
 import ProductionReportTable from './ProductionReportTable.vue'
@@ -428,6 +429,94 @@ const handleMakeReport = async () => {
   if (reportTableRef.value) {
     reportTableRef.value.refresh()
   }
+}
+
+const addUniqueIdsByValue = (
+  optionList: Array<{ id: number; name: string }>,
+  selectedRef: Ref<Array<number | string>>,
+  searchValues: string
+) => {
+
+  const valuesArray = searchValues.split(',').map(item => item.trim()).filter(Boolean);
+
+  if (valuesArray.length === 0) {
+    return [];
+  }
+
+  const valuesSet = new Set(valuesArray);
+
+  const newIds = optionList.filter(item => valuesSet.has(item.name)).map(item => item.id);
+
+  const existingSet = new Set(selectedRef.value ?? []);
+  const uniqueNewIds = newIds.filter(id => !existingSet.has(id));
+
+  if (uniqueNewIds.length > 0) {
+    selectedRef.value = [...selectedRef.value, ...uniqueNewIds];
+  }
+};
+
+
+const onCellDblClick = ({ column, value }: { column: string; value: string | null | undefined }) => {
+  //console.log('Дабл-клик: колонка =', column, ', значение =', value)
+
+  if (value == null || value === '-' || value === '') {
+    return;
+  }
+
+  const valuesArray = value.split(',').map(item => item.trim()).filter(Boolean);
+  if (valuesArray.length === 0) {
+    return;
+  } 
+
+  const valuesSet = new Set(valuesArray);
+  let optionList: Array<{ id: number; name: string }> = [];
+  let selectedRef: Ref<Array<number>> | undefined;
+
+  switch (column) {
+    case 'process':
+      optionList = store.materials_meta?.process_list ?? [];
+      selectedRef = selectedProcess;
+      break;
+
+    case 'operation':
+      optionList = store.materials_meta?.operation_list ?? [];
+      selectedRef = selectedOperation;
+      break;
+
+    case 'material':
+      optionList = store.materials_meta?.material_list ?? [];
+      selectedRef = selectedMaterial;
+      break;
+
+    case 'product':
+      optionList = store.materials_meta?.material_list ?? [];
+      selectedRef = selectedProduct;
+      break;
+
+    default:
+      console.warn('Неизвестная колонка для дабл-клика:', column);
+      return;
+  };
+
+   if (!selectedRef) return;
+
+  addUniqueIdsByValue(optionList, selectedRef, value);
+
+  switch (column) {
+    case 'operation':
+      operationOptions.value = store.materials_meta?.operation_list.filter((item: any)=> selectedOperation.value.includes(item.id)) || [];
+      break;
+
+    case 'material':
+      materialOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedMaterial.value.includes(item.id)) || [];
+      break;
+
+    case 'product':
+      productOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedProduct.value.includes(item.id)) || [];
+      break;
+  };
+
+
 }
 
 </script>

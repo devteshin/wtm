@@ -28,7 +28,7 @@ export default defineStore("app_store", () => {
     /** остатки материалов для отчета по остаткам */
     const materials_data = ref<frontend.IMaterialsData | null>(null);
     /** данные отчета по производству */
-    const production_report_data = ref<frontend.IProductionReportData | null>(null);
+    const production_report_data = ref<Array<frontend.IProductionReportData | null>> ([]);
     /** подбор материалов */
     const selection_data = ref<frontend.ISelectionData | null>(null);
     /** подбор материалов - значения показателей подбора */
