@@ -135,8 +135,6 @@
         </el-form-item>
 
 
-
-
         <el-form-item label="Материал">
           <div class="item-remote-select-wrapper">
             <el-select
@@ -207,7 +205,6 @@
               :remote="isRemoteSearchProduct"
               class="item-remote-select"
               :loading="productOptionsLoading"
-              :disabled="productOptionsLoading"
               :remote-method="isRemoteSearchProduct ? handleProductSearch : undefined"
             >
               <el-option
@@ -667,10 +664,14 @@ const closeGraph = () => {
 .graph-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* Не height: 100%, а max-height, чтобы не было бесконечного роста */
+  max-height: calc(100vh - 200px); /* подбери под себя: минус шапка, сайдбар, отступы */
+  
 }
+
 .graph-header {
   display: flex;
+  flex-shrink: 0;
   justify-content: space-between;
   align-items: center;
   padding-bottom: 8px;
