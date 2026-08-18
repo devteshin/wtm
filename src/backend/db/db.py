@@ -67,7 +67,26 @@ async def select_production_report_data(
             await cur.callproc("report_production", [date_start, date_end, stock_ids, schema_ids, process_ids, operation_ids, material_ids, product_ids])
 
         except Exception as e:
-            print(f"ERROR callproc \"report_production_report_data\": {e}")
+            print(f"ERROR callproc \"report_production\": {e}")
+            return report_result
+        report_result = await cur.fetchall()
+        #print(report_result)
+
+    return report_result
+
+async def select_production_graph_data(
+    conn: Connection, 
+            graph_type: str = '',
+            item_ids: str = ''
+    ):
+
+    async with conn.cursor() as cur:
+        try:
+            if graph_type == "product":  
+                await cur.callproc("make_products_chain", [item_ids])
+            
+        except Exception as e:
+            print(f"ERROR callproc \"make_products_chain\": {e}")
             return report_result
         report_result = await cur.fetchall()
         #print(report_result)

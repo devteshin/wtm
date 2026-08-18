@@ -7,7 +7,8 @@ from .db import (
     check_user, select_task, select_tasks, change_password, select_stocks, select_operations, select_operation_data, select_operations_meta, select_operation, select_arrival, select_max_tare_id, update_operation, update_operation_task, delete_operation,
     update_job_status, check_can_login, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, 
     select_materials_meta, select_materials_data, get_material_id, select_selection_data, check_operation_name, search_materials, search_operations,
-    check_material_item, select_dnm_doc_number, select_production_report_data, DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
+    check_material_item, select_dnm_doc_number, select_production_report_data,  select_production_graph_data,
+    DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
 )
 
 
@@ -33,6 +34,7 @@ __all__ = (
     "select_materials_meta",
     "select_materials_data",
     "select_production_report_data",
+    "select_production_graph_data",
     "get_material_id",
     "search_materials",
     "search_operations",

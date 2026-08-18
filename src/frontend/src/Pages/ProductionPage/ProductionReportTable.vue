@@ -116,7 +116,6 @@ const refresh = async () => {
       date_start: reportStore.selectedPeriod?.[0] ?? '',
       date_end: reportStore.selectedPeriod?.[1] ?? '',
     })
-    console.log('reportData', store.production_report_data)
   } catch (error) {
     console.error('fetchProductionReportData error:', error)
     data.value = []

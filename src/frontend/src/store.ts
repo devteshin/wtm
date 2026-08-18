@@ -29,6 +29,8 @@ export default defineStore("app_store", () => {
     const materials_data = ref<frontend.IMaterialsData | null>(null);
     /** данные отчета по производству */
     const production_report_data = ref<Array<frontend.IProductionReportData | null>> ([]);
+    /** данные графа по производству */
+    const production_graph_data = ref<frontend.IProductionGraphData | null> (null);
     /** подбор материалов */
     const selection_data = ref<frontend.ISelectionData | null>(null);
     /** подбор материалов - значения показателей подбора */
@@ -56,6 +58,11 @@ export default defineStore("app_store", () => {
     /** запрос к API для получения данных для отчета по производству */
     const fetchProductionReportData = (params?: frontend.IProductionReportQueryParams) => {
         return api.fetchProductionReportData(params).then(body => production_report_data.value = body).finally(() => loading.value = false);
+    };
+
+    /** запрос к API для получения данных для графа по производству */
+    const fetchProductionGraphData = (params?: frontend.IProductionGraphQueryParams) => {
+        return api.fetchProductionGraphData(params).then(body => production_graph_data.value = body).finally(() => loading.value = false);
     };
 
     /** запрос к API для получения данных по остаткам материалов подбора */
@@ -281,6 +288,7 @@ export default defineStore("app_store", () => {
         fetchMaterialsMeta,
         fetchMaterialsData,
         fetchProductionReportData,
+        fetchProductionGraphData,
         fetchSelectionData,
         fetchOperations,
         fetchOperationsMeta,
@@ -311,6 +319,7 @@ export default defineStore("app_store", () => {
         materials_meta,
         materials_data,
         production_report_data,
+        production_graph_data,
         selection_data,
         raw_materials_data,
         selection_ind_data,

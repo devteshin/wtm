@@ -11,6 +11,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { ElNotification } from 'element-plus'
 import useApplicationStore from '@/store'
+import { useProductionReportStore } from '@/storeProductionReport'
 
 const props = defineProps<{
   type: 'material' | 'product' | 'operation'
@@ -25,32 +26,37 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 
 const store = useApplicationStore()
+const reportStore = useProductionReportStore()
 
 const fetchGraphData = async (type: string, ids: number[]) => {
-  loading.value = true
-  error.value = null
+  loading.value = true;
+  let item_ids: string = ''; 
+  let mermaid_string: string = ''; 
+
+  item_ids = ids.toString() ?? ''
+
+  if (item_ids === '') {
+    return;
+  } 
 
   try {
-    const idsStr = ids.join(',')
-    const res = await fetch(`/api/graph?type=${encodeURIComponent(type)}&ids=${encodeURIComponent(idsStr)}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        // если нужна авторизация:
-        // 'Authorization': `Bearer ${store.token}`
-      }
+    await store.fetchProductionGraphData({
+      type: type,
+      item_ids: item_ids
     })
+    console.log('production_graph_data', store.production_graph_data)
+    //mermaid_string = get_mermaid_code(store.production_graph_data);
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    // Ожидаем, что бэкенд отдаёт строку Mermaid, например: "graph TD; A --> B;"
-    renderMermaid(data.mermaid)
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Ошибка загрузки графа'
-    error.value = msg
-    ElNotification({ title: 'Ошибка', message: msg, type: 'error' })
+    //renderMermaid(mermaid_string.mermaid)
+
+  } catch (error) {
+    console.error('fetchProductionGraphData error:', error)
   } finally {
     loading.value = false
   }
+
+
+
 }
 
 const renderMermaid = (mermaidStr: string) => {

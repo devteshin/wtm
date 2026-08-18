@@ -71,6 +71,54 @@ declare namespace frontend {
         operation_date_out: string;
     }    
 
+    export type IProductionGraphData = {
+        product_chain: Array<IProductionGraphDataProductChain>
+        material_chain: Array<IProductionGraphDataMaterialChain>
+        operation_node: Array<IProductionGraphOperationNode>
+        material_node: Array<IProductionGraphMaterialNode>
+        raw_material_node: Array<IProductionGraphRawMaterialNode>
+    }    
+
+    export type IProductionGraphDataProductChain = {
+        product: string
+        operation: string
+        product_weight: number
+        operation_level: number
+        product_id: number
+        operation_id: number
+    }    
+
+    export type IProductionGraphDataMaterialChain = {
+        material: string
+        operation: string
+        material_weight: number
+        operation_level: number
+        material_id: number
+        operation_id: number
+    }    
+
+    export type IProductionGraphOperationNode = {
+        operation: string
+        total_operation_weight: number
+        product_operation_weight: number
+        koeff: number
+        operation_id: number
+    }    
+
+    export type IProductionGraphMaterialNode = {
+        material: string
+        weight_in: number
+        weight_out: number
+        koeff: number
+        material_id: number
+    }    
+
+    export type IProductionGraphRawMaterialNode = {
+        material: string
+        weight_out: number
+        material_id: number
+    }    
+
     export type ISelectionData = {
         stock_name: string
         material: string
@@ -104,6 +152,11 @@ declare namespace frontend {
         schema_ids?: string;
         date_start?: string;
         date_end?: string;
+    }
+
+    export type IProductionGraphQueryParams = {
+        type?: string;
+        item_ids?: string;
     }
 
     export type ISelectionQueryParams = {

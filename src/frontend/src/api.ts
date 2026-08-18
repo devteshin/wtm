@@ -13,6 +13,7 @@ const OPERATION_UPDATE_TASK = "operation/update_task";
 const CHECK_OPERATION_NAME = "operation/check_name";
 const MATERIAL = "material";
 const PRODUCTION_REPORT = "production_report";
+const PRODUCTION_GRAPH = "production_graph";
 const SEARCH_MATERIAL = "search_materials";
 const SEARCH_OPERATION = "search_operations";
 const DOC = "doc";
@@ -112,6 +113,29 @@ class ClientAPI {
         });
 
         const url = `${BASE_URL}/${PRODUCTION_REPORT}${
+            queryParams.toString() ? `?${queryParams.toString()}` : ''
+        }`;        
+
+        const response = await fetch(url, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
+    async fetchProductionGraphData(params: frontend.IProductionGraphQueryParams = {}) {
+        this.checkToken();
+
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+            }
+        });
+
+        const url = `${BASE_URL}/${PRODUCTION_GRAPH}${
             queryParams.toString() ? `?${queryParams.toString()}` : ''
         }`;        
 
