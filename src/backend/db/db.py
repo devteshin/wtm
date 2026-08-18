@@ -80,18 +80,35 @@ async def select_production_graph_data(
             item_ids: str = ''
     ):
 
+    if not item_ids:
+        raise ValueError("item_ids is required for graph")
+
+    graph_data = {}
+
     async with conn.cursor() as cur:
         try:
             if graph_type == "product":  
                 await cur.callproc("make_products_chain", [item_ids])
+            await cur.execute("SELECT * FROM tmp_graph_product_chain")
+            graph_data["product_chain"] = await cur.fetchall()
+            await cur.execute("SELECT * FROM tmp_graph_material_chain")
+            graph_data["product_chain"] = await cur.fetchall()
+            await cur.execute("SELECT * FROM tmp_graph_operation_node")
+            graph_data["operation_node"] = await cur.fetchall()
+            await cur.execute("SELECT * FROM tmp_graph_material_node")
+            graph_data["material_node"] = await cur.fetchall()
+            await cur.execute("SELECT * FROM tmp_graph_raw_material_node")
+            graph_data["raw_material_node_chain"] = await cur.fetchall()
             
         except Exception as e:
             print(f"ERROR callproc \"make_products_chain\": {e}")
-            return report_result
-        report_result = await cur.fetchall()
-        #print(report_result)
+            return
 
-    return report_result
+
+    print(graph_data)
+
+    return graph_data
+
 
 async def select_selection_data(
     conn: Connection, 

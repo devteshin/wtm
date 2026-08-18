@@ -276,7 +276,7 @@
         <div v-if="isGraphVisible" class="graph-wrapper">
           <div class="graph-header">
             <h3>Граф зависимостей ({{ graphType }})</h3>
-            <el-button type="text" size="small" @click="closeGraph">
+            <el-button type="link" size="small" @click="closeGraph">
               Закрыть
             </el-button>
           </div>
