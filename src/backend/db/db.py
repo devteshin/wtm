@@ -98,7 +98,7 @@ async def select_production_graph_data(
             await cur.execute("SELECT * FROM tmp_graph_material_node")
             graph_data["material_node"] = await cur.fetchall()
             await cur.execute("SELECT * FROM tmp_graph_raw_material_node")
-            graph_data["raw_material_node_chain"] = await cur.fetchall()
+            graph_data["raw_material_node"] = await cur.fetchall()
             
         except Exception as e:
             print(f"ERROR callproc \"make_products_chain\": {e}")

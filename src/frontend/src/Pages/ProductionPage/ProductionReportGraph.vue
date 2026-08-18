@@ -31,7 +31,6 @@ const reportStore = useProductionReportStore()
 const fetchGraphData = async (type: string, ids: number[]) => {
   loading.value = true;
   let item_ids: string = ''; 
-  let mermaid_string: string = ''; 
 
   item_ids = ids.toString() ?? ''
 
@@ -44,17 +43,51 @@ const fetchGraphData = async (type: string, ids: number[]) => {
       type: type,
       item_ids: item_ids
     })
-    console.log('production_graph_data', store.production_graph_data)
-    //mermaid_string = get_mermaid_code(store.production_graph_data);
-
-    //renderMermaid(mermaid_string.mermaid)
-
+    console.log('production_graph_data', store.production_graph_data);
+    const mermaidStr = get_mermaid_code();
+    console.log("mermaidStr", mermaidStr);
+    //renderMermaid(mermaidStr);
   } catch (error) {
     console.error('fetchProductionGraphData error:', error)
   } finally {
     loading.value = false
   }
 
+  function get_mermaid_code(): string {
+    const data = store.production_graph_data
+    
+    if (!data) {
+      return ''
+    } 
+
+    const lines: string[] = ['flowchart TD'];
+    lines.push('classDef product fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
+    lines.push('classDef rawMat fill:#fff3e0,stroke:#ff9800,stroke-width:2px')
+
+    for (const row of data.material_chain) {
+      lines.push(`material_${row.material_id} -->|Вес:  ${row.material_weight} кг.| operation_${row.operation_id}`)
+    };
+    for (const row of data.product_chain) {
+      lines.push(`operation_${row.operation_id} -->|Вес:  ${row.product_weight} кг.| material_${row.product_id}`)
+    }
+    for (const row of data.operation_node) {
+      lines.push(`operation_${row.operation_id}[${row.operation}<br/>Выход продуктов: ${row.product_operation_weight}<br/>Выход операции всего: ${row.total_operation_weight}<br/>Коэфф: ${row.koeff}]`)
+    }
+    for (const row of data.material_node) {
+      lines.push(`material_${row.material_id}([${row.material}<br/>Коэфф: ${row.koeff}])`)
+    }
+    for (const row of data.material_node) {
+      lines.push(`material_${row.material_id}:::product`)
+    }
+    for (const row of data.raw_material_node) {
+      lines.push(`material_${row.material_id}([${row.material}<br/>Вес: ${row.weight_out} кг.])`)
+    }
+    for (const row of data.raw_material_node) {
+      lines.push(`material_${row.material_id}:::rawMat`)
+    }
+
+    return lines.join('\n');
+  };
 
 
 }
