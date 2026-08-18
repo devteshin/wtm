@@ -92,7 +92,7 @@ async def select_production_graph_data(
             await cur.execute("SELECT * FROM tmp_graph_product_chain")
             graph_data["product_chain"] = await cur.fetchall()
             await cur.execute("SELECT * FROM tmp_graph_material_chain")
-            graph_data["product_chain"] = await cur.fetchall()
+            graph_data["material_chain"] = await cur.fetchall()
             await cur.execute("SELECT * FROM tmp_graph_operation_node")
             graph_data["operation_node"] = await cur.fetchall()
             await cur.execute("SELECT * FROM tmp_graph_material_node")
