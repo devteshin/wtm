@@ -144,24 +144,35 @@ function get_mermaid_code(): string {
   lines.push('classDef product fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
   lines.push('classDef rawMat fill:#fff3e0,stroke:#ff9800,stroke-width:2px')
 
+  const escapeLabel = (text: string) => text.replace(/"/g, '\\"');
+
   for (const row of data.material_chain) {
-    lines.push(`material_${row.material_id} -->|Вес: ${row.material_weight} кг.| operation_${row.operation_id}`)
+    lines.push(`material_${row.material_id} -->|${row.material_weight} кг| operation_${row.operation_id}`)
   }
   for (const row of data.product_chain) {
-    lines.push(`operation_${row.operation_id} -->|Вес: ${row.product_weight} кг.| material_${row.product_id}`)
-  }
-  for (const row of data.operation_node) {
-    lines.push(`operation_${row.operation_id}["${row.operation}<br/>Выход продуктов: ${row.product_operation_weight}<br/>Выход операции всего: ${row.total_operation_weight}<br/>Коэфф: ${row.koeff}"]`)
-  }
-  for (const row of data.material_node) {
-    lines.push(`material_${row.material_id}(["${row.material}<br/>Коэфф: ${row.koeff}"])`)
-    lines.push(`material_${row.material_id}:::product`)
-  }
-  for (const row of data.raw_material_node) {
-    lines.push(`material_${row.material_id}(["${row.material}<br/>Вес: ${row.weight_out} кг."])`)
-    lines.push(`material_${row.material_id}:::rawMat`)
+    lines.push(`operation_${row.operation_id} -->|${row.product_weight} кг| material_${row.product_id}`)
   }
 
+  for (const row of data.operation_node) {
+    const parts = [
+      row.operation,
+      `Выход продуктов: ${row.product_operation_weight}`,
+      `Выход операции всего: ${row.total_operation_weight}`,
+      `Коэфф: ${row.koeff}`,
+    ]
+    const label = escapeLabel(parts.join('<br/>'))
+    lines.push(`operation_${row.operation_id}["${label}"]`)
+  }
+
+  for (const row of data.material_node) {
+    const label = escapeLabel(row.material)
+    lines.push(`material_${row.material_id}["${label}"]:::product`)
+  }
+
+  for (const row of data.raw_material_node) {
+    const label = escapeLabel(row.material)
+    lines.push(`material_${row.material_id}["${label}"]:::rawMat`)
+  }
   return lines.join('\n')
 }
 
@@ -309,5 +320,6 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.9);
   z-index: 10;
 }
+
 
 </style>
