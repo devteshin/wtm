@@ -151,14 +151,14 @@ function get_mermaid_code(): string {
     lines.push(`operation_${row.operation_id} -->|Вес: ${row.product_weight} кг.| material_${row.product_id}`)
   }
   for (const row of data.operation_node) {
-    lines.push(`operation_${row.operation_id}[${row.operation}<br/>Выход продуктов: ${row.product_operation_weight}<br/>Выход операции всего: ${row.total_operation_weight}<br/>Коэфф: ${row.koeff}]`)
+    lines.push(`operation_${row.operation_id}["${row.operation}<br/>Выход продуктов: ${row.product_operation_weight}<br/>Выход операции всего: ${row.total_operation_weight}<br/>Коэфф: ${row.koeff}"]`)
   }
   for (const row of data.material_node) {
-    lines.push(`material_${row.material_id}([${row.material}<br/>Коэфф: ${row.koeff}])`)
+    lines.push(`material_${row.material_id}(["${row.material}<br/>Коэфф: ${row.koeff}"])`)
     lines.push(`material_${row.material_id}:::product`)
   }
   for (const row of data.raw_material_node) {
-    lines.push(`material_${row.material_id}([${row.material}<br/>Вес: ${row.weight_out} кг.])`)
+    lines.push(`material_${row.material_id}(["${row.material}<br/>Вес: ${row.weight_out} кг."])`)
     lines.push(`material_${row.material_id}:::rawMat`)
   }
 
@@ -223,6 +223,7 @@ onMounted(async () => {
       item_ids,
     })
     const mermaidStr = get_mermaid_code()
+    //console.log('mermaid', mermaidStr);
     renderMermaid(mermaidStr)
 
     if (svgContainer.value) {
@@ -273,7 +274,7 @@ onUnmounted(() => {
 /* Зона рендера: фиксируем размеры и скролл (на случай, если граф очень большой до зума) */
 .mermaid-render-area {
   width: 100%;
-  min-height: 300px;
+  min-height: calc(100vh - 260px);
   max-height: calc(100vh - 260px);
   overflow: auto;
   text-align: center;
