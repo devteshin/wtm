@@ -165,13 +165,17 @@ function get_mermaid_code(): string {
   }
 
   for (const row of data.material_node) {
-    const label = escapeLabel(row.material)
-    lines.push(`material_${row.material_id}["${label}"]:::product`)
+    const parts = [
+      `${row.material}`,
+      `Коэфф: ${row.koeff}`,
+    ]
+    const label = escapeLabel(parts.join('<br/>'))
+    lines.push(`material_${row.material_id}(["${label}"]):::product`)
   }
 
   for (const row of data.raw_material_node) {
     const label = escapeLabel(row.material)
-    lines.push(`material_${row.material_id}["${label}"]:::rawMat`)
+    lines.push(`material_${row.material_id}(["${label}"]):::rawMat`)
   }
   return lines.join('\n')
 }

@@ -108,6 +108,7 @@
               :loading="operationOptionsLoading"
               :disabled="operationOptionsLoading"
               @click="handleLoadAllOperationOptions"
+              title="Загрузить все опции"
             >
               <template #icon>
                 <el-icon :size="16">
@@ -126,7 +127,7 @@
             >
               <template #icon>
                 <el-icon :size="16">
-                  <folder-opened />
+                  <Histogram />
                 </el-icon>
               </template>
             </el-button>
@@ -168,6 +169,7 @@
               :loading="materialOptionsLoading"
               :disabled="materialOptionsLoading"
               @click="handleLoadAllMaterialOptions"
+              title="Загрузить все опции"
             >
               <template #icon>
                 <el-icon :size="16">
@@ -186,7 +188,7 @@
             >
               <template #icon>
                 <el-icon :size="16">
-                  <folder-opened />
+                  <Histogram />
                 </el-icon>
               </template>
             </el-button>
@@ -227,6 +229,7 @@
               :loading="productOptionsLoading"
               :disabled="productOptionsLoading"
               @click="handleLoadAllProductOptions"
+              title="Загрузить все опции"
             >
               <template #icon>
                 <el-icon :size="16">
@@ -245,7 +248,7 @@
             >
               <template #icon>
                 <el-icon :size="16">
-                  <folder-opened />
+                  <Histogram />
                 </el-icon>
               </template>
             </el-button>
@@ -304,7 +307,7 @@ import { useProductionReportStore } from '@/storeProductionReport'
 import ProductionReportTable from './ProductionReportTable.vue'
 import ProductionReportGraph from './ProductionReportGraph.vue'
 import { ElMessageBox } from 'element-plus'
-import { FolderOpened } from '@element-plus/icons-vue'
+import { FolderOpened, Histogram } from '@element-plus/icons-vue'
 
 const reportTableRef = ref<typeof ProductionReportTable | null>(null)
 
@@ -611,6 +614,7 @@ const closeGraph = () => {
   width: 100%;
   box-sizing: border-box;
 }
+
 .sidebar {
   background-color: #f5f7fa;
   padding: 20px;
@@ -619,10 +623,12 @@ const closeGraph = () => {
   width: 400px;
   overflow: auto;
 }
+
 .right-container {
   flex: 1;
   display: flex;
 }
+
 .content-area {
   padding: 20px;
   box-sizing: border-box;
@@ -630,13 +636,8 @@ const closeGraph = () => {
   display: flex;
   flex-direction: column;
 }
-.skeleton-placeholder {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.future-components-slot {
+
+.skeleton-placeholder, .future-components-slot {
   flex: 1;
   display: flex;
   align-items: center;
@@ -644,29 +645,49 @@ const closeGraph = () => {
   color: #999;
   font-size: 14px;
 }
+
 .apply-button {
   margin-top: 16px;
 }
-.text-muted {
-  color: #888;
-}
-/* Стили для селекта и кнопки */
+
+/* --- ГЛАВНЫЕ ИСПРАВЛЕНИЯ --- */
+
+/* Контейнер-обертка: gap — единственный источник расстояния */
 .item-remote-select-wrapper {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
-}
-.item-remote-select {
-  flex: 1;
+  gap: 2px; /* Расстояние между селектом и кнопками, а также между кнопками */
 }
 
+/* Селект: занимает всё свободное место */
+.item-remote-select {
+  flex: 1;
+  height: 100%;
+  min-width: 0; /* Позволяет селекту сжиматься при нехватке места */
+}
+
+/* Кнопки: убираем все внешние отступы, которые добавляет Element Plus */
+.item-remote-select-wrapper .el-button {
+  height: 100%;
+  margin: 0 !important; /* ГЛАВНОЕ: принудительно убираем margin у кнопок */
+  padding: 6px 8px; /* Комфортный внутренний отступ, чтобы иконка не прилипала к краю */
+  min-width: auto; /* Отключаем стандартную минимальную ширину кнопки */
+  box-sizing: border-box;
+}
+
+/* Убираем лишние отступы у контента form-item */
+.el-form-item__content {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100%;
+}
+
+/* Граф */
 .graph-wrapper {
   display: flex;
   flex-direction: column;
-  /* Не height: 100%, а max-height, чтобы не было бесконечного роста */
-  max-height: calc(100vh - 200px); /* подбери под себя: минус шапка, сайдбар, отступы */
-  
+  max-height: calc(100vh - 200px);
 }
 
 .graph-header {
@@ -678,6 +699,7 @@ const closeGraph = () => {
   border-bottom: 1px solid #e6e9ef;
   margin-bottom: 12px;
 }
+
 .graph-header h3 {
   margin: 0;
   font-size: 16px;
