@@ -83,6 +83,7 @@ declare namespace frontend {
         product: string
         operation: string
         product_weight: number
+        koeff: number
         operation_level: number
         product_id: number
         operation_id: number
@@ -92,6 +93,7 @@ declare namespace frontend {
         material: string
         operation: string
         material_weight: number
+        koeff: number
         operation_level: number
         material_id: number
         operation_id: number
@@ -109,7 +111,6 @@ declare namespace frontend {
         material: string
         weight_in: number
         weight_out: number
-        koeff: number
         material_id: number
     }    
 

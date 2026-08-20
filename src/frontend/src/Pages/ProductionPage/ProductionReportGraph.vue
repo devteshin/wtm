@@ -147,10 +147,22 @@ function get_mermaid_code(): string {
   const escapeLabel = (text: string) => text.replace(/"/g, '\\"');
 
   for (const row of data.material_chain) {
-    lines.push(`material_${row.material_id} -->|${row.material_weight} кг| operation_${row.operation_id}`)
+    let label = '';
+    if (row.koeff == 1) {
+      label = `-->|${row.material_weight} кг|`;  
+    } else {
+      label = `-->|"${row.material_weight} кг (${row.koeff})"|`;
+    }
+    lines.push(`material_${row.material_id} ${label} operation_${row.operation_id}`)
   }
   for (const row of data.product_chain) {
-    lines.push(`operation_${row.operation_id} -->|${row.product_weight} кг| material_${row.product_id}`)
+    let label = '';
+    if (row.koeff == 1) {
+      label = `-->|${row.product_weight} кг|`;  
+    } else {
+      label = `-->|"${row.product_weight} кг (${row.koeff})"|`;
+    }
+    lines.push(`operation_${row.operation_id} ${label} material_${row.product_id}`)
   }
 
   for (const row of data.operation_node) {
@@ -165,11 +177,13 @@ function get_mermaid_code(): string {
   }
 
   for (const row of data.material_node) {
-    const parts = [
+/*     const parts = [
       `${row.material}`,
       `Коэфф: ${row.koeff}`,
     ]
     const label = escapeLabel(parts.join('<br/>'))
+ */    
+    const label = escapeLabel(`${row.material}`)
     lines.push(`material_${row.material_id}(["${label}"]):::product`)
   }
 
