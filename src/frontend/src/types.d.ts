@@ -95,6 +95,7 @@ declare namespace frontend {
         material_weight: number
         koeff: number
         operation_level: number
+        adjusted_material_weight: number
         material_id: number
         operation_id: number
     }    
@@ -117,6 +118,7 @@ declare namespace frontend {
     export type IProductionGraphRawMaterialNode = {
         material: string
         weight_out: number
+        adjusted_weight_out: number
         material_id: number
     }    
 

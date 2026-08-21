@@ -136,7 +136,7 @@ const handleWheel = (e: WheelEvent) => {
 }
 
 
-function get_mermaid_code(): string {
+function get_mermaid_code(withCoefficients: boolean = true): string {
   const data = store.production_graph_data
   if (!data) return ''
 
@@ -148,49 +148,84 @@ function get_mermaid_code(): string {
 
   for (const row of data.material_chain) {
     let label = '';
-    if (row.koeff == 1) {
-      label = `-->|${row.material_weight} кг|`;  
-    } else {
-      label = `-->|"${row.material_weight} кг (${row.koeff})"|`;
+    let adjusted_material_weight_label = '';
+    if (row.adjusted_material_weight && row.material_weight != row.adjusted_material_weight ) {
+      adjusted_material_weight_label = `(${row.adjusted_material_weight} кг)`;
     }
+    if (withCoefficients) {
+      if (row.koeff == 1) {
+        label = `-->|"${row.material_weight} кг ${adjusted_material_weight_label}"|`;  
+      } else {
+        label = `-->|"${row.material_weight} кг (${row.koeff}) ${adjusted_material_weight_label}"|`;
+      }
+    } else {
+        label = `-->|${row.material_weight} кг|`;  
+    };  
     lines.push(`material_${row.material_id} ${label} operation_${row.operation_id}`)
   }
   for (const row of data.product_chain) {
     let label = '';
-    if (row.koeff == 1) {
-      label = `-->|${row.product_weight} кг|`;  
-    } else {
-      label = `-->|"${row.product_weight} кг (${row.koeff})"|`;
+    if (withCoefficients) {
+      if (row.koeff == 1) {
+        label = `-->|${row.product_weight} кг|`;  
+      } else {
+        label = `-->|"${row.product_weight} кг (${row.koeff})"|`;
+      }
+    } else { 
+      label = `-->|${row.product_weight} кг|`;
     }
     lines.push(`operation_${row.operation_id} ${label} material_${row.product_id}`)
   }
 
   for (const row of data.operation_node) {
-    const parts = [
-      row.operation,
-      `Выход продуктов: ${row.product_operation_weight}`,
-      `Выход операции всего: ${row.total_operation_weight}`,
-      `Коэфф: ${row.koeff}`,
-    ]
-    const label = escapeLabel(parts.join('<br/>'))
+    let label = '';
+    if (withCoefficients) {
+      const parts = [
+        row.operation,
+        `Выход продуктов: ${row.product_operation_weight}`,
+        `Выход операции всего: ${row.total_operation_weight}`,
+        `Коэфф: ${row.koeff}`,
+      ]
+      label = escapeLabel(parts.join('<br/>'))
+    } else {
+      const parts = [
+        row.operation,
+      ]
+      label = escapeLabel(parts.join('<br/>'))
+
+    };
     lines.push(`operation_${row.operation_id}["${label}"]`)
   }
 
   for (const row of data.material_node) {
-/*     const parts = [
-      `${row.material}`,
-      `Коэфф: ${row.koeff}`,
-    ]
-    const label = escapeLabel(parts.join('<br/>'))
- */    
     const label = escapeLabel(`${row.material}`)
     lines.push(`material_${row.material_id}(["${label}"]):::product`)
   }
 
   for (const row of data.raw_material_node) {
-    const label = escapeLabel(row.material)
+    let label = ''; 
+
+    if (withCoefficients) {
+      const parts = [
+       `${row.material}`,
+      ]
+      if (row.weight_out && row.weight_out !== row.adjusted_weight_out) {
+        parts.push(`Вес: ${row.weight_out} (${row.adjusted_weight_out}) кг.`)
+      } else {
+        parts.push(`Вес: ${row.weight_out} кг.`)
+      };
+      label = escapeLabel(parts.join('<br/>'))
+    } else {
+      const parts = [
+       `${row.material}`,
+       `Вес: ${row.weight_out} кг.`,
+      ]
+      label = escapeLabel(parts.join('<br/>'))
+    }
+
     lines.push(`material_${row.material_id}(["${label}"]):::rawMat`)
   }
+
   return lines.join('\n')
 }
 
@@ -252,7 +287,8 @@ onMounted(async () => {
       item_ids,
     })
     const mermaidStr = get_mermaid_code()
-    //console.log('mermaid', mermaidStr);
+    //const mermaidStr = get_mermaid_code(false)
+    console.log('mermaid', mermaidStr);
     renderMermaid(mermaidStr)
 
     if (svgContainer.value) {
