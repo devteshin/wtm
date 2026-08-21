@@ -1,6 +1,8 @@
 <template>
   <div class="mermaid-container" ref="containerRef">
-    <div class="zoom-controls">
+    <div class="graph-controls">
+
+      <!-- Управление масштабом -->
       <el-button size="small" @click="zoomOut" plain type="info">
         <template #icon><el-icon :size="14"><Minus /></el-icon></template>
       </el-button>
@@ -8,7 +10,30 @@
       <el-button size="small" @click="zoomIn" plain type="info">
         <template #icon><el-icon :size="14"><Plus /></el-icon></template>
       </el-button>
+
+      <!-- Сброс и обновление -->
       <el-button size="small" @click="resetView" plain type="primary">Сброс</el-button>
+
+      <span class="separator-line" />
+
+      <!-- Переключатель режима коэффициентов -->
+      <el-switch
+        v-model="withCoefficients"
+        label="С коэффициентами"
+        size="small"
+        inline-prompt
+      />
+      <span class="separator-line" />
+
+      <el-button
+        size="small"
+        @click="renderGraph"
+        plain
+        type="success"
+        :loading="loading"
+      >
+        Обновить
+      </el-button>
     </div>
 
     <div v-if="loading" class="loading-state">Строим граф...</div>
@@ -54,6 +79,9 @@ const panY = ref(0)
 const minScale = 0.5
 const maxScale = 3
 
+// Флаг: отображать коэффициенты или нет
+const withCoefficients = ref(true)
+
 const store = useApplicationStore()
 
 // --- Перетаскивание ---
@@ -64,7 +92,6 @@ let startPanX = 0
 let startPanY = 0
 
 const onPanStart = (e: MouseEvent) => {
-  // Не запускаем, если зажали Ctrl/Shift/Alt или клик по кнопке/инпуту
   if (e.ctrlKey || e.shiftKey || e.altKey) return
   e.preventDefault()
 
@@ -100,7 +127,7 @@ const applyTransform = () => {
   if (!svg) return
 
   svg.style.transform = `translate(${panX.value}px, ${panY.value}px) scale(${scale.value})`
-  svg.style.transformOrigin = '0 0' // начало координат в левом верхнем углу
+  svg.style.transformOrigin = '0 0'
   svg.style.willChange = 'transform'
 }
 
@@ -123,7 +150,7 @@ const resetView = () => {
   applyTransform()
 }
 
-// Зум по колёсику (панорамирование при этом не сбрасывается)
+// Зум по колёсику
 const handleWheel = (e: WheelEvent) => {
   e.preventDefault()
   const delta = e.deltaY
@@ -135,8 +162,7 @@ const handleWheel = (e: WheelEvent) => {
   }
 }
 
-
-function get_mermaid_code(withCoefficients: boolean = true): string {
+function get_mermaid_code(withCoeff: boolean = true): string {
   const data = store.production_graph_data
   if (!data) return ''
 
@@ -144,58 +170,43 @@ function get_mermaid_code(withCoefficients: boolean = true): string {
   lines.push('classDef product fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
   lines.push('classDef rawMat fill:#fff3e0,stroke:#ff9800,stroke-width:2px')
 
-  const escapeLabel = (text: string) => text.replace(/"/g, '\\"');
+  const escapeLabel = (text: string) => text.replace(/"/g, '\\"')
 
   for (const row of data.material_chain) {
-    let label = '';
-    let adjusted_material_weight_label = '';
-    if (row.adjusted_material_weight && row.material_weight != row.adjusted_material_weight ) {
-      adjusted_material_weight_label = `(${row.adjusted_material_weight} кг)`;
-    }
-    if (withCoefficients) {
-      if (row.koeff == 1) {
-        label = `-->|"${row.material_weight} кг ${adjusted_material_weight_label}"|`;  
-      } else {
-        label = `-->|"${row.material_weight} кг (${row.koeff}) ${adjusted_material_weight_label}"|`;
-      }
+    let label = ''
+    const adjusted_material_weight_label = row.adjusted_material_weight &&
+      row.material_weight !== row.adjusted_material_weight
+      ? `(${row.adjusted_material_weight} кг)`
+      : ''
+
+    if (withCoeff) {
+      label = row.koeff === 1
+        ? `-->|"${row.material_weight} кг ${adjusted_material_weight_label}"|`
+        : `-->|"${row.material_weight} кг (${row.koeff}) ${adjusted_material_weight_label}"|`
     } else {
-        label = `-->|${row.material_weight} кг|`;  
-    };  
+      label = `-->|${row.material_weight} кг|`
+    }
     lines.push(`material_${row.material_id} ${label} operation_${row.operation_id}`)
   }
+
   for (const row of data.product_chain) {
-    let label = '';
-    if (withCoefficients) {
-      if (row.koeff == 1) {
-        label = `-->|${row.product_weight} кг|`;  
-      } else {
-        label = `-->|"${row.product_weight} кг (${row.koeff})"|`;
-      }
-    } else { 
-      label = `-->|${row.product_weight} кг|`;
-    }
+    const label = withCoeff && row.koeff !== 1
+      ? `-->|"${row.product_weight} кг (${row.koeff})"|`
+      : `-->|${row.product_weight} кг|`
     lines.push(`operation_${row.operation_id} ${label} material_${row.product_id}`)
   }
 
   for (const row of data.operation_node) {
-    let label = '';
-    if (withCoefficients) {
-      const parts = [
-        row.process_name,
-        row.operation,
-        `Выход продуктов: ${row.product_operation_weight}`,
-        `Выход операции всего: ${row.total_operation_weight}`,
-        `Коэфф: ${row.koeff}`,
-      ]
-      label = escapeLabel(parts.join('<br/>'))
-    } else {
-      const parts = [
-        row.process_name,
-        row.operation,
-      ]
-      label = escapeLabel(parts.join('<br/>'))
-
-    };
+    const parts = withCoeff
+      ? [
+          row.process_name,
+          row.operation,
+          `Выход продуктов: ${row.product_operation_weight}`,
+          `Выход операции всего: ${row.total_operation_weight}`,
+          `Коэфф: ${row.koeff}`,
+        ]
+      : [row.process_name, row.operation]
+    const label = escapeLabel(parts.join('<br/>'))
     lines.push(`operation_${row.operation_id}["${label}"]`)
   }
 
@@ -205,26 +216,13 @@ function get_mermaid_code(withCoefficients: boolean = true): string {
   }
 
   for (const row of data.raw_material_node) {
-    let label = ''; 
-
-    if (withCoefficients) {
-      const parts = [
-       `${row.material}`,
-      ]
-      if (row.weight_out && row.weight_out !== row.adjusted_weight_out) {
-        parts.push(`Вес: ${row.weight_out} (${row.adjusted_weight_out}) кг.`)
-      } else {
-        parts.push(`Вес: ${row.weight_out} кг.`)
-      };
-      label = escapeLabel(parts.join('<br/>'))
-    } else {
-      const parts = [
-       `${row.material}`,
-       `Вес: ${row.weight_out} кг.`,
-      ]
-      label = escapeLabel(parts.join('<br/>'))
-    }
-
+    const parts = [
+      `${row.material}`,
+      withCoeff && row.weight_out && row.weight_out !== row.adjusted_weight_out
+        ? `Вес: ${row.weight_out} (${row.adjusted_weight_out}) кг.`
+        : `Вес: ${row.weight_out} кг.`,
+    ]
+    const label = escapeLabel(parts.join('<br/>'))
     lines.push(`material_${row.material_id}(["${label}"]):::rawMat`)
   }
 
@@ -238,10 +236,10 @@ const renderMermaid = (mermaidStr: string) => {
   const source = mermaidStr.trim()
   if (!source) {
     svgContainer.value.textContent = 'Нет данных для построения графа.'
+    isRenderingMermaid.value = false
     return
   }
 
-  // Ставим флаг: сейчас будем рендерить
   isRenderingMermaid.value = true
 
   const rawBlock = document.createElement('div')
@@ -249,7 +247,8 @@ const renderMermaid = (mermaidStr: string) => {
   rawBlock.innerHTML = source
   svgContainer.value.appendChild(rawBlock)
 
-  const forceReflow = svgContainer.value.offsetHeight
+  // Принудительный reflow
+  void svgContainer.value.offsetHeight
 
   nextTick(async () => {
     const rect = svgContainer.value?.getBoundingClientRect()
@@ -270,37 +269,39 @@ const renderMermaid = (mermaidStr: string) => {
 
     isRendered.value = true
     applyTransform()
-
-    // Снимаем флаг: Mermaid отрисовал SVG, можно показывать
     isRenderingMermaid.value = false
   })
 }
 
-onMounted(async () => {
+const renderGraph = async () => {
   const item_ids = props.ids.toString() ?? ''
   if (!item_ids) return
 
   loading.value = true
   error.value = null
+  isRendered.value = false
 
   try {
     await store.fetchProductionGraphData({
       type: props.type,
       item_ids,
     })
-    const mermaidStr = get_mermaid_code()
-    //const mermaidStr = get_mermaid_code(false)
-    //console.log('mermaid', mermaidStr);
-    renderMermaid(mermaidStr)
 
-    if (svgContainer.value) {
-      svgContainer.value.addEventListener('wheel', handleWheel, { passive: false })
-    }
+    const mermaidStr = get_mermaid_code(withCoefficients.value)
+    renderMermaid(mermaidStr)
   } catch (e: any) {
     console.error('loadGraph error:', e)
     error.value = e.message || 'Ошибка при построении графа'
   } finally {
     loading.value = false
+  }
+}
+
+onMounted(async () => {
+  await renderGraph()
+
+  if (svgContainer.value) {
+    svgContainer.value.addEventListener('wheel', handleWheel, { passive: false })
   }
 })
 
@@ -325,20 +326,29 @@ onUnmounted(() => {
   color: #ff4d4f;
 }
 
-.zoom-controls {
+.graph-controls {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
   justify-content: flex-start;
+  flex-wrap: wrap;
 }
+
+.separator-line {
+  width: 1px;
+  height: 24px;
+  background: #e5e7eb;
+  margin: 0 8px;
+}
+
 .zoom-value {
   font-weight: 600;
   min-width: 48px;
   text-align: center;
 }
 
-/* Зона рендера: фиксируем размеры и скролл (на случай, если граф очень большой до зума) */
+/* Зона рендера: фиксируем размеры и скролл */
 .mermaid-render-area {
   width: 100%;
   min-height: calc(100vh - 260px);
@@ -365,8 +375,8 @@ onUnmounted(() => {
 }
 
 .mermaid-render-area.mermaid-hidden {
-  visibility: hidden; /* скрывает содержимое, но оставляет место */
-  pointer-events: none; /* отключаем события мыши, чтобы не мешал */
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .mermaid-render-area.mermaid-hidden::after {
@@ -376,6 +386,4 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.9);
   z-index: 10;
 }
-
-
 </style>
