@@ -181,6 +181,7 @@ function get_mermaid_code(withCoefficients: boolean = true): string {
     let label = '';
     if (withCoefficients) {
       const parts = [
+        row.process_name,
         row.operation,
         `Выход продуктов: ${row.product_operation_weight}`,
         `Выход операции всего: ${row.total_operation_weight}`,
@@ -189,6 +190,7 @@ function get_mermaid_code(withCoefficients: boolean = true): string {
       label = escapeLabel(parts.join('<br/>'))
     } else {
       const parts = [
+        row.process_name,
         row.operation,
       ]
       label = escapeLabel(parts.join('<br/>'))
@@ -288,7 +290,7 @@ onMounted(async () => {
     })
     const mermaidStr = get_mermaid_code()
     //const mermaidStr = get_mermaid_code(false)
-    console.log('mermaid', mermaidStr);
+    //console.log('mermaid', mermaidStr);
     renderMermaid(mermaidStr)
 
     if (svgContainer.value) {

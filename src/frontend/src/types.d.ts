@@ -106,6 +106,7 @@ declare namespace frontend {
         product_operation_weight: number
         koeff: number
         operation_id: number
+        process_name: string
     }    
 
     export type IProductionGraphMaterialNode = {
