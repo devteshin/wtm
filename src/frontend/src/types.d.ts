@@ -77,7 +77,15 @@ declare namespace frontend {
         operation_node: Array<IProductionGraphOperationNode>
         material_node: Array<IProductionGraphMaterialNode>
         raw_material_node: Array<IProductionGraphRawMaterialNode>
+        operation_sequences: Array<IProductionGraphOperationSequences>
     }    
+
+    export type IProductionGraphOperationSequences = {
+        operation_sequence: string
+        koeff: number
+        next_operation: string
+    }    
+
 
     export type IProductionGraphDataProductChain = {
         product: string

@@ -15,25 +15,21 @@
       <el-button size="small" @click="resetView" plain type="primary">Сброс</el-button>
 
       <span class="separator-line" />
-
-      <!-- Переключатель режима коэффициентов -->
-      <el-switch
-        v-model="withCoefficients"
-        label="С коэффициентами"
-        size="small"
-        inline-prompt
-      />
+      <div class="coeff-toggle-group">
+        <span class="coeff-label">с учётом коэффициентов списания материалов</span>
+        <el-switch
+          v-model="withCoefficients"
+          size="small"
+        />
+        <span class="coeff-label">таблицы расчета коэффициентов</span>
+        <el-switch
+          v-model="withCoefficientsDetailsTables"
+          :disabled="!withCoefficients"
+          size="small"
+        />
+      </div>
       <span class="separator-line" />
 
-      <el-button
-        size="small"
-        @click="renderGraph"
-        plain
-        type="success"
-        :loading="loading"
-      >
-        Обновить
-      </el-button>
     </div>
 
     <div v-if="loading" class="loading-state">Строим граф...</div>
@@ -54,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import useApplicationStore from '@/store'
 import { Minus, Plus } from '@element-plus/icons-vue'
 
@@ -80,7 +76,8 @@ const minScale = 0.5
 const maxScale = 3
 
 // Флаг: отображать коэффициенты или нет
-const withCoefficients = ref(true)
+const withCoefficients = ref(false)
+const withCoefficientsDetailsTables = ref(false)
 
 const store = useApplicationStore()
 
@@ -273,6 +270,7 @@ const renderMermaid = (mermaidStr: string) => {
   })
 }
 
+
 const renderGraph = async () => {
   const item_ids = props.ids.toString() ?? ''
   if (!item_ids) return
@@ -296,6 +294,10 @@ const renderGraph = async () => {
     loading.value = false
   }
 }
+
+watch(withCoefficients, async () => {
+  await renderGraph()
+})
 
 onMounted(async () => {
   await renderGraph()
@@ -386,4 +388,18 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.9);
   z-index: 10;
 }
+
+.coeff-toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* расстояние между текстом и свитчем */
+}
+
+.coeff-label {
+  font-size: 13px;
+  line-height: 20px;
+  color: #333;
+  white-space: nowrap; /* чтобы текст не переносился */
+}
+
 </style>
