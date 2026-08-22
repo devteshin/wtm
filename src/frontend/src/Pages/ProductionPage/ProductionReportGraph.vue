@@ -333,12 +333,12 @@ const renderMermaid = (mermaidStr: string) => {
     ;(window as any).mermaid.init({
       flowchart: {
         useMaxWidth: true,
-        height: rect.height,
+        //height: rect.height,
       },
     }, '.mermaid')
 
     isRendered.value = true
-    applyTransform()
+    //applyTransform()
     isRenderingMermaid.value = false
 
     // Включаем wheel только после того, как SVG реально появился
@@ -372,7 +372,6 @@ const renderGraph = async () => {
 
 const onCoeffChange = async () => {
   if (viewMode.value === 'graph') {
-    scale.value = 1
     await renderGraph()
   }
 }
@@ -418,12 +417,14 @@ onUnmounted(() => {
 <style scoped>
 .mermaid-container {
   width: 100%;
-  height: calc(100vh - 220px);
+  /*height: calc(100vh - 220px);*/
   max-height: calc(100vh - 120px);
   position: relative;
   overflow: auto; /* единственный скролл у компонента */
   padding-bottom: 8px;
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;  
 }
 
 .loading-state,
@@ -490,7 +491,7 @@ onUnmounted(() => {
 /* --- Режим «Таблицы»: Grid --- */
 .tables-view-wrapper {
   width: 100%;
-  height: 100%;
+  /*height: 100%;*/
   display: flex;
   flex-direction: column;
 }
@@ -527,15 +528,20 @@ onUnmounted(() => {
 /* --- Режим «Граф» --- */
 .graph-view-wrapper {
   width: 100%;
-  height: 100%;
+  /*height: 100%;*/
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;  
 }
 
 .mermaid-render-area {
-  flex: 1;
+  /*flex: 1;*/
   min-height: 300px;
   width: 100%;
+  overflow: visible;
   text-align: center;
   box-sizing: border-box;
   cursor: grab;
@@ -544,6 +550,18 @@ onUnmounted(() => {
 
 .mermaid-render-area:active {
   cursor: grabbing;
+}
+
+.mermaid-render-area svg {
+  max-width: none;           /* разрешить быть шире контейнера (для зума) */
+  max-height: none;          /* разрешить быть выше контейнера */
+  width: auto !important;    /* игнорировать width из SVG */
+  height: auto !important;   /* игнорировать height из SVG */
+  display: block;
+  margin: 0 auto;
+  transform-origin: 0 0;
+  will-change: transform;
+  pointer-events: auto;      /* чтобы клики/зум работали */
 }
 
 .mermaid-render-area::-webkit-scrollbar {
