@@ -64,55 +64,58 @@
 
     <!-- 2. ОБЛАСТЬ КОНТЕНТА (Скроллится отдельно) -->
     <!-- Обратите внимание: overflow перенесен сюда -->
-    <div class="mermaid-container" ref="containerRef">
-      
+    <div
+      class="mermaid-container"
+      ref="containerRef"
+      :class="{ 'tables-mode': viewMode === 'tables' }"
+    >
       <!-- Вид: Таблицы -->
       <div v-if="viewMode === 'tables'" class="tables-view-wrapper">
-        <div class="tables-scroll-area">
-          <!-- Таблица 1 -->
-          <div class="coeff-table-card">
-            <h4 class="table-title">Таблица расчёта коэффициентов списания</h4>
-            <el-table
-              :data="store.production_graph_data?.operation_sequences || []"
-              style="width: 100%"
-              :border="true"
-              size="small"
-            >
-              <el-table-column prop="operation_sequence" label="Операция (последовательность)" width="220" />
-              <el-table-column prop="koeff" label="Коэффициент" width="120">
-                <template #default="scope">
-                  {{ scope.row.koeff.toFixed(4) }}
-                </template>
-              </el-table-column>
-              <el-table-column prop="next_operation" label="Следующая операция" />
-            </el-table>
-          </div>
+        <div class="tables-scroll-area-wrapper">
+          <div class="tables-scroll-area">
+            <!-- Таблица 1 -->
+            <div class="coeff-table-card">
+              <h4 class="table-title">Таблица расчёта коэффициентов списания</h4>
+              <el-table
+                :data="store.production_graph_data?.operation_sequences || []"
+                style="width: 100%"
+                :border="true"
+                size="small"
+              >
+                <el-table-column prop="operation_sequence" label="Операция (последовательность)" width="220" />
+                <el-table-column prop="koeff" label="Коэффициент" width="120">
+                  <template #default="scope">
+                    {{ scope.row.koeff.toFixed(4) }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="next_operation" label="Следующая операция" />
+              </el-table>
+            </div>
 
-          <!-- Таблица 2 -->
-          <div class="coeff-table-card">
-            <h4 class="table-title">Расчётные веса списания исходных материалов</h4>
-            <el-table
-              :data="store.production_graph_data?.raw_material_node || []"
-              style="width: 100%"
-              :border="true"
-              size="small"
-            >
-              <el-table-column prop="material" label="Материал" width="200" />
-              <el-table-column prop="adjusted_weight_out" label="Скорректированный вес (кг)">
-                <template #default="scope">
-                  {{ Number(scope.row.adjusted_weight_out).toFixed(2) }}
-                </template>
-              </el-table-column>
-            </el-table>
+            <!-- Таблица 2 -->
+            <div class="coeff-table-card">
+              <h4 class="table-title">Расчётные веса списания исходных материалов</h4>
+              <el-table
+                :data="store.production_graph_data?.raw_material_node || []"
+                style="width: 100%"
+                :border="true"
+                size="small"
+              >
+                <el-table-column prop="material" label="Материал" width="200" />
+                <el-table-column prop="adjusted_weight_out" label="Скорректированный вес (кг)">
+                  <template #default="scope">
+                    {{ Number(scope.row.adjusted_weight_out).toFixed(2) }}
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Вид: Граф -->
       <div v-else class="graph-view-wrapper">
-        <!-- ЭТО НОВОЕ: лоадер поверх области рендера, скрывает старый SVG -->
         <div v-if="loading" class="overlay-loader">Строим граф...</div>
-
         <div v-else-if="error" class="error-state">{{ error }}</div>
 
         <div
@@ -126,6 +129,8 @@
         </div>
       </div>
     </div>
+  
+    
   </div>
 </template>
 
@@ -414,19 +419,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 
-   Обертка для всего компонента. 
-   Здесь НЕТ overflow, чтобы кнопки не скроллились.
-*/
 .controls-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: calc(100vh - 20px); /* Подстройте высоту под вашу верстку */
+  /* Фиксированная высота — обязательна для работы flex-скролла */
+  height: calc(100vh - 20px);
   max-width: 100%;
 }
 
-/* Панель управления (Кнопки) */
 .graph-controls {
   display: flex;
   align-items: center;
@@ -437,54 +438,23 @@ onUnmounted(() => {
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   border: 1px solid #e5e7eb;
-  z-index: 10; /* Чтобы кнопки были поверх всего */
-  position: sticky; /* Опционально: если нужно, чтобы прилипало к верху окна */
+  z-index: 10;
+  position: sticky;
   top: 0;
   margin-bottom: 8px;
 }
 
-.separator-line {
-  width: 1px;
-  height: 28px;
-  background-color: #e5e7eb;
-  margin: 0 8px;
-}
-
-.zoom-value {
-  font-weight: 600;
-  font-size: 13px;
-  min-width: 56px;
-  text-align: center;
-}
-
-.coeff-toggle-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.coeff-label {
-  font-size: 13px;
-  line-height: 20px;
-  color: #4b5563;
-  white-space: nowrap;
-}
-
-/* 
-   Контейнер для контента (Граф или Таблицы).
-   Именно здесь теперь живет скролл.
-*/
+/* Контейнер контента: по умолчанию — скролл для графа */
 .mermaid-container {
   width: 100%;
   flex-grow: 1;
-  overflow: auto; /* Скролл только здесь */
+  overflow: auto;
   padding-bottom: 8px;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  
-  /* Важно для скроллбара */
+
+  /* Скроллбар */
   scrollbar-width: thin;
   scrollbar-color: #ccc #f1f1f1;
 }
@@ -500,18 +470,33 @@ onUnmounted(() => {
   border-radius: 4px;
 }
 
-/* Стили для таблиц */
+/* В режиме таблиц убираем скролл у родителя, чтобы работал внутренний */
+.mermaid-container.tables-mode {
+  overflow: hidden;
+}
+
+/* Обертка для таблиц: должна занимать 100% высоты родителя */
 .tables-view-wrapper {
   width: 100%;
+  height: 100%; /* Ключевое: чтобы wrapper ниже мог занять всю высоту */
   display: flex;
   flex-direction: column;
 }
 
+/* Внутренний скролл-контейнер для таблиц */
+.tables-scroll-area-wrapper {
+  flex: 1;           /* Занимает всё свободное место */
+  min-height: 0;    /* Обязательно: разрешает сжиматься ниже контента для flex-скролла */
+  overflow-y: auto; /* Только вертикальный скролл */
+  overflow-x: hidden;
+  padding: 4px 0;
+}
+
+/* Сетка карточек таблиц */
 .tables-scroll-area {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
-  padding: 4px 0;
 }
 
 .coeff-table-card {
@@ -534,7 +519,7 @@ onUnmounted(() => {
   padding-bottom: 6px;
 }
 
-/* Стили для графа */
+/* Граф */
 .graph-view-wrapper {
   width: 100%;
   display: flex;
@@ -558,20 +543,14 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.loading-state,
 .error-state {
   padding: 24px;
   text-align: center;
-  color: #333;
-  background: #f9fafb;
-  border-radius: 6px;
-  margin-top: 16px;
-}
-
-.error-state {
   color: #dc2626;
   background: #fef2f2;
   border: 1px solid #fee2e2;
+  border-radius: 6px;
+  margin-top: 16px;
 }
 
 .mermaid-render-area {
@@ -600,16 +579,4 @@ onUnmounted(() => {
   pointer-events: auto;
 }
 
-.mermaid-hidden {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.mermaid-hidden::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.95);
-  z-index: 10;
-}
 </style>
