@@ -1,7 +1,12 @@
 <template>
-  <div class="mermaid-container" ref="containerRef">
+  <!-- 
+    Главный оберточный контейнер. 
+    Он НЕ имеет overflow, поэтому кнопки внутри него не будут скроллиться.
+  -->
+  <div class="controls-wrapper">
+    
+    <!-- 1. ПАНЕЛЬ УПРАВЛЕНИЯ (Фиксированная) -->
     <div class="graph-controls">
-      <!-- Переключатель вида: граф / таблицы -->
       <el-radio-group v-model="viewMode" size="small">
         <el-radio-button label="graph">Граф</el-radio-button>
         <el-radio-button label="tables">Таблицы расчёта</el-radio-button>
@@ -9,23 +14,25 @@
 
       <span class="separator-line" />
 
-      <!-- Управление масштабом (только для графа) -->
+      <!-- Кнопки зума (видны только для графа) -->
       <el-button
         size="small"
-        @click="zoomOut"
+        @click="zoomIn"
         plain
         type="info"
         :disabled="viewMode !== 'graph'"
       >
         <template #icon><el-icon :size="14"><Minus /></el-icon></template>
       </el-button>
+      
       <span
         class="zoom-value"
         v-if="viewMode === 'graph'"
       >{{ Math.round(scale * 100) }}%</span>
+      
       <el-button
         size="small"
-        @click="zoomIn"
+        @click="zoomOut"
         plain
         type="info"
         :disabled="viewMode !== 'graph'"
@@ -43,6 +50,7 @@
 
       <span class="separator-line" />
 
+      <!-- Свитч коэффициентов -->
       <div class="coeff-toggle-group">
         <span class="coeff-label">с учётом коэффициентов списания</span>
         <el-switch
@@ -55,64 +63,67 @@
       <span class="separator-line" />
     </div>
 
-    <div
-      v-if="viewMode === 'tables'"
-      class="tables-view-wrapper"
-    >
-      <div class="tables-scroll-area">
-        <!-- Таблица 1: Расчёт коэффициентов списания -->
-        <div class="coeff-table-card">
-          <h4 class="table-title">Таблица расчёта коэффициентов списания</h4>
-          <el-table
-            :data="store.production_graph_data?.operation_sequences || []"
-            style="width: 100%"
-            :border="true"
-            size="small"
-          >
-            <el-table-column prop="operation_sequence" label="Операция (последовательность)" width="220" />
-            <el-table-column prop="koeff" label="Коэффициент" width="120">
-              <template #default="scope">
-                {{ scope.row.koeff.toFixed(4) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="next_operation" label="Следующая операция" />
-          </el-table>
-        </div>
+    <!-- 2. ОБЛАСТЬ КОНТЕНТА (Скроллится отдельно) -->
+    <!-- Обратите внимание: overflow перенесен сюда -->
+    <div class="mermaid-container" ref="containerRef">
+      
+      <!-- Вид: Таблицы -->
+      <div v-if="viewMode === 'tables'" class="tables-view-wrapper">
+        <div class="tables-scroll-area">
+          <!-- Таблица 1 -->
+          <div class="coeff-table-card">
+            <h4 class="table-title">Таблица расчёта коэффициентов списания</h4>
+            <el-table
+              :data="store.production_graph_data?.operation_sequences || []"
+              style="width: 100%"
+              :border="true"
+              size="small"
+            >
+              <el-table-column prop="operation_sequence" label="Операция (последовательность)" width="220" />
+              <el-table-column prop="koeff" label="Коэффициент" width="120">
+                <template #default="scope">
+                  {{ scope.row.koeff.toFixed(4) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="next_operation" label="Следующая операция" />
+            </el-table>
+          </div>
 
-        <!-- Таблица 2: Расчётные веса списания исходных материалов -->
-        <div class="coeff-table-card">
-          <h4 class="table-title">Расчётные веса списания исходных материалов</h4>
-          <el-table
-            :data="store.production_graph_data?.raw_material_node || []"
-            style="width: 100%"
-            :border="true"
-            size="small"
-          >
-            <el-table-column prop="material" label="Материал" width="200" />
-            <el-table-column prop="adjusted_weight_out" label="Скорректированный вес (кг)">
-              <template #default="scope">
-                {{ Number(scope.row.adjusted_weight_out).toFixed(2) }}
-              </template>
-            </el-table-column>
-          </el-table>
+          <!-- Таблица 2 -->
+          <div class="coeff-table-card">
+            <h4 class="table-title">Расчётные веса списания исходных материалов</h4>
+            <el-table
+              :data="store.production_graph_data?.raw_material_node || []"
+              style="width: 100%"
+              :border="true"
+              size="small"
+            >
+              <el-table-column prop="material" label="Материал" width="200" />
+              <el-table-column prop="adjusted_weight_out" label="Скорректированный вес (кг)">
+                <template #default="scope">
+                  {{ Number(scope.row.adjusted_weight_out).toFixed(2) }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Вид: Граф -->
-    <div v-else class="graph-view-wrapper">
-      <div v-if="loading" class="loading-state">Строим граф...</div>
-      <div v-else-if="error" class="error-state">{{ error }}</div>
+      <!-- Вид: Граф -->
+      <div v-else class="graph-view-wrapper">
+        <div v-if="loading" class="loading-state">Строим граф...</div>
+        <div v-else-if="error" class="error-state">{{ error }}</div>
 
-      <div
-        ref="svgContainer"
-        class="mermaid-render-area"
-        :class="{ 'mermaid-hidden': isRenderingMermaid }"
-        @mousedown="onPanStart"
-        @mouseleave="onPanEnd"
-        @mouseup="onPanEnd"
-      >
-        <!-- Сюда Mermaid вставит SVG -->
+        <div
+          ref="svgContainer"
+          class="mermaid-render-area"
+          :class="{ 'mermaid-hidden': isRenderingMermaid }"
+          @mousedown="onPanStart"
+          @mouseleave="onPanEnd"
+          @mouseup="onPanEnd"
+        >
+          <!-- Сюда Mermaid вставит SVG -->
+        </div>
       </div>
     </div>
   </div>
@@ -415,49 +426,33 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.mermaid-container {
+/* 
+   Обертка для всего компонента. 
+   Здесь НЕТ overflow, чтобы кнопки не скроллились.
+*/
+.controls-wrapper {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  /*height: calc(100vh - 220px);*/
-  max-height: calc(100vh - 120px);
-  position: relative;
-  overflow: auto; /* единственный скролл у компонента */
-  padding-bottom: 8px;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;  
+  height: calc(100vh - 20px); /* Подстройте высоту под вашу верстку */
+  max-width: 100%;
 }
 
-.loading-state,
-.error-state {
-  padding: 24px;
-  text-align: center;
-  color: #333;
-  background: #f9fafb;
-  border-radius: 6px;
-  margin-top: 16px;
-}
-
-.error-state {
-  color: #dc2626;
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-}
-
-/* Панель управления */
+/* Панель управления (Кнопки) */
 .graph-controls {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  margin-bottom: 12px;
   flex-wrap: wrap;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   border: 1px solid #e5e7eb;
-  position: sticky;
+  z-index: 10; /* Чтобы кнопки были поверх всего */
+  position: sticky; /* Опционально: если нужно, чтобы прилипало к верху окна */
   top: 0;
-  z-index: 10;
+  margin-bottom: 8px;
 }
 
 .separator-line {
@@ -488,17 +483,44 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* --- Режим «Таблицы»: Grid --- */
+/* 
+   Контейнер для контента (Граф или Таблицы).
+   Именно здесь теперь живет скролл.
+*/
+.mermaid-container {
+  width: 100%;
+  flex-grow: 1;
+  overflow: auto; /* Скролл только здесь */
+  padding-bottom: 8px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  
+  /* Важно для скроллбара */
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f1f1f1;
+}
+
+.mermaid-container::-webkit-scrollbar {
+  width: 8px;
+}
+.mermaid-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.mermaid-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+/* Стили для таблиц */
 .tables-view-wrapper {
   width: 100%;
-  /*height: 100%;*/
   display: flex;
   flex-direction: column;
 }
 
 .tables-scroll-area {
   display: grid;
-  /* auto-fit: если две карточки не влезают — будет одна колонка */
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
   padding: 4px 0;
@@ -510,7 +532,6 @@ onUnmounted(() => {
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  /* ВАЖНО: нет min-width, карточка может сжиматься */
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -525,20 +546,34 @@ onUnmounted(() => {
   padding-bottom: 6px;
 }
 
-/* --- Режим «Граф» --- */
+/* Стили для графа */
 .graph-view-wrapper {
   width: 100%;
-  /*height: 100%;*/
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   margin: 0;
-  padding: 0;  
+  padding: 0;
+}
+
+.loading-state,
+.error-state {
+  padding: 24px;
+  text-align: center;
+  color: #333;
+  background: #f9fafb;
+  border-radius: 6px;
+  margin-top: 16px;
+}
+
+.error-state {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
 }
 
 .mermaid-render-area {
-  /*flex: 1;*/
   min-height: 300px;
   width: 100%;
   overflow: visible;
@@ -553,26 +588,15 @@ onUnmounted(() => {
 }
 
 .mermaid-render-area svg {
-  max-width: none;           /* разрешить быть шире контейнера (для зума) */
-  max-height: none;          /* разрешить быть выше контейнера */
-  width: auto !important;    /* игнорировать width из SVG */
-  height: auto !important;   /* игнорировать height из SVG */
+  max-width: none;
+  max-height: none;
+  width: auto !important;
+  height: auto !important;
   display: block;
   margin: 0 auto;
   transform-origin: 0 0;
   will-change: transform;
-  pointer-events: auto;      /* чтобы клики/зум работали */
-}
-
-.mermaid-render-area::-webkit-scrollbar {
-  width: 8px;
-}
-.mermaid-render-area::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-.mermaid-render-area::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
+  pointer-events: auto;
 }
 
 .mermaid-hidden {
@@ -586,31 +610,5 @@ onUnmounted(() => {
   inset: 0;
   background: rgba(255, 255, 255, 0.95);
   z-index: 10;
-}
-
-@media (max-width: 640px) {
-  .graph-controls {
-    justify-content: space-between;
-  }
-  .separator-line {
-    display: none;
-  }
-  .coeff-toggle-group {
-    width: 100%;
-    justify-content: flex-end;
-    order: 1;
-  }
-}
-
-@media (max-width: 768px) {
-  .tables-scroll-area {
-    grid-template-columns: 1fr !important; /* Принудительно одна колонка */
-  }
-
-  .coeff-table-card {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-  }
 }
 </style>
