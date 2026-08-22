@@ -81,7 +81,7 @@ declare namespace frontend {
     }    
 
     export type IProductionGraphOperationSequences = {
-        operation_sequence: string
+        operation_sequences: string
         koeff: number
         next_operation: string
     }    

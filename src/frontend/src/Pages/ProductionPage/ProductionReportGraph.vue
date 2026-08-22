@@ -1,7 +1,6 @@
 <template>
   <div class="mermaid-container" ref="containerRef">
     <div class="graph-controls">
-
       <!-- Управление масштабом -->
       <el-button size="small" @click="zoomOut" plain type="info">
         <template #icon><el-icon :size="14"><Minus /></el-icon></template>
@@ -15,13 +14,15 @@
       <el-button size="small" @click="resetView" plain type="primary">Сброс</el-button>
 
       <span class="separator-line" />
+
       <div class="coeff-toggle-group">
         <span class="coeff-label">с учётом коэффициентов списания материалов</span>
         <el-switch
           v-model="withCoefficients"
           size="small"
         />
-        <span class="coeff-label">таблицы расчета коэффициентов</span>
+        <span class="separator-line" />
+        <span class="coeff-label">таблицы расчёта коэффициентов</span>
         <el-switch
           v-model="withCoefficientsDetailsTables"
           :disabled="!withCoefficients"
@@ -29,7 +30,49 @@
         />
       </div>
       <span class="separator-line" />
+    </div>
 
+    <!-- Таблицы расчётов (показываются только если флаг включён) -->
+    <div
+      v-if="withCoefficients && withCoefficientsDetailsTables"
+      class="coeff-tables-wrapper"
+    >
+      <!-- Таблица 1: Расчёт коэффициентов списания -->
+      <div class="coeff-table-card">
+        <h4 class="table-title">Таблица расчёта коэффициентов списания</h4>
+        <el-table
+          :data="store.production_graph_data?.operation_sequences || []"
+          style="width: 100%"
+          :border="true"
+          size="small"
+        >
+          <el-table-column prop="operation_sequence" label="Операция (последовательность)" width="220" />
+          <el-table-column prop="koeff" label="Коэффициент" width="120">
+            <template #default="scope">
+              {{ scope.row.koeff.toFixed(4) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="next_operation" label="Следующая операция" />
+        </el-table>
+      </div>
+
+      <!-- Таблица 2: Расчётные веса списания исходных материалов -->
+      <div class="coeff-table-card">
+        <h4 class="table-title">Расчётные веса списания исходных материалов</h4>
+        <el-table
+          :data="store.production_graph_data?.raw_material_node || []"
+          style="width: 100%"
+          :border="true"
+          size="small"
+        >
+          <el-table-column prop="material" label="Материал" width="200" />
+          <el-table-column prop="adjusted_weight_out" label="Скорректированный вес (кг)">
+            <template #default="scope">
+              {{ Number(scope.row.adjusted_weight_out).toFixed(2) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </div>
 
     <div v-if="loading" class="loading-state">Строим граф...</div>
@@ -75,7 +118,7 @@ const panY = ref(0)
 const minScale = 0.5
 const maxScale = 3
 
-// Флаг: отображать коэффициенты или нет
+// Флаги отображения
 const withCoefficients = ref(false)
 const withCoefficientsDetailsTables = ref(false)
 
@@ -270,7 +313,6 @@ const renderMermaid = (mermaidStr: string) => {
   })
 }
 
-
 const renderGraph = async () => {
   const item_ids = props.ids.toString() ?? ''
   if (!item_ids) return
@@ -299,6 +341,11 @@ watch(withCoefficients, async () => {
   await renderGraph()
 })
 
+watch(withCoefficientsDetailsTables, () => {
+  // Таблицы не требуют перерисовки графа, но можно добавить логику, если позже понадобится
+  // Например, пересчёт сводных значений или валидацию данных
+})
+
 onMounted(async () => {
   await renderGraph()
 
@@ -319,11 +366,13 @@ onUnmounted(() => {
   width: 100%;
   position: relative;
 }
+
 .loading-state,
 .error-state {
   padding: 20px;
   text-align: center;
 }
+
 .error-state {
   color: #ff4d4f;
 }
@@ -360,6 +409,7 @@ onUnmounted(() => {
   box-sizing: border-box;
   cursor: grab;
 }
+
 .mermaid-render-area:active {
   cursor: grabbing;
 }
@@ -368,9 +418,11 @@ onUnmounted(() => {
 .mermaid-render-area::-webkit-scrollbar {
   width: 8px;
 }
+
 .mermaid-render-area::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
+
 .mermaid-render-area::-webkit-scrollbar-thumb {
   background: #ccc;
   border-radius: 4px;
@@ -392,14 +444,54 @@ onUnmounted(() => {
 .coeff-toggle-group {
   display: flex;
   align-items: center;
-  gap: 8px; /* расстояние между текстом и свитчем */
+  gap: 8px;
 }
 
 .coeff-label {
   font-size: 13px;
   line-height: 20px;
   color: #333;
-  white-space: nowrap; /* чтобы текст не переносился */
+  white-space: nowrap;
 }
 
+/* Контейнер для двух таблиц */
+.coeff-tables-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+/* Карточка таблицы — для отступов и фона */
+.coeff-table-card {
+  flex: 1 1 450px; /* на десктопе занимают примерно половину, но не меньше 450px */
+  min-width: 300px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.table-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 6px;
+}
+
+/* Адаптив: на узких экранах таблицы друг под другом */
+@media (max-width: 960px) {
+  .coeff-tables-wrapper {
+    flex-direction: column;
+  }
+
+  .coeff-table-card {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+}
 </style>
