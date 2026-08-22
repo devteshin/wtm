@@ -57,7 +57,6 @@
           v-model="withCoefficients"
           size="small"
           :disabled="viewMode !== 'graph'"
-          @change="onCoeffChange"
         />
       </div>
       <span class="separator-line" />
@@ -111,13 +110,14 @@
 
       <!-- Вид: Граф -->
       <div v-else class="graph-view-wrapper">
-        <div v-if="loading" class="loading-state">Строим граф...</div>
+        <!-- ЭТО НОВОЕ: лоадер поверх области рендера, скрывает старый SVG -->
+        <div v-if="loading" class="overlay-loader">Строим граф...</div>
+
         <div v-else-if="error" class="error-state">{{ error }}</div>
 
         <div
           ref="svgContainer"
           class="mermaid-render-area"
-          :class="{ 'mermaid-hidden': isRenderingMermaid }"
           @mousedown="onPanStart"
           @mouseleave="onPanEnd"
           @mouseup="onPanEnd"
@@ -312,10 +312,9 @@ function get_mermaid_code(withCoeff: boolean = true): string {
 const renderMermaid = (mermaidStr: string) => {
   if (!svgContainer.value) return
 
-  // Отключаем wheel, пока перерисовываем
   detachWheelListener()
+  svgContainer.value.innerHTML = '' // очищаем сразу
 
-  svgContainer.value.innerHTML = ''
   const source = mermaidStr.trim()
   if (!source) {
     svgContainer.value.textContent = 'Нет данных для построения графа.'
@@ -330,40 +329,32 @@ const renderMermaid = (mermaidStr: string) => {
   rawBlock.innerHTML = source
   svgContainer.value.appendChild(rawBlock)
 
-  void svgContainer.value.offsetHeight // reflow
+  void svgContainer.value.offsetHeight // принудительный reflow
 
-  nextTick(async () => {
-    const rect = svgContainer.value?.getBoundingClientRect()
-    if (!rect?.width || !rect?.height) {
-      isRenderingMermaid.value = false
-      return
-    }
+  // Сразу вызываем init без таймера
+  ;(window as any).mermaid.init(
+    { flowchart: { useMaxWidth: true } },
+    '.mermaid'
+  )
 
-    await new Promise(resolve => setTimeout(resolve, 50))
-
-    ;(window as any).mermaid.init({
-      flowchart: {
-        useMaxWidth: true,
-        //height: rect.height,
-      },
-    }, '.mermaid')
-
-    isRendered.value = true
-    //applyTransform()
-    isRenderingMermaid.value = false
-
-    // Включаем wheel только после того, как SVG реально появился
-    attachWheelListener()
-  })
+  isRendered.value = true
+  isRenderingMermaid.value = false
+  attachWheelListener()
 }
 
 const renderGraph = async () => {
   const item_ids = props.ids.toString() ?? ''
   if (!item_ids) return
 
-  loading.value = true
+  loading.value = true // <-- ставим ДО запроса
   error.value = null
   isRendered.value = false
+
+  if (!item_ids || props.ids.length === 0) {
+    loading.value = false
+    error.value = 'Не переданы ID элементов для построения графа'
+    return
+  }
 
   try {
     await store.fetchProductionGraphData({
@@ -377,29 +368,24 @@ const renderGraph = async () => {
     console.error('loadGraph error:', e)
     error.value = e.message || 'Ошибка при построении графа'
   } finally {
-    loading.value = false
+    loading.value = false // <-- снимаем после всего
   }
 }
 
-const onCoeffChange = async () => {
+
+watch(withCoefficients, async () => {
   if (viewMode.value === 'graph') {
     await renderGraph()
   }
-}
-
-watch(withCoefficients, async () => {
-  await renderGraph()
 })
 
 watch(viewMode, async (newMode) => {
   if (newMode === 'graph') {
     await renderGraph()
   } else {
-    // Уходим из режима графа — отключаем зум по колесу
     detachWheelListener()
   }
 })
-
 const attachWheelListener = () => {
   if (wheelListenerAttached) return
   const el = svgContainer.value
@@ -422,7 +408,9 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  detachWheelListener()
 })
+
 </script>
 
 <style scoped>
@@ -555,6 +543,19 @@ onUnmounted(() => {
   min-height: 0;
   margin: 0;
   padding: 0;
+  position: relative;
+}
+
+.overlay-loader {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  color: #333;
+  font-weight: 500;
 }
 
 .loading-state,
