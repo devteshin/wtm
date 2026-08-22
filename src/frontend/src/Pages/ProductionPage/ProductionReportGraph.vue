@@ -1,93 +1,119 @@
 <template>
   <div class="mermaid-container" ref="containerRef">
     <div class="graph-controls">
-      <!-- Управление масштабом -->
-      <el-button size="small" @click="zoomOut" plain type="info">
+      <!-- Переключатель вида: граф / таблицы -->
+      <el-radio-group v-model="viewMode" size="small">
+        <el-radio-button label="graph">Граф</el-radio-button>
+        <el-radio-button label="tables">Таблицы расчёта</el-radio-button>
+      </el-radio-group>
+
+      <span class="separator-line" />
+
+      <!-- Управление масштабом (только для графа) -->
+      <el-button
+        size="small"
+        @click="zoomOut"
+        plain
+        type="info"
+        :disabled="viewMode !== 'graph'"
+      >
         <template #icon><el-icon :size="14"><Minus /></el-icon></template>
       </el-button>
-      <span class="zoom-value">{{ Math.round(scale * 100) }}%</span>
-      <el-button size="small" @click="zoomIn" plain type="info">
+      <span
+        class="zoom-value"
+        v-if="viewMode === 'graph'"
+      >{{ Math.round(scale * 100) }}%</span>
+      <el-button
+        size="small"
+        @click="zoomIn"
+        plain
+        type="info"
+        :disabled="viewMode !== 'graph'"
+      >
         <template #icon><el-icon :size="14"><Plus /></el-icon></template>
       </el-button>
 
-      <!-- Сброс и обновление -->
-      <el-button size="small" @click="resetView" plain type="primary">Сброс</el-button>
+      <el-button
+        size="small"
+        @click="resetView"
+        plain
+        type="primary"
+        :disabled="viewMode !== 'graph'"
+      >Сброс</el-button>
 
       <span class="separator-line" />
 
       <div class="coeff-toggle-group">
-        <span class="coeff-label">с учётом коэффициентов списания материалов</span>
+        <span class="coeff-label">с учётом коэффициентов списания</span>
         <el-switch
           v-model="withCoefficients"
           size="small"
-        />
-        <span class="separator-line" />
-        <span class="coeff-label">таблицы расчёта коэффициентов</span>
-        <el-switch
-          v-model="withCoefficientsDetailsTables"
-          :disabled="!withCoefficients"
-          size="small"
+          :disabled="viewMode !== 'graph'"
+          @change="onCoeffChange"
         />
       </div>
       <span class="separator-line" />
     </div>
 
-    <!-- Таблицы расчётов (показываются только если флаг включён) -->
     <div
-      v-if="withCoefficients && withCoefficientsDetailsTables"
-      class="coeff-tables-wrapper"
+      v-if="viewMode === 'tables'"
+      class="tables-view-wrapper"
     >
-      <!-- Таблица 1: Расчёт коэффициентов списания -->
-      <div class="coeff-table-card">
-        <h4 class="table-title">Таблица расчёта коэффициентов списания</h4>
-        <el-table
-          :data="store.production_graph_data?.operation_sequences || []"
-          style="width: 100%"
-          :border="true"
-          size="small"
-        >
-          <el-table-column prop="operation_sequence" label="Операция (последовательность)" width="220" />
-          <el-table-column prop="koeff" label="Коэффициент" width="120">
-            <template #default="scope">
-              {{ scope.row.koeff.toFixed(4) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="next_operation" label="Следующая операция" />
-        </el-table>
-      </div>
+      <div class="tables-scroll-area">
+        <!-- Таблица 1: Расчёт коэффициентов списания -->
+        <div class="coeff-table-card">
+          <h4 class="table-title">Таблица расчёта коэффициентов списания</h4>
+          <el-table
+            :data="store.production_graph_data?.operation_sequences || []"
+            style="width: 100%"
+            :border="true"
+            size="small"
+          >
+            <el-table-column prop="operation_sequence" label="Операция (последовательность)" width="220" />
+            <el-table-column prop="koeff" label="Коэффициент" width="120">
+              <template #default="scope">
+                {{ scope.row.koeff.toFixed(4) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="next_operation" label="Следующая операция" />
+          </el-table>
+        </div>
 
-      <!-- Таблица 2: Расчётные веса списания исходных материалов -->
-      <div class="coeff-table-card">
-        <h4 class="table-title">Расчётные веса списания исходных материалов</h4>
-        <el-table
-          :data="store.production_graph_data?.raw_material_node || []"
-          style="width: 100%"
-          :border="true"
-          size="small"
-        >
-          <el-table-column prop="material" label="Материал" width="200" />
-          <el-table-column prop="adjusted_weight_out" label="Скорректированный вес (кг)">
-            <template #default="scope">
-              {{ Number(scope.row.adjusted_weight_out).toFixed(2) }}
-            </template>
-          </el-table-column>
-        </el-table>
+        <!-- Таблица 2: Расчётные веса списания исходных материалов -->
+        <div class="coeff-table-card">
+          <h4 class="table-title">Расчётные веса списания исходных материалов</h4>
+          <el-table
+            :data="store.production_graph_data?.raw_material_node || []"
+            style="width: 100%"
+            :border="true"
+            size="small"
+          >
+            <el-table-column prop="material" label="Материал" width="200" />
+            <el-table-column prop="adjusted_weight_out" label="Скорректированный вес (кг)">
+              <template #default="scope">
+                {{ Number(scope.row.adjusted_weight_out).toFixed(2) }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </div>
     </div>
 
-    <div v-if="loading" class="loading-state">Строим граф...</div>
-    <div v-else-if="error" class="error-state">{{ error }}</div>
+    <!-- Вид: Граф -->
+    <div v-else class="graph-view-wrapper">
+      <div v-if="loading" class="loading-state">Строим граф...</div>
+      <div v-else-if="error" class="error-state">{{ error }}</div>
 
-    <!-- Контейнер всегда есть, но содержимое скрыто через CSS -->
-    <div
-      ref="svgContainer"
-      class="mermaid-render-area"
-      :class="{ 'mermaid-hidden': isRenderingMermaid }"
-      @mousedown="onPanStart"
-      @mouseleave="onPanEnd"
-      @mouseup="onPanEnd"
-    >
-      <!-- Сюда Mermaid вставит SVG -->
+      <div
+        ref="svgContainer"
+        class="mermaid-render-area"
+        :class="{ 'mermaid-hidden': isRenderingMermaid }"
+        @mousedown="onPanStart"
+        @mouseleave="onPanEnd"
+        @mouseup="onPanEnd"
+      >
+        <!-- Сюда Mermaid вставит SVG -->
+      </div>
     </div>
   </div>
 </template>
@@ -109,8 +135,9 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const isRendered = ref(false)
 const isRenderingMermaid = ref(false)
+let wheelListenerAttached = false
 
-// Состояние вида: зум и панорамирование
+// Состояние вида: зум и панорамирование (только для графа)
 const scale = ref(1)
 const panX = ref(0)
 const panY = ref(0)
@@ -120,7 +147,9 @@ const maxScale = 3
 
 // Флаги отображения
 const withCoefficients = ref(false)
-const withCoefficientsDetailsTables = ref(false)
+
+// Режим отображения: 'graph' или 'tables'
+const viewMode = ref<'graph' | 'tables'>('graph')
 
 const store = useApplicationStore()
 
@@ -272,6 +301,9 @@ function get_mermaid_code(withCoeff: boolean = true): string {
 const renderMermaid = (mermaidStr: string) => {
   if (!svgContainer.value) return
 
+  // Отключаем wheel, пока перерисовываем
+  detachWheelListener()
+
   svgContainer.value.innerHTML = ''
   const source = mermaidStr.trim()
   if (!source) {
@@ -287,13 +319,11 @@ const renderMermaid = (mermaidStr: string) => {
   rawBlock.innerHTML = source
   svgContainer.value.appendChild(rawBlock)
 
-  // Принудительный reflow
-  void svgContainer.value.offsetHeight
+  void svgContainer.value.offsetHeight // reflow
 
   nextTick(async () => {
     const rect = svgContainer.value?.getBoundingClientRect()
     if (!rect?.width || !rect?.height) {
-      console.warn('[Mermaid] Контейнер нулевой — рендер отменяется')
       isRenderingMermaid.value = false
       return
     }
@@ -310,6 +340,9 @@ const renderMermaid = (mermaidStr: string) => {
     isRendered.value = true
     applyTransform()
     isRenderingMermaid.value = false
+
+    // Включаем wheel только после того, как SVG реально появился
+    attachWheelListener()
   })
 }
 
@@ -337,141 +370,149 @@ const renderGraph = async () => {
   }
 }
 
+const onCoeffChange = async () => {
+  if (viewMode.value === 'graph') {
+    scale.value = 1
+    await renderGraph()
+  }
+}
+
 watch(withCoefficients, async () => {
   await renderGraph()
 })
 
-watch(withCoefficientsDetailsTables, () => {
-  // Таблицы не требуют перерисовки графа, но можно добавить логику, если позже понадобится
-  // Например, пересчёт сводных значений или валидацию данных
+watch(viewMode, async (newMode) => {
+  if (newMode === 'graph') {
+    await renderGraph()
+  } else {
+    // Уходим из режима графа — отключаем зум по колесу
+    detachWheelListener()
+  }
 })
+
+const attachWheelListener = () => {
+  if (wheelListenerAttached) return
+  const el = svgContainer.value
+  if (!el) return
+
+  el.addEventListener('wheel', handleWheel, { passive: false })
+  wheelListenerAttached = true
+}
+
+const detachWheelListener = () => {
+  const el = svgContainer.value
+  if (!el) return
+
+  el.removeEventListener('wheel', handleWheel)
+  wheelListenerAttached = false
+}
 
 onMounted(async () => {
   await renderGraph()
-
-  if (svgContainer.value) {
-    svgContainer.value.addEventListener('wheel', handleWheel, { passive: false })
-  }
 })
 
 onUnmounted(() => {
-  if (svgContainer.value) {
-    svgContainer.value.removeEventListener('wheel', handleWheel)
-  }
 })
 </script>
 
 <style scoped>
 .mermaid-container {
   width: 100%;
+  height: calc(100vh - 220px);
+  max-height: calc(100vh - 120px);
   position: relative;
+  overflow: auto; /* единственный скролл у компонента */
+  padding-bottom: 8px;
+  box-sizing: border-box;
 }
 
 .loading-state,
 .error-state {
-  padding: 20px;
+  padding: 24px;
   text-align: center;
+  color: #333;
+  background: #f9fafb;
+  border-radius: 6px;
+  margin-top: 16px;
 }
 
 .error-state {
-  color: #ff4d4f;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
 }
 
+/* Панель управления */
 .graph-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  justify-content: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .separator-line {
   width: 1px;
-  height: 24px;
-  background: #e5e7eb;
+  height: 28px;
+  background-color: #e5e7eb;
   margin: 0 8px;
 }
 
 .zoom-value {
   font-weight: 600;
-  min-width: 48px;
+  font-size: 13px;
+  min-width: 56px;
   text-align: center;
-}
-
-/* Зона рендера: фиксируем размеры и скролл */
-.mermaid-render-area {
-  width: 100%;
-  min-height: calc(100vh - 260px);
-  max-height: calc(100vh - 260px);
-  overflow: auto;
-  text-align: center;
-  box-sizing: border-box;
-  cursor: grab;
-}
-
-.mermaid-render-area:active {
-  cursor: grabbing;
-}
-
-/* Стили скроллбара */
-.mermaid-render-area::-webkit-scrollbar {
-  width: 8px;
-}
-
-.mermaid-render-area::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.mermaid-render-area::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-
-.mermaid-render-area.mermaid-hidden {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.mermaid-render-area.mermaid-hidden::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.9);
-  z-index: 10;
 }
 
 .coeff-toggle-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .coeff-label {
   font-size: 13px;
   line-height: 20px;
-  color: #333;
+  color: #4b5563;
   white-space: nowrap;
 }
 
-/* Контейнер для двух таблиц */
-.coeff-tables-wrapper {
+/* --- Режим «Таблицы»: Grid --- */
+.tables-view-wrapper {
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: row;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
 }
 
-/* Карточка таблицы — для отступов и фона */
+.tables-scroll-area {
+  display: grid;
+  /* auto-fit: если две карточки не влезают — будет одна колонка */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  padding: 4px 0;
+}
+
 .coeff-table-card {
-  flex: 1 1 450px; /* на десктопе занимают примерно половину, но не меньше 450px */
-  min-width: 300px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  /* ВАЖНО: нет min-width, карточка может сжиматься */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .table-title {
@@ -483,15 +524,75 @@ onUnmounted(() => {
   padding-bottom: 6px;
 }
 
-/* Адаптив: на узких экранах таблицы друг под другом */
-@media (max-width: 960px) {
-  .coeff-tables-wrapper {
-    flex-direction: column;
+/* --- Режим «Граф» --- */
+.graph-view-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mermaid-render-area {
+  flex: 1;
+  min-height: 300px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  cursor: grab;
+  position: relative;
+}
+
+.mermaid-render-area:active {
+  cursor: grabbing;
+}
+
+.mermaid-render-area::-webkit-scrollbar {
+  width: 8px;
+}
+.mermaid-render-area::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.mermaid-render-area::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.mermaid-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mermaid-hidden::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .graph-controls {
+    justify-content: space-between;
+  }
+  .separator-line {
+    display: none;
+  }
+  .coeff-toggle-group {
+    width: 100%;
+    justify-content: flex-end;
+    order: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .tables-scroll-area {
+    grid-template-columns: 1fr !important; /* Принудительно одна колонка */
   }
 
   .coeff-table-card {
-    flex: 1 1 100%;
-    min-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
   }
 }
 </style>
