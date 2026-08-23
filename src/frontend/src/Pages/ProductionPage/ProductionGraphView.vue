@@ -1,7 +1,7 @@
 <template>
   <div class="graph-wrapper">
     <div class="graph-controls">
-      <div class="coeff-toggle-group">
+      <div v-if="props.type==='product'" class="coeff-toggle-group">
         <span class="coeff-label">с учётом коэффициентов списания</span>
         <el-switch v-model="withCoefficients" size="small" />
       </div>
@@ -183,15 +183,15 @@ function get_mermaid_code(withCoeff: boolean = false): string {
         ? [
             row.process_name,
             row.operation,
-            `Выход продуктов: ${row.product_operation_weight}`,
-            `Выход операции всего: ${row.total_operation_weight}`,
+            `Выход продуктов: ${row.product_operation_weight} кг`,
+            `Выход операции всего: ${row.total_operation_weight} кг`,
             `Коэфф: ${row.koeff}`,
           ]
         : [
             row.process_name,
             row.operation,
-            `Выход продуктов: ${row.product_operation_weight}`,
-            `Выход операции всего: ${row.total_operation_weight}`,
+            `Выход продуктов: ${row.product_operation_weight} кг`,
+            `Выход операции всего: ${row.total_operation_weight} кг`,
           ]
       const label = escapeLabel(parts.join('<br/>'))
       lines.push(`operation_${row.operation_id}["${label}"]`)
@@ -237,8 +237,8 @@ function get_mermaid_code(withCoeff: boolean = false): string {
       const parts = [
             row.process_name,
             row.operation,
-            `Выход продуктов: ${row.product_operation_weight}`,
-            `Выход операции всего: ${row.total_operation_weight}`,
+            `Вход материалов: ${row.material_operation_weight} кг`,
+            `Вход материалов всего: ${row.total_operation_weight} кг`,
           ]
       const label = escapeLabel(parts.join('<br/>'))
       lines.push(`operation_${row.operation_id}["${label}"]`)

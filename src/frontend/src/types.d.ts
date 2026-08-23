@@ -160,7 +160,7 @@ declare namespace frontend {
     export type IProductionGraphOperationNodeForward = {
         operation: string
         total_operation_weight: number
-        product_operation_weight: number
+        material_operation_weight: number
         operation_id: number
         process_name: string
     }    
