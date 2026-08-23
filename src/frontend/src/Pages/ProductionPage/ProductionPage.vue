@@ -252,6 +252,20 @@
                 </el-icon>
               </template>
             </el-button>
+            <el-button
+              type="info"
+              plain
+              size="small"
+              :disabled="selectedProduct.length === 0"
+              @click="openCoeffTables(selectedProduct)"
+              :title="selectedProduct.length ? 'Показать таблицы списания материалов' : 'Нет выбранных продуктов'"
+            >
+              <template #icon>
+                <el-icon :size="16">
+                  <Grid />
+                </el-icon>
+              </template>
+            </el-button>
 
           </div>
         </el-form-item>
@@ -275,18 +289,29 @@
         <!-- Зона графа -->
         <div v-if="isGraphVisible" class="graph-wrapper">
           <div class="graph-header">
-            <h3>Граф зависимостей ({{ graphType }})</h3>
+            <h3>Граф зависимостей</h3>
             <el-button link size="small" @click="closeGraph">
               Закрыть
             </el-button>
           </div>
-
-           <ProductionReportGraph
+           <ProductionGraphView
             :type="graphType!"
             :ids="graphIds"
             @close="closeGraph"
           />
-           
+        </div>
+        <!-- Зона таблиц списания материалов -->
+        <div v-else-if="isCoeffTablesVisible" class="graph-wrapper">
+          <div class="graph-header">
+            <h3>Списание материалов на производство продуктов</h3>
+            <el-button link size="small" @click="closeCoeffTables">
+              Закрыть
+            </el-button>
+          </div>
+           <ProductionCoeffTablesView
+            :ids="coeffTablesIds"
+            @close="closeCoeffTables"
+          />
         </div>
 
         <!-- Таблица отчёта (показывается, когда граф закрыт) -->
@@ -305,9 +330,10 @@ import { ref, computed, nextTick, onMounted, Ref } from 'vue'
 import useApplicationStore from '@/store'
 import { useProductionReportStore } from '@/storeProductionReport'
 import ProductionReportTable from './ProductionReportTable.vue'
-import ProductionReportGraph from './ProductionReportGraph.vue'
+import ProductionGraphView from './ProductionGraphView.vue'
+import ProductionCoeffTablesView from './ProductionCoeffTablesView.vue'
 import { ElMessageBox } from 'element-plus'
-import { FolderOpened, Histogram } from '@element-plus/icons-vue'
+import { FolderOpened, Histogram, Grid } from '@element-plus/icons-vue'
 
 const reportTableRef = ref<typeof ProductionReportTable | null>(null)
 
@@ -375,8 +401,10 @@ const selectedPeriod = computed({
 })
 
 const isGraphVisible = ref(false)
+const isCoeffTablesVisible = ref(false)
 const graphType = ref<'material' | 'product' | 'operation' | null>(null)
 const graphIds = ref<number[]>([])
+const coeffTablesIds = ref<number[]>([])
 
 onMounted(async () => {
   isSkeletonLoading.value = true
@@ -602,6 +630,20 @@ const closeGraph = () => {
   isGraphVisible.value = false
   graphType.value = null
   graphIds.value = []
+}
+
+const openCoeffTables = (ids: number[]) => {
+  if (ids.length === 0) {
+    ElMessageBox.alert('Сначала выберите хотя бы один элемент в фильтре.')
+    return
+  }
+  coeffTablesIds.value = ids
+  isCoeffTablesVisible.value = true
+}
+
+const closeCoeffTables = () => {
+  isCoeffTablesVisible.value = false
+  coeffTablesIds.value = []
 }
 
 
