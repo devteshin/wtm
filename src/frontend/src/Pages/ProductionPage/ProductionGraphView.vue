@@ -142,68 +142,105 @@ const handleWheel = (e: WheelEvent) => {
   }
 }
 
-function get_mermaid_code(withCoeff: boolean = true): string {
-  const data = store.production_graph_data
-  if (!data) return ''
+function get_mermaid_code(withCoeff: boolean = false): string {
+  const lines: string[] = []
 
-  const lines: string[] = ['flowchart RL']
-  lines.push('classDef product fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
-  lines.push('classDef rawMat fill:#fff3e0,stroke:#ff9800,stroke-width:2px')
+  if (props.type === 'product') {
+    const data_product = store.production_graph_data_product as frontend.IProductionGraphDataBackward;
 
-  const escapeLabel = (text: string) => text.replace(/"/g, '\\"')
+    lines.push('flowchart RL')
+    lines.push('classDef product fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
+    lines.push('classDef rawMat fill:#fff3e0,stroke:#ff9800,stroke-width:2px')
 
-  for (const row of data.material_chain) {
-    let label = ''
-    const adjusted_material_weight_label = row.adjusted_material_weight &&
-      row.material_weight !== row.adjusted_material_weight
-      ? `(${row.adjusted_material_weight} кг)`
-      : ''
+    const escapeLabel = (text: string) => text.replace(/"/g, '\\"')
 
-    if (withCoeff) {
-      label = row.koeff === 1
-        ? `-->|"${row.material_weight} кг ${adjusted_material_weight_label}"|`
-        : `-->|"${row.material_weight} кг (${row.koeff}) ${adjusted_material_weight_label}"|`
-    } else {
-      label = `-->|${row.material_weight} кг|`
+    for (const row of data_product.material_chain) {
+      let label = ''
+      const adjusted_material_weight_label = row.adjusted_material_weight &&
+        row.material_weight !== row.adjusted_material_weight
+        ? `(${row.adjusted_material_weight} кг)`
+        : ''
+
+      if (withCoeff) {
+        label = row.koeff === 1
+          ? `-->|"${row.material_weight} кг ${adjusted_material_weight_label}"|`
+          : `-->|"${row.material_weight} кг (${row.koeff}) ${adjusted_material_weight_label}"|`
+      } else {
+        label = `-->|${row.material_weight} кг|`
+      }
+      lines.push(`material_${row.material_id} ${label} operation_${row.operation_id}`)
     }
-    lines.push(`material_${row.material_id} ${label} operation_${row.operation_id}`)
-  }
 
-  for (const row of data.product_chain) {
-    const label = withCoeff && row.koeff !== 1
-      ? `-->|"${row.product_weight} кг (${row.koeff})"|`
-      : `-->|${row.product_weight} кг|`
-    lines.push(`operation_${row.operation_id} ${label} material_${row.product_id}`)
-  }
+    for (const row of data_product.product_chain) {
+      const label = withCoeff && row.koeff !== 1
+        ? `-->|"${row.product_weight} кг (${row.koeff})"|`
+        : `-->|${row.product_weight} кг|`
+      lines.push(`operation_${row.operation_id} ${label} material_${row.product_id}`)
+    }
 
-  for (const row of data.operation_node) {
-    const parts = withCoeff
-      ? [
-          row.process_name,
-          row.operation,
-          `Выход продуктов: ${row.product_operation_weight}`,
-          `Выход операции всего: ${row.total_operation_weight}`,
-          `Коэфф: ${row.koeff}`,
-        ]
-      : [row.process_name, row.operation]
-    const label = escapeLabel(parts.join('<br/>'))
-    lines.push(`operation_${row.operation_id}["${label}"]`)
-  }
+    for (const row of data_product.operation_node) {
+      const parts = withCoeff
+        ? [
+            row.process_name,
+            row.operation,
+            `Выход продуктов: ${row.product_operation_weight}`,
+            `Выход операции всего: ${row.total_operation_weight}`,
+            `Коэфф: ${row.koeff}`,
+          ]
+        : [row.process_name, row.operation]
+      const label = escapeLabel(parts.join('<br/>'))
+      lines.push(`operation_${row.operation_id}["${label}"]`)
+    }
 
-  for (const row of data.material_node) {
-    const label = escapeLabel(`${row.material}`)
-    lines.push(`material_${row.material_id}(["${label}"]):::product`)
-  }
+    for (const row of data_product.material_node) {
+      const label = escapeLabel(`${row.material}`)
+      lines.push(`material_${row.material_id}(["${label}"]):::product`)
+    }
 
-  for (const row of data.raw_material_node) {
-    const parts = [
-      `${row.material}`,
-      withCoeff && row.weight_out && row.weight_out !== row.adjusted_weight_out
-        ? `Вес: ${row.weight_out} (${row.adjusted_weight_out}) кг.`
-        : `Вес: ${row.weight_out} кг.`,
-    ]
-    const label = escapeLabel(parts.join('<br/>'))
-    lines.push(`material_${row.material_id}(["${label}"]):::rawMat`)
+    for (const row of data_product.raw_material_node) {
+      const parts = [
+        `${row.material}`,
+        withCoeff && row.weight_out && row.weight_out !== row.adjusted_weight_out
+          ? `Вес: ${row.weight_out} (${row.adjusted_weight_out}) кг.`
+          : `Вес: ${row.weight_out} кг.`,
+      ]
+      const label = escapeLabel(parts.join('<br/>'))
+      lines.push(`material_${row.material_id}(["${label}"]):::rawMat`)
+    }
+
+
+  } else if (props.type === 'material') {
+    const data_material = store.production_graph_data_material as frontend.IProductionGraphDataForward;
+
+    lines.push('flowchart LR')
+    lines.push('classDef product fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
+    lines.push('classDef rawMat fill:#fff3e0,stroke:#ff9800,stroke-width:2px')
+
+    const escapeLabel = (text: string) => text.replace(/"/g, '\\"')
+
+    for (const row of data_material.material_chain) {
+      const label = `-->|${row.material_weight} кг|`
+      lines.push(`material_${row.material_id} ${label} operation_${row.operation_id}`)
+    }
+
+    for (const row of data_material.product_chain) {
+      const label =  `-->|${row.product_weight} кг|`
+      lines.push(`operation_${row.operation_id} ${label} material_${row.product_id}`)
+    }
+
+    for (const row of data_material.operation_node) {
+      const parts = [row.process_name, row.operation]
+      const label = escapeLabel(parts.join('<br/>'))
+      lines.push(`operation_${row.operation_id}["${label}"]`)
+    }
+
+    for (const row of data_material.material_node) {
+      const label = escapeLabel(`${row.material}`)
+      lines.push(`material_${row.material_id}(["${label}"]):::product`)
+    }
+
+  } else {
+    return '';
   }
 
   return lines.join('\n')

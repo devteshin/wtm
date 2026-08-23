@@ -71,23 +71,23 @@ declare namespace frontend {
         operation_date_out: string;
     }    
 
-    export type IProductionGraphData = {
-        product_chain: Array<IProductionGraphDataProductChain>
-        material_chain: Array<IProductionGraphDataMaterialChain>
-        operation_node: Array<IProductionGraphOperationNode>
-        material_node: Array<IProductionGraphMaterialNode>
-        raw_material_node: Array<IProductionGraphRawMaterialNode>
-        operation_sequences: Array<IProductionGraphOperationSequences>
+    export type IProductionGraphDataBackward = {
+        product_chain: Array<IProductionGraphDataProductChainBackward>
+        material_chain: Array<IProductionGraphDataMaterialChainBackward>
+        operation_node: Array<IProductionGraphOperationNodeBackward>
+        material_node: Array<IProductionGraphMaterialNodeBackward>
+        raw_material_node: Array<IProductionGraphRawMaterialNodeBackward>
+        operation_sequences: Array<IProductionGraphOperationSequencesBackward>
     }    
 
-    export type IProductionGraphOperationSequences = {
+    export type IProductionGraphOperationSequencesBackward = {
         operation_sequences: string
         koeff: number
         next_operation: string
     }    
 
 
-    export type IProductionGraphDataProductChain = {
+    export type IProductionGraphDataProductChainBackward = {
         product: string
         operation: string
         product_weight: number
@@ -97,7 +97,7 @@ declare namespace frontend {
         operation_id: number
     }    
 
-    export type IProductionGraphDataMaterialChain = {
+    export type IProductionGraphDataMaterialChainBackward = {
         material: string
         operation: string
         material_weight: number
@@ -108,7 +108,7 @@ declare namespace frontend {
         operation_id: number
     }    
 
-    export type IProductionGraphOperationNode = {
+    export type IProductionGraphOperationNodeBackward = {
         operation: string
         total_operation_weight: number
         product_operation_weight: number
@@ -117,17 +117,57 @@ declare namespace frontend {
         process_name: string
     }    
 
-    export type IProductionGraphMaterialNode = {
+    export type IProductionGraphMaterialNodeBackward = {
         material: string
         weight_in: number
         weight_out: number
         material_id: number
     }    
 
-    export type IProductionGraphRawMaterialNode = {
+    export type IProductionGraphRawMaterialNodeBackward = {
         material: string
         weight_out: number
         adjusted_weight_out: number
+        material_id: number
+    }    
+
+    export type IProductionGraphDataForward = {
+        product_chain: Array<IProductionGraphDataProductChainForward>
+        material_chain: Array<IProductionGraphDataMaterialChainForward>
+        operation_node: Array<IProductionGraphOperationNodeForward>
+        material_node: Array<IProductionGraphMaterialNodeForward>
+    }    
+
+    export type IProductionGraphDataProductChainForward = {
+        product: string
+        operation: string
+        product_weight: number
+        operation_level: number
+        product_id: number
+        operation_id: number
+    }    
+
+    export type IProductionGraphDataMaterialChainForward = {
+        material: string
+        operation: string
+        material_weight: number
+        operation_level: number
+        material_id: number
+        operation_id: number
+    }    
+
+    export type IProductionGraphOperationNodeForward = {
+        operation: string
+        total_operation_weight: number
+        product_operation_weight: number
+        operation_id: number
+        process_name: string
+    }    
+
+    export type IProductionGraphMaterialNodeForward = {
+        material: string
+        weight_in: number
+        weight_out: number
         material_id: number
     }    
 

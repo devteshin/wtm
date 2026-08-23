@@ -25,7 +25,7 @@
         <div class="coeff-table-card">
           <h4 class="table-title">Таблица расчёта коэффициентов списания</h4>
           <el-table
-            :data="store.production_graph_data?.operation_sequences || []"
+            :data="store.production_graph_data_product?.operation_sequences || []"
             style="width: 100%"
             :border="true"
             size="small"
@@ -45,7 +45,7 @@
         <div class="coeff-table-card">
           <h4 class="table-title">Расчётные веса списания исходных материалов</h4>
           <el-table
-            :data="store.production_graph_data?.raw_material_node || []"
+            :data="store.production_graph_data_product?.raw_material_node || []"
             style="width: 100%"
             :border="true"
             size="small"
@@ -85,7 +85,7 @@ const exportLoading = ref(false)
 
 /**
  * Запрос данных для таблиц.
- * Данные попадают в store.production_graph_data, откуда таблицы их берут.
+ * Данные попадают в store.production_graph_data_product, откуда таблицы их берут.
  */
 const fetchData = async () => {
   const item_ids = props.ids.toString() ?? ''
@@ -118,21 +118,21 @@ const onExportExcel = async () => {
   exportLoading.value = true
 
   // Проверка наличия данных
-  if (!store.production_graph_data) {
+  if (!store.production_graph_data_product) {
     // Если данных нет — сначала пробуем подгрузить
     await fetchData()
-    if (!store.production_graph_data) {
+    if (!store.production_graph_data_product) {
       exportLoading.value = false
       return
     }
   }
 
   // TODO: здесь будет реальная логика экспорта:
-  // 1. Преобразовать store.production_graph_data в массив строк для XLSX
+  // 1. Преобразовать store.production_graph_data_product в массив строк для XLSX
   // 2. Создать Blob и вызвать saveAs из file-saver
   console.log('Экспорт в Excel:', {
-    operation_sequences: store.production_graph_data.operation_sequences,
-    raw_material_node: store.production_graph_data.raw_material_node,
+    operation_sequences: store.production_graph_data_product.operation_sequences,
+    raw_material_node: store.production_graph_data_product.raw_material_node,
   })
 
   setTimeout(() => {

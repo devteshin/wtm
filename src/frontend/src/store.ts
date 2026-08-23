@@ -29,8 +29,10 @@ export default defineStore("app_store", () => {
     const materials_data = ref<frontend.IMaterialsData | null>(null);
     /** данные отчета по производству */
     const production_report_data = ref<Array<frontend.IProductionReportData | null>> ([]);
-    /** данные графа по производству */
-    const production_graph_data = ref<frontend.IProductionGraphData | null> (null);
+    /** данные графа по производству (продукт - к продукту от материалов) */
+    const production_graph_data_product = ref<frontend.IProductionGraphDataBackward | null> (null);
+    /** данные графа по производству (материал - от материала к продуктам) */
+    const production_graph_data_material = ref<frontend.IProductionGraphDataForward | null> (null);
     /** подбор материалов */
     const selection_data = ref<frontend.ISelectionData | null>(null);
     /** подбор материалов - значения показателей подбора */
@@ -62,7 +64,12 @@ export default defineStore("app_store", () => {
 
     /** запрос к API для получения данных для графа по производству */
     const fetchProductionGraphData = (params?: frontend.IProductionGraphQueryParams) => {
-        return api.fetchProductionGraphData(params).then(body => production_graph_data.value = body).finally(() => loading.value = false);
+        if (params?.type === 'product') {
+            return api.fetchProductionGraphData(params).then(body => production_graph_data_product.value = body).finally(() => loading.value = false);
+        }
+        if (params?.type === 'material') {
+            return api.fetchProductionGraphData(params).then(body => production_graph_data_material.value = body).finally(() => loading.value = false);
+        }
     };
 
     /** запрос к API для получения данных по остаткам материалов подбора */
@@ -319,7 +326,8 @@ export default defineStore("app_store", () => {
         materials_meta,
         materials_data,
         production_report_data,
-        production_graph_data,
+        production_graph_data_product,
+        production_graph_data_material,
         selection_data,
         raw_materials_data,
         selection_ind_data,
