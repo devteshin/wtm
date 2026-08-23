@@ -136,6 +136,7 @@ declare namespace frontend {
         material_chain: Array<IProductionGraphDataMaterialChainForward>
         operation_node: Array<IProductionGraphOperationNodeForward>
         material_node: Array<IProductionGraphMaterialNodeForward>
+        final_product_node: Array<IProductionGraphFinalProductNodeBackward>
     }    
 
     export type IProductionGraphDataProductChainForward = {
@@ -171,6 +172,12 @@ declare namespace frontend {
         material_id: number
     }    
 
+     export type IProductionGraphFinalProductNodeBackward = {
+        product: string
+        weight_in: number
+        product_id: number
+    }    
+   
     export type ISelectionData = {
         stock_name: string
         material: string

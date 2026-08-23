@@ -187,7 +187,12 @@ function get_mermaid_code(withCoeff: boolean = false): string {
             `Выход операции всего: ${row.total_operation_weight}`,
             `Коэфф: ${row.koeff}`,
           ]
-        : [row.process_name, row.operation]
+        : [
+            row.process_name,
+            row.operation,
+            `Выход продуктов: ${row.product_operation_weight}`,
+            `Выход операции всего: ${row.total_operation_weight}`,
+          ]
       const label = escapeLabel(parts.join('<br/>'))
       lines.push(`operation_${row.operation_id}["${label}"]`)
     }
@@ -214,7 +219,7 @@ function get_mermaid_code(withCoeff: boolean = false): string {
 
     lines.push('flowchart LR')
     lines.push('classDef product fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
-    lines.push('classDef rawMat fill:#fff3e0,stroke:#ff9800,stroke-width:2px')
+    lines.push('classDef finalProduct fill:#fff3e0,stroke:#ff9800,stroke-width:2px')
 
     const escapeLabel = (text: string) => text.replace(/"/g, '\\"')
 
@@ -229,7 +234,12 @@ function get_mermaid_code(withCoeff: boolean = false): string {
     }
 
     for (const row of data_material.operation_node) {
-      const parts = [row.process_name, row.operation]
+      const parts = [
+            row.process_name,
+            row.operation,
+            `Выход продуктов: ${row.product_operation_weight}`,
+            `Выход операции всего: ${row.total_operation_weight}`,
+          ]
       const label = escapeLabel(parts.join('<br/>'))
       lines.push(`operation_${row.operation_id}["${label}"]`)
     }
@@ -238,6 +248,16 @@ function get_mermaid_code(withCoeff: boolean = false): string {
       const label = escapeLabel(`${row.material}`)
       lines.push(`material_${row.material_id}(["${label}"]):::product`)
     }
+
+    for (const row of data_material.final_product_node) {
+      const parts = [
+        `${row.product}`,
+        `Вес: ${row.weight_in} кг.`,
+      ]
+      const label = escapeLabel(parts.join('<br/>'))
+      lines.push(`material_${row.product_id}(["${label}"]):::finalProduct`)
+    }
+    
 
   } else {
     return '';

@@ -112,6 +112,8 @@ async def select_production_graph_data(
                 graph_data["operation_node"] = await cur.fetchall()
                 await cur.execute("SELECT * FROM tmp_graph_material_node")
                 graph_data["material_node"] = await cur.fetchall()
+                await cur.execute("SELECT * FROM tmp_graph_final_product_node")
+                graph_data["final_product_node"] = await cur.fetchall()
 
 
         except Exception as e:
