@@ -11,7 +11,7 @@
         size="small"
         type="success"
         :loading="exportLoading"
-        @click="onExportExcel"
+        @click="exportToExcelClick"
       >
         <template #icon><el-icon :size="14"><Download /></el-icon></template>
         Экспорт в Excel
@@ -72,6 +72,7 @@
 import { ref, onMounted, watch } from 'vue'
 import useApplicationStore from '@/store'
 import { Download } from '@element-plus/icons-vue'
+import { exportToExcel } from '@/utils/excelExport'
 
 const props = defineProps<{
   ids: number[]
@@ -145,6 +146,31 @@ const onExportExcel = async () => {
 onMounted(async () => {
   await fetchData()
 })
+
+const exportToExcelClick = () => {
+  const sheets = [
+    {
+      name: 'Операции и коэффициенты',
+      columns: [
+        { key: 'operation_sequence', header: 'Операция' },
+        { key: 'koeff', header: 'Коэффициент' },
+        { key: 'next_operation', header: 'Следующая операция' },
+      ],
+      data: store.production_graph_data_product?.operation_sequences || [],
+    },
+    {
+      name: 'Материалы (вес списания)',
+      columns: [
+        { key: 'material', header: 'Материал' },
+        { key: 'adjusted_weight_out', header: 'Скорректированный вес (кг)' },
+      ],
+      data: store.production_graph_data_product?.raw_material_node || [],
+    },
+  ]
+
+  exportToExcel(sheets, 'production_report')
+}
+
 
 </script>
 
