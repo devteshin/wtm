@@ -50,3 +50,4 @@ export const exportToExcel = (
 
   XLSX.writeFile(wb, filename)
 }
+

@@ -19,6 +19,18 @@
       </el-button>
 
       <el-button size="small" @click="resetView" plain type="primary">Сброс</el-button>
+
+    <span class="separator-line" />
+
+      <el-button
+        size="small"
+        type="success"
+        @click="saveGraphAsSvg"
+      >
+        <template #icon><el-icon :size="14"><Download /></el-icon></template>
+      Сохранить как SVG
+      </el-button>
+
     </div>
 
     <!-- ВАЖНО: overflow: auto здесь даёт изолированный скролл -->
@@ -38,14 +50,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import useApplicationStore from '@/store'
-import { Minus, Plus } from '@element-plus/icons-vue'
+import { Minus, Plus, Download } from '@element-plus/icons-vue'
+import { saveMermaidSvg } from '@/utils/mermaidExport'
 
 const props = defineProps<{
   type: 'material' | 'product' | 'operation'
   ids: number[]
 }>()
 
-const containerRef = ref<HTMLElement | null>(null)
 const svgContainer = ref<HTMLElement | null>(null)
 
 const loading = ref(false)
@@ -345,6 +357,11 @@ onMounted(async () => {
 onUnmounted(() => {
   detachWheelListener()
 })
+
+const saveGraphAsSvg = () => {
+  saveMermaidSvg(svgContainer.value, 'product-graph')
+}
+
 </script>
 
 <style scoped>
