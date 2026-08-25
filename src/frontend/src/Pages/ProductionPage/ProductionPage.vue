@@ -335,6 +335,7 @@ import ProductionGraphView from './ProductionGraphView.vue'
 import ProductionCoeffTablesView from './ProductionCoeffTablesView.vue'
 import { ElMessageBox } from 'element-plus'
 import { FolderOpened, Histogram, Grid } from '@element-plus/icons-vue'
+import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 
 const reportTableRef = ref<typeof ProductionReportTable | null>(null)
 
@@ -468,7 +469,6 @@ const handleLoadAllOperationOptions = async () => {
 }
 
 
-
 const loadMaterialOptions = async (material_substring: string = '', limit: number = 100) => {
   materialOptionsLoading.value = true
   try {
@@ -528,30 +528,6 @@ const handleMakeReport = async () => {
     reportTableRef.value.refresh()
   }
 }
-
-const addUniqueIdsByValue = (
-  optionList: Array<{ id: number; name: string }>,
-  selectedRef: Ref<Array<number | string>>,
-  searchValues: string
-) => {
-
-  const valuesArray = searchValues.split(',').map(item => item.trim()).filter(Boolean);
-
-  if (valuesArray.length === 0) {
-    return [];
-  }
-
-  const valuesSet = new Set(valuesArray);
-
-  const newIds = optionList.filter(item => valuesSet.has(item.name)).map(item => item.id);
-
-  const existingSet = new Set(selectedRef.value ?? []);
-  const uniqueNewIds = newIds.filter(id => !existingSet.has(id));
-
-  if (uniqueNewIds.length > 0) {
-    selectedRef.value = [...selectedRef.value, ...uniqueNewIds];
-  }
-};
 
 
 const onCellDblClick = ({ column, value }: { column: string; value: string | null | undefined }) => {
