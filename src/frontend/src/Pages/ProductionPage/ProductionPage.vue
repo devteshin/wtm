@@ -315,11 +315,12 @@
         </div>
 
         <!-- Таблица отчёта (показывается, когда граф закрыт) -->
-        <ProductionReportTable
-          v-else
-          ref="reportTableRef"
-          @cell-dblclick="onCellDblClick"
-        />
+        <div class="report-table-wrapper" v-else>
+           <ProductionReportTable
+            ref="reportTableRef"
+            @cell-dblclick="onCellDblClick"
+          />
+        </div>        
       </el-main>
     </el-container>
   </el-container>
@@ -554,7 +555,6 @@ const addUniqueIdsByValue = (
 
 
 const onCellDblClick = ({ column, value }: { column: string; value: string | null | undefined }) => {
-  //console.log('Дабл-клик: колонка =', column, ', значение =', value)
 
   if (value == null || value === '-' || value === '') {
     return;
@@ -565,7 +565,6 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
     return;
   } 
 
-  const valuesSet = new Set(valuesArray);
   let optionList: Array<{ id: number; name: string }> = [];
   let selectedRef: Ref<Array<number>> | undefined;
 
@@ -624,6 +623,7 @@ const openGraph = (type: typeof graphType.value, ids: number[]) => {
   graphType.value = type
   graphIds.value = ids
   isGraphVisible.value = true
+  isCoeffTablesVisible.value = false
 }
 
 const closeGraph = () => {
@@ -639,6 +639,7 @@ const openCoeffTables = (ids: number[]) => {
   }
   coeffTablesIds.value = ids
   isCoeffTablesVisible.value = true
+  isGraphVisible.value = false
 }
 
 const closeCoeffTables = () => {
@@ -655,6 +656,7 @@ const closeCoeffTables = () => {
   display: flex;
   width: 100%;
   box-sizing: border-box;
+  gap: 10px;
 }
 
 .sidebar {
@@ -672,7 +674,7 @@ const closeCoeffTables = () => {
 }
 
 .content-area {
-  padding: 20px;
+  padding: 0px;
   box-sizing: border-box;
   height: 100%;
   display: flex;
@@ -692,9 +694,6 @@ const closeCoeffTables = () => {
   margin-top: 16px;
 }
 
-/* --- ГЛАВНЫЕ ИСПРАВЛЕНИЯ --- */
-
-/* Контейнер-обертка: gap — единственный источник расстояния */
 .item-remote-select-wrapper {
   display: flex;
   align-items: stretch;
@@ -745,6 +744,15 @@ const closeCoeffTables = () => {
 .graph-header h3 {
   margin: 0;
   font-size: 16px;
+}
+
+.report-table-wrapper {
+  flex: 1; /* Растягивается на всё свободное место */
+  min-height: 0; /* КРИТИЧНО: позволяет вложенным элементам со скроллом сжиматься */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  /* Убираем height: 100% отсюда! Это ломает расчет высоты внутри flex-контейнеров */
 }
 
 </style>

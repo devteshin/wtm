@@ -14,7 +14,6 @@
       style="width: 100%"
       border
       stripe
-      :height="tableHeight"
     >
       <el-table-column prop="operation_date_in" label="Дата переработки" width="120" />
       
@@ -125,6 +124,7 @@ const refresh = async () => {
 }
 
 defineExpose({ refresh })
+
 </script>
 
 <style scoped>

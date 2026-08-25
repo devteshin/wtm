@@ -6,7 +6,6 @@
 
       <span class="separator-line" />
 
-      <!-- Кнопка экспорта (заглушка) -->
       <el-button
         size="small"
         type="success"
@@ -109,37 +108,6 @@ const fetchData = async () => {
   } finally {
     loading.value = false
   }
-}
-
-/**
- * Экспорт в Excel (заглушка).
- * Здесь будет логика с file-saver / генерация Blob.
- */
-const onExportExcel = async () => {
-  exportLoading.value = true
-
-  // Проверка наличия данных
-  if (!store.production_graph_data_product) {
-    // Если данных нет — сначала пробуем подгрузить
-    await fetchData()
-    if (!store.production_graph_data_product) {
-      exportLoading.value = false
-      return
-    }
-  }
-
-  // TODO: здесь будет реальная логика экспорта:
-  // 1. Преобразовать store.production_graph_data_product в массив строк для XLSX
-  // 2. Создать Blob и вызвать saveAs из file-saver
-  console.log('Экспорт в Excel:', {
-    operation_sequences: store.production_graph_data_product.operation_sequences,
-    raw_material_node: store.production_graph_data_product.raw_material_node,
-  })
-
-  setTimeout(() => {
-    exportLoading.value = false
-    // В будущем: вызов saveAs(blob, 'report.xlsx')
-  }, 800)
 }
 
 // При монтировании сразу запрашиваем данные
