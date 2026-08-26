@@ -60,6 +60,12 @@ declare namespace frontend {
         [key: string]: number;
     }    
 
+    export type IProductionReportDataWithLimit = {
+        data: Array<IProductionReportData>
+        total: number
+    }    
+
+
     export type IProductionReportData = {
         operation_date_in: string
         process: string
@@ -211,6 +217,8 @@ declare namespace frontend {
         schema_ids?: string;
         date_start?: string;
         date_end?: string;
+        page?: number;
+        limit?: number;
     }
 
     export type IProductionGraphQueryParams = {

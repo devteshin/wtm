@@ -59,20 +59,29 @@ async def select_production_report_data(
             operation_ids: str = '',
             schema_ids: str = '',
             date_start: str = '',
-            date_end: str = ''
+            date_end: str = '',
+            limit: int = 0,
+            page: int = 0
     ):
 
     async with conn.cursor() as cur:
         try:
-            await cur.callproc("report_production", [date_start, date_end, stock_ids, schema_ids, process_ids, operation_ids, material_ids, product_ids])
+            await cur.callproc("report_production", [date_start, date_end, stock_ids, schema_ids, process_ids, operation_ids, material_ids, product_ids, limit, page])
+            report_result = await cur.fetchall()
+
+            await cur.execute("SELECT @out_total_report_production AS total_count")
+            result = await cur.fetchone()
+            total_count = result.get("total_count", 0)
 
         except Exception as e:
             print(f"ERROR callproc \"report_production\": {e}")
-            return report_result
-        report_result = await cur.fetchall()
-        #print(report_result)
+            return {"data": [], "total": 0}
 
-    return report_result
+    return {
+        "data": report_result,
+        "total": total_count
+    }
+
 
 async def select_production_graph_data(
     conn: Connection, 

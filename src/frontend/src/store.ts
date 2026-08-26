@@ -28,7 +28,9 @@ export default defineStore("app_store", () => {
     /** остатки материалов для отчета по остаткам */
     const materials_data = ref<frontend.IMaterialsData | null>(null);
     /** данные отчета по производству */
-    const production_report_data = ref<Array<frontend.IProductionReportData | null>> ([]);
+    const production_report_data = ref<Array<frontend.IProductionReportData>> ([]);
+    /** данные отчета по производству с пагинацией */
+    const production_report_data_with_limit = ref<frontend.IProductionReportDataWithLimit | null> (null);
     /** данные графа по производству (продукт - к продукту от материалов) */
     const production_graph_data_product = ref<frontend.IProductionGraphDataBackward | null> (null);
     /** данные графа по производству (материал - от материала к продуктам) */
@@ -59,7 +61,7 @@ export default defineStore("app_store", () => {
 
     /** запрос к API для получения данных для отчета по производству */
     const fetchProductionReportData = (params?: frontend.IProductionReportQueryParams) => {
-        return api.fetchProductionReportData(params).then(body => production_report_data.value = body).finally(() => loading.value = false);
+        return api.fetchProductionReportData(params).then(body => production_report_data_with_limit.value = body).finally(() => loading.value = false);
     };
 
     /** запрос к API для получения данных для графа по производству */

@@ -226,6 +226,8 @@ async def get_production_report_data(request: Request):
     schema_ids = request.query.get("schema_ids")
     date_start = request.query.get("date_start")
     date_end = request.query.get("date_end")
+    limit = request.query.get("limit")
+    page = request.query.get("page")
 
     production_report_data = []
     async with request.app["db"].acquire() as conn:
@@ -238,7 +240,9 @@ async def get_production_report_data(request: Request):
             operation_ids = operation_ids,
             schema_ids = schema_ids,
             date_start = date_start,
-            date_end = date_end
+            date_end = date_end,
+            limit = limit,
+            page = page
         )
 
     return await jsonify(production_report_data, request)

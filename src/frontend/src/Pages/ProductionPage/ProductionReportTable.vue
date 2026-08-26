@@ -4,7 +4,7 @@
       <el-skeleton animated />
     </div>
 
-    <div v-else-if="!store.production_report_data.length" class="empty-state">
+    <div v-else-if="!store.production_report_data?.length" class="empty-state">
       Нет данных по выбранным фильтрам.
     </div>
 

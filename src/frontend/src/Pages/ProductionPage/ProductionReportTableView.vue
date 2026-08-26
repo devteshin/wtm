@@ -22,7 +22,6 @@
         Нет данных по выбранным фильтрам.
       </div>
 
-      <!-- width убираем, height оставляем — это ключ к фиксации шапки -->
       <el-table
         v-else
         :data="store.production_report_data"
@@ -30,7 +29,6 @@
         border
         stripe
       >
-        <!-- колонки без изменений -->
         <el-table-column prop="operation_date_in" label="Дата переработки" width="120" />
 
         <el-table-column prop="process" label="Техпроцесс" min-width="140">
@@ -92,6 +90,19 @@
         <el-table-column prop="operation_date_out" label="Дата приема" width="120" />
       </el-table>
     </div>
+
+    <!-- Пагинация -->
+    <div v-if="total > 0" class="pagination-area">
+      <el-pagination
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
+        :total="total"
+        :page-sizes="[100, 200, 300]"
+        layout="total, sizes, prev, pager, next"
+        @current-change="onCurrentChange"
+        @size-change="onSizeChange"
+      />
+    </div>
   </div>
 
   <div v-if="loading" class="overlay-loader">Загрузка данных...</div>
@@ -99,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { Download } from '@element-plus/icons-vue'
 import { exportToExcel } from '@/utils/excelExport'
 import { useProductionReportStore } from '@/storeProductionReport'
@@ -112,7 +123,11 @@ const exportLoading = ref(false)
 const reportStore = useProductionReportStore()
 const store = useApplicationStore()
 
-const data = ref<any[]>([])
+// Пагинация
+const currentPage = ref(1)
+const pageSize = ref(100)
+const total = ref(0)
+
 const isLoading = ref(false)
 
 const emit = defineEmits<{
@@ -126,7 +141,7 @@ const emitCellDblClick = (column: string, value: string | null | undefined) => {
 const refresh = async () => {
   isLoading.value = true
   try {
-    await store.fetchProductionReportData({
+    const result = await store.fetchProductionReportData({
       stock_ids: reportStore.selectedStore?.toString() ?? '',
       material_ids: reportStore.selectedMaterial?.toString() ?? '',
       product_ids: reportStore.selectedProduct?.toString() ?? '',
@@ -135,14 +150,35 @@ const refresh = async () => {
       schema_ids: reportStore.selectedSchema?.toString() ?? '',
       date_start: reportStore.selectedPeriod?.[0] ?? '',
       date_end: reportStore.selectedPeriod?.[1] ?? '',
+      page: currentPage.value,
+      limit: pageSize.value,      
     })
+    total.value = Number(result.total) ?? 0
+    store.production_report_data = result.data ?? []
   } catch (error) {
     console.error('fetchProductionReportData error:', error)
-    data.value = []
+    store.production_report_data = []
+    total.value = 0
   } finally {
     isLoading.value = false
   }
 }
+
+watch(
+  () => [
+    reportStore.selectedStore,
+    reportStore.selectedMaterial,
+    reportStore.selectedProduct,
+    reportStore.selectedProcess,
+    reportStore.selectedOperation,
+    reportStore.selectedSchema,
+    reportStore.selectedPeriod,
+  ],
+  () => {
+    currentPage.value = 1
+  },
+  { deep: true }
+);
 
 defineExpose({ refresh })
 
@@ -154,12 +190,25 @@ const formatWeight = (value: number | null | undefined): string => {
   }).format(value)
 }
 
+const onCurrentChange = (page: number) => {
+  currentPage.value = page
+  refresh()
+}
+
+const onSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1 // при смене размера страницы сбрасываем на первую
+  refresh()
+}
+
 const exportToExcelClick = () => {
+
+
   const sheets = [
     {
       name: 'Отчет по переработке',
       columns: [
-        { key: 'operation_date_in', header: 'Дата пеработки' },
+        { key: 'operation_date_in', header: 'Дата переработки' },
         { key: 'process', header: 'Техпроцесс' },
         { key: 'operation', header: 'Операция' },
         { key: 'material', header: 'Материал' },
@@ -174,20 +223,17 @@ const exportToExcelClick = () => {
 
   exportToExcel(sheets, 'production_report')
 }
-
-
 </script>
 
 <style scoped>
-
 .tables-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 100%; /* жёстко ограничиваем ширину */
+  max-width: 100%;
   height: calc(100vh - 120px);
   max-height: calc(100vh - 20px);
-  overflow: hidden; /* запрещает скролл у самого wrapper */
+  overflow: hidden;
   box-sizing: border-box;
 }
 .tables-controls {
@@ -204,33 +250,26 @@ const exportToExcelClick = () => {
   top: 0;
   margin-bottom: 8px;
 }
-
 .controls-title {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: #1f2937;
 }
-
 .separator-line {
   width: 1px;
   height: 24px;
   background: #e5e7eb;
 }
-
-/* Скролл только здесь: и вертикальный, и горизонтальный */
 .tables-scroll-area {
   flex: 1;
-  min-height: 0; /* обязательно для flex-скролла */
+  min-height: 0;
   overflow-x: auto;
   overflow-y: auto;
   padding-right: 4px;
-  /* Важно: ограничиваем ширину, чтобы таблица не растягивала родителя */
   width: 100%;
   box-sizing: border-box;
 }
-
-/* Стили скроллбара */
 .tables-scroll-area::-webkit-scrollbar {
   height: 8px;
   width: 8px;
@@ -242,7 +281,6 @@ const exportToExcelClick = () => {
   background: #ccc;
   border-radius: 4px;
 }
-
 .overlay-loader {
   position: absolute;
   inset: 0;
@@ -254,7 +292,6 @@ const exportToExcelClick = () => {
   color: #333;
   font-weight: 500;
 }
-
 .error-state {
   padding: 24px;
   text-align: center;
@@ -264,12 +301,12 @@ const exportToExcelClick = () => {
   border-radius: 6px;
   margin-top: 16px;
 }
-
 .dbl-click-cell {
   cursor: pointer;
   user-select: none;
 }
-
-
-
+.pagination-area {
+  padding: 12px 0 8px;
+  text-align: right;
+}
 </style>
