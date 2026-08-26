@@ -120,8 +120,8 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const exportLoading = ref(false)
 
-const reportStore = useProductionReportStore()
 const store = useApplicationStore()
+const reportStore = useProductionReportStore()
 
 // Пагинация
 const currentPage = ref(1)
