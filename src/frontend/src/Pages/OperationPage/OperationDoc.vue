@@ -268,13 +268,18 @@ function setContextMaterialsSelection() {
   if (raw_materials_options.value.length > 0){
     const newselectedMaterials = raw_materials_options.value.filter(item => !reportStore.selectedMaterial.includes(item.material_id)).map(item => item.material_id);
     reportStore.selectedMaterial = [...reportStore.selectedMaterial, ...newselectedMaterials];
+    reportStore.isDetailedMode = true;
+    reportStore.isSelectionEnabled = true;
+  } else {
+    reportStore.setTableData([]);
+    reportStore.isDetailedMode = false;
+    reportStore.isSelectionEnabled = false;
   };  
   if (props.stockID != null) {
     reportStore.selectedStore = [props.stockID];
   };
   reportStore.isSelectionDetailedMode = true;
-  reportStore.isDetailedMode = true;
-  reportStore.isSelectionEnabled = true;
+  
   reportStore.isSelectionControlEnabled = true;
   reportStore.isOnlyNonZeroMode = true;
 }; 

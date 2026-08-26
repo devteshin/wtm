@@ -210,7 +210,9 @@
         <!-- Таблица с данными -->
         <template v-else>
           <div class="table-wrapper">
-            <div v-if="!reportStore.tableData?.length">Нет данных для отображения</div>
+            <div v-if="!reportStore.tableData?.length" class="no-data-message">
+              Нет данных для отображения
+            </div>
             <el-table
               v-else
               ref="tableRef"
@@ -1325,7 +1327,8 @@ watch(
   height: calc(100vh - 120px); /* Занимает всю высоту экрана минус меню */
   display: flex;
   width: 100%;
-  box-sizing: border-box;  
+  box-sizing: border-box;
+  gap: 10px;  
 }
 
 .sidebar {
@@ -1472,5 +1475,10 @@ watch(
   gap: 2px; /* Расстояние между селектом и кнопками, а также между кнопками */
 }
 
+.no-data-message {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
 
 </style>
