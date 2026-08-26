@@ -25,17 +25,6 @@
           </el-select>
         </el-form-item>
 
-        <!-- <el-form-item label="Материал">
-          <el-select v-model="selectedMaterial" placeholder="Материал" clearable multiple filterable>
-             <el-option
-              v-for="item in materialOptions"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item> -->
-
         <el-form-item label="Материал">
           <div class="item-remote-select-wrapper">
             <el-select

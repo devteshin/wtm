@@ -81,11 +81,6 @@ const store = useApplicationStore()
 const data = ref<any[]>([])
 const isLoading = ref(false)
 
-const tableHeight = computed(() => {
-  const baseHeight = window.innerHeight - 220
-  return baseHeight > 300 ? baseHeight : 300
-})
-
 const formatWeight = (value: number | null | undefined): string => {
   if (value == null) return '-'
   return new Intl.NumberFormat('ru-RU', {
