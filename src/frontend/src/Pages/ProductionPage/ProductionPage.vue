@@ -344,7 +344,7 @@ import { ElMessageBox } from 'element-plus'
 import { FolderOpened, Histogram, Grid } from '@element-plus/icons-vue'
 import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 
-const reportTableRef = ref<typeof ProductionReportTable | null>(null)
+const reportTableRef = ref<typeof ProductionReportTableView | null>(null)
 
 const props = defineProps({
   stockID: { type: Number, required: true },
