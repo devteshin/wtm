@@ -18,10 +18,12 @@
       <div v-if="isLoading" class="loading-state">
         <el-skeleton animated />
       </div>
-      <div v-else-if="!store.production_report_data.length" class="empty-state">
-        Нет данных по выбранным фильтрам.
+      <div
+        v-else-if="!store.production_report_data.length"
+        class="empty-state"
+      >
+        {{ total === 0 ? 'Нет данных по выбранным фильтрам.' : 'Загрузка данных...' }}
       </div>
-
       <el-table
         v-else
         :data="store.production_report_data"
@@ -92,7 +94,7 @@
     </div>
 
     <!-- Пагинация -->
-    <div v-if="total > 0" class="pagination-area">
+    <div v-if="total > 0 || store.production_report_data.length > 0" class="pagination-area">
       <el-pagination
         v-model:currentPage="currentPage"
         v-model:pageSize="pageSize"
