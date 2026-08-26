@@ -1,98 +1,101 @@
 <template>
-    <div class="tables-wrapper">
-      <!-- Панель управления -->
-      <div class="tables-controls">
-        <h3 class="controls-title">Производство</h3>
-
-        <span class="separator-line" />
-
-        <el-button
-          size="small"
-          type="success"
-          :loading="exportLoading"
-          @click="exportToExcelClick"
-        >
-          <template #icon><el-icon :size="14"><Download /></el-icon></template>
-          Экспорт в Excel
-        </el-button>
-      </div>
-
-      <!-- Скроллируемая область с таблицами -->
-      <div class="tables-scroll-area">
-          <div v-if="isLoading" class="loading-state">
-            <el-skeleton animated />
-          </div>
-
-          <div v-else-if="!store.production_report_data.length" class="empty-state">
-            Нет данных по выбранным фильтрам.
-          </div>
-
-          <el-table
-            v-else
-            :data="store.production_report_data"
-            style="width: 100%; height: 100%;"
-            border
-            stripe
-          >
-            <el-table-column prop="operation_date_in" label="Дата переработки" width="120" />
-            
-            <!-- Техпроцесс -->
-            <el-table-column prop="process" label="Техпроцесс" min-width="140">
-              <template #default="scope">
-                <span class="dbl-click-cell" @dblclick.stop="emitCellDblClick ('process', scope.row.process)">
-                  {{ scope.row.process ?? '-' }}
-                </span>
-              </template>
-            </el-table-column>
-
-            <!-- Операция -->
-            <el-table-column prop="operation" label="Операция" min-width="160">
-              <template #default="scope">
-                <span class="dbl-click-cell" @dblclick.stop="emitCellDblClick ('operation', scope.row.operation)">
-                  {{ scope.row.operation ?? '-' }}
-                </span>
-              </template>
-            </el-table-column>
-
-            <!-- Материал -->
-            <el-table-column prop="material" label="Материал" min-width="180">
-              <template #default="scope">
-                <span class="dbl-click-cell" @dblclick.stop="emitCellDblClick('material', scope.row.material)">
-                  {{ scope.row.material ?? '-' }}
-                </span>
-              </template>
-            </el-table-column>
-
-            <el-table-column prop="weight_in" label="Списано" width="90" align="right">
-              <template #default="scope">
-                {{ formatWeight(scope.row.weight_in) }}
-              </template>
-            </el-table-column>
-
-            <!-- Продукт -->
-            <el-table-column prop="product" label="Продукт" min-width="160">
-              <template #default="scope">
-                <span class="dbl-click-cell" @dblclick.stop="emitCellDblClick('product', scope.row.product)">
-                  {{ scope.row.product ?? '-' }}
-                </span>
-              </template>
-            </el-table-column>
-
-            <el-table-column prop="weight_out" label="Принято" width="90" align="right">
-              <template #default="scope">
-                {{ formatWeight(scope.row.weight_out) }}
-              </template>
-            </el-table-column>
-
-            <el-table-column prop="operation_date_out" label="Дата приема" width="120" />
-          </el-table>
-
-      </div>
+  <div class="tables-wrapper">
+    <div class="tables-controls">
+      <h3 class="controls-title">Производство</h3>
+      <span class="separator-line" />
+      <el-button
+        size="small"
+        type="success"
+        :loading="exportLoading"
+        @click="exportToExcelClick"
+      >
+        <template #icon><el-icon :size="14"><Download /></el-icon></template>
+        Экспорт в Excel
+      </el-button>
     </div>
 
-    <!-- Состояние загрузки -->
-    <div v-if="loading" class="overlay-loader">Загрузка данных...</div>
-    <div v-else-if="error" class="error-state">{{ error }}</div>
+    <div class="tables-scroll-area">
+      <div v-if="isLoading" class="loading-state">
+        <el-skeleton animated />
+      </div>
+      <div v-else-if="!store.production_report_data.length" class="empty-state">
+        Нет данных по выбранным фильтрам.
+      </div>
+
+      <!-- width убираем, height оставляем — это ключ к фиксации шапки -->
+      <el-table
+        v-else
+        :data="store.production_report_data"
+        style="height: 100%"
+        border
+        stripe
+      >
+        <!-- колонки без изменений -->
+        <el-table-column prop="operation_date_in" label="Дата переработки" width="120" />
+
+        <el-table-column prop="process" label="Техпроцесс" min-width="140">
+          <template #default="scope">
+            <span
+              class="dbl-click-cell"
+              @dblclick.stop="emitCellDblClick('process', scope.row.process)"
+            >
+              {{ scope.row.process ?? '-' }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="operation" label="Операция" min-width="160">
+          <template #default="scope">
+            <span
+              class="dbl-click-cell"
+              @dblclick.stop="emitCellDblClick('operation', scope.row.operation)"
+            >
+              {{ scope.row.operation ?? '-' }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="material" label="Материал" min-width="180">
+          <template #default="scope">
+            <span
+              class="dbl-click-cell"
+              @dblclick.stop="emitCellDblClick('material', scope.row.material)"
+            >
+              {{ scope.row.material ?? '-' }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="weight_in" label="Списано" width="90" align="right">
+          <template #default="scope">
+            {{ formatWeight(scope.row.weight_in) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="product" label="Продукт" min-width="160">
+          <template #default="scope">
+            <span
+              class="dbl-click-cell"
+              @dblclick.stop="emitCellDblClick('product', scope.row.product)"
+            >
+              {{ scope.row.product ?? '-' }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="weight_out" label="Принято" width="90" align="right">
+          <template #default="scope">
+            {{ formatWeight(scope.row.weight_out) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="operation_date_out" label="Дата приема" width="120" />
+      </el-table>
+    </div>
+  </div>
+
+  <div v-if="loading" class="overlay-loader">Загрузка данных...</div>
+  <div v-else-if="error" class="error-state">{{ error }}</div>
 </template>
 
 <script setup lang="ts">
@@ -154,21 +157,18 @@ const formatWeight = (value: number | null | undefined): string => {
 const exportToExcelClick = () => {
   const sheets = [
     {
-      name: 'Операции и коэффициенты',
+      name: 'Отчет по переработке',
       columns: [
-        { key: 'operation_sequence', header: 'Операция' },
-        { key: 'koeff', header: 'Коэффициент' },
-        { key: 'next_operation', header: 'Следующая операция' },
-      ],
-      data: store.production_graph_data_product?.operation_sequences || [],
-    },
-    {
-      name: 'Материалы (вес списания)',
-      columns: [
+        { key: 'operation_date_in', header: 'Дата пеработки' },
+        { key: 'process', header: 'Техпроцесс' },
+        { key: 'operation', header: 'Операция' },
         { key: 'material', header: 'Материал' },
-        { key: 'adjusted_weight_out', header: 'Скорректированный вес (кг)' },
+        { key: 'weight_in', header: 'Списано' },
+        { key: 'product', header: 'Продукт' },
+        { key: 'weight_out', header: 'Принято' },
+        { key: 'operation_date_out', header: 'Дата приема' },
       ],
-      data: store.production_graph_data_product?.raw_material_node || [],
+      data: store.production_report_data || [],
     },
   ]
 
@@ -179,15 +179,17 @@ const exportToExcelClick = () => {
 </script>
 
 <style scoped>
+
 .tables-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: calc(100vh - 120px); /* Подстраивается под экран, включая планшеты */
+  max-width: 100%; /* жёстко ограничиваем ширину */
+  height: calc(100vh - 120px);
   max-height: calc(100vh - 20px);
-  overflow: hidden; /* Важно: родитель не скроллится, скролл только внутри */
+  overflow: hidden; /* запрещает скролл у самого wrapper */
+  box-sizing: border-box;
 }
-
 .tables-controls {
   display: flex;
   align-items: center;
@@ -216,25 +218,31 @@ const exportToExcelClick = () => {
   background: #e5e7eb;
 }
 
-/* Область со скроллом: занимает всё оставшееся место */
+/* Скролл только здесь: и вертикальный, и горизонтальный */
 .tables-scroll-area {
   flex: 1;
-  min-height: 0; /* Критично для flex-скролла внутри flex-контейнера */
+  min-height: 0; /* обязательно для flex-скролла */
+  overflow-x: auto;
   overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 4px; /* Небольшой отступ, чтобы скроллбар не прилипал к контенту */
+  padding-right: 4px;
+  /* Важно: ограничиваем ширину, чтобы таблица не растягивала родителя */
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.table-title {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-  border-bottom: 1px solid #f3f4f6;
-  padding-bottom: 6px;
+/* Стили скроллбара */
+.tables-scroll-area::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.tables-scroll-area::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.tables-scroll-area::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
 }
 
-/* Стили для состояний загрузки и ошибки */
 .overlay-loader {
   position: absolute;
   inset: 0;
@@ -257,22 +265,11 @@ const exportToExcelClick = () => {
   margin-top: 16px;
 }
 
-/* Кастомизация скроллбара (для Chrome/Edge/Safari) */
-.tables-scroll-area::-webkit-scrollbar {
-  width: 8px;
-}
-.tables-scroll-area::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-.tables-scroll-area::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-
 .dbl-click-cell {
   cursor: pointer;
-  /* опционально: можно добавить лёгкое выделение при наведении */
-  user-select: none; /* чтобы не выделялся текст при быстрых кликах */
+  user-select: none;
 }
+
+
 
 </style>
