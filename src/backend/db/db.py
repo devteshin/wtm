@@ -60,13 +60,20 @@ async def select_production_report_data(
             schema_ids: str = '',
             date_start: str = '',
             date_end: str = '',
+            full_mode: bool | str = False,
             limit: int = 0,
             page: int = 0
     ):
 
+    if isinstance(full_mode, str):
+        full_mode_int = 1 if full_mode.lower() in ('true', '1') else 0
+    else:
+        full_mode_int = int(full_mode)
+
+
     async with conn.cursor() as cur:
         try:
-            await cur.callproc("report_production", [date_start, date_end, stock_ids, schema_ids, process_ids, operation_ids, material_ids, product_ids, limit, page])
+            await cur.callproc("report_production", [date_start, date_end, stock_ids, schema_ids, process_ids, operation_ids, material_ids, product_ids, full_mode_int, limit, page])
             report_result = await cur.fetchall()
 
             await cur.execute("SELECT @out_total_report_production AS total_count")

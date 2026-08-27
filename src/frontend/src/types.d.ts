@@ -217,6 +217,7 @@ declare namespace frontend {
         schema_ids?: string;
         date_start?: string;
         date_end?: string;
+        fullMode?: boolean;
         page?: number;
         limit?: number;
     }

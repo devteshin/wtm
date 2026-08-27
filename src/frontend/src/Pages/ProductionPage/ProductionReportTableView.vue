@@ -1,8 +1,25 @@
 <template>
   <div class="tables-wrapper">
+    <!-- Панель управления -->
     <div class="tables-controls">
       <h3 class="controls-title">Производство</h3>
       <span class="separator-line" />
+
+      <!-- Кнопка переключения режима: полный отчёт / пагинация -->
+      <el-button
+        size="small"
+        :type="isFullMode ? 'danger' : 'primary'"
+        @click="toggleMode"
+      >
+        <template #icon>
+          <el-icon :size="14">
+            <component :is="isFullMode ? 'Sqr' : 'List'" />
+          </el-icon>
+        </template>
+        {{ isFullMode ? 'Пагинация' : 'Полный отчёт' }}
+      </el-button>
+
+      <!-- Кнопка экспорта в Excel -->
       <el-button
         size="small"
         type="success"
@@ -14,16 +31,19 @@
       </el-button>
     </div>
 
+    <!-- Область скролла таблицы -->
     <div class="tables-scroll-area">
       <div v-if="isLoading" class="loading-state">
         <el-skeleton animated />
       </div>
+
       <div
         v-else-if="!store.production_report_data.length"
         class="empty-state"
       >
         {{ total === 0 ? 'Нет данных по выбранным фильтрам.' : 'Загрузка данных...' }}
       </div>
+
       <el-table
         v-else
         :data="store.production_report_data"
@@ -32,7 +52,6 @@
         stripe
       >
         <el-table-column prop="operation_date_in" label="Дата переработки" width="120" />
-
         <el-table-column prop="process" label="Техпроцесс" min-width="140">
           <template #default="scope">
             <span
@@ -43,7 +62,6 @@
             </span>
           </template>
         </el-table-column>
-
         <el-table-column prop="operation" label="Операция" min-width="160">
           <template #default="scope">
             <span
@@ -54,7 +72,6 @@
             </span>
           </template>
         </el-table-column>
-
         <el-table-column prop="material" label="Материал" min-width="180">
           <template #default="scope">
             <span
@@ -65,13 +82,11 @@
             </span>
           </template>
         </el-table-column>
-
         <el-table-column prop="weight_in" label="Списано" width="90" align="right">
           <template #default="scope">
             {{ formatWeight(scope.row.weight_in) }}
           </template>
         </el-table-column>
-
         <el-table-column prop="product" label="Продукт" min-width="160">
           <template #default="scope">
             <span
@@ -82,19 +97,20 @@
             </span>
           </template>
         </el-table-column>
-
         <el-table-column prop="weight_out" label="Принято" width="90" align="right">
           <template #default="scope">
             {{ formatWeight(scope.row.weight_out) }}
           </template>
         </el-table-column>
-
         <el-table-column prop="operation_date_out" label="Дата приема" width="120" />
       </el-table>
     </div>
 
-    <!-- Пагинация -->
-    <div v-if="total > 0 || store.production_report_data.length > 0" class="pagination-area">
+    <!-- Пагинация: показываем только в режиме пагинации -->
+    <div
+      v-if="isPaginatedMode && (total > 0 || store.production_report_data.length > 0)"
+      class="pagination-area"
+    >
       <el-pagination
         v-model:currentPage="currentPage"
         v-model:pageSize="pageSize"
@@ -105,14 +121,15 @@
         @size-change="onSizeChange"
       />
     </div>
-  </div>
 
-  <div v-if="loading" class="overlay-loader">Загрузка данных...</div>
-  <div v-else-if="error" class="error-state">{{ error }}</div>
+    <!-- Глобальные лоадер и ошибка (если нужны поверх всего) -->
+    <div v-if="loading" class="overlay-loader">Загрузка данных...</div>
+    <div v-else-if="error" class="error-state">{{ error }}</div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Download } from '@element-plus/icons-vue'
 import { exportToExcel } from '@/utils/excelExport'
 import { useProductionReportStore } from '@/storeProductionReport'
@@ -125,11 +142,19 @@ const exportLoading = ref(false)
 const store = useApplicationStore()
 const reportStore = useProductionReportStore()
 
+// Режимы отображения
+const MODE_PAGINATED = 'paginated' as const
+const MODE_FULL = 'full' as const
+type Mode = typeof MODE_PAGINATED | typeof MODE_FULL
+
+const mode = ref<Mode>(MODE_PAGINATED)
+const isPaginatedMode = computed(() => mode.value === MODE_PAGINATED)
+const isFullMode = computed(() => mode.value === MODE_FULL)
+
 // Пагинация
 const currentPage = ref(1)
 const pageSize = ref(100)
 const total = ref(0)
-
 const isLoading = ref(false)
 
 const emit = defineEmits<{
@@ -138,6 +163,14 @@ const emit = defineEmits<{
 
 const emitCellDblClick = (column: string, value: string | null | undefined) => {
   emit('cell-dblclick', { column, value })
+}
+
+const toggleMode = () => {
+  mode.value = isFullMode.value ? MODE_PAGINATED : MODE_FULL
+  // При переключении всегда делаем refresh, чтобы подтянуть нужные данные
+  currentPage.value = 1
+  pageSize.value = 100
+  refresh()
 }
 
 const refresh = async () => {
@@ -152,15 +185,18 @@ const refresh = async () => {
       schema_ids: reportStore.selectedSchema?.toString() ?? '',
       date_start: reportStore.selectedPeriod?.[0] ?? '',
       date_end: reportStore.selectedPeriod?.[1] ?? '',
-      page: currentPage.value,
-      limit: pageSize.value,      
+      fullMode: isFullMode.value,
+      limit: isFullMode.value ? 0 : pageSize.value,
+      page: isFullMode.value ? 0 : currentPage.value,
     })
+
     total.value = Number(result.total) ?? 0
     store.production_report_data = result.data ?? []
-  } catch (error) {
-    console.error('fetchProductionReportData error:', error)
+  } catch (err) {
+    console.error('fetchProductionReportData error:', err)
     store.production_report_data = []
     total.value = 0
+    error.value = 'Не удалось загрузить данные отчёта'
   } finally {
     isLoading.value = false
   }
@@ -177,10 +213,14 @@ watch(
     reportStore.selectedPeriod,
   ],
   () => {
+    // При изменении фильтров сбрасываем на первую страницу и режим пагинации
+    mode.value = MODE_PAGINATED
     currentPage.value = 1
+    pageSize.value = 100
+    refresh()
   },
   { deep: true }
-);
+)
 
 defineExpose({ refresh })
 
@@ -199,13 +239,11 @@ const onCurrentChange = (page: number) => {
 
 const onSizeChange = (size: number) => {
   pageSize.value = size
-  currentPage.value = 1 // при смене размера страницы сбрасываем на первую
+  currentPage.value = 1
   refresh()
 }
 
 const exportToExcelClick = () => {
-
-
   const sheets = [
     {
       name: 'Отчет по переработке',
@@ -219,11 +257,10 @@ const exportToExcelClick = () => {
         { key: 'weight_out', header: 'Принято' },
         { key: 'operation_date_out', header: 'Дата приема' },
       ],
-      data: store.production_report_data || [],
+      data: store.production_report_data,
     },
   ]
-
-  exportToExcel(sheets, 'production_report')
+  exportToExcel(sheets, 'production_report')  
 }
 </script>
 

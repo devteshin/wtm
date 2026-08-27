@@ -226,6 +226,7 @@ async def get_production_report_data(request: Request):
     schema_ids = request.query.get("schema_ids")
     date_start = request.query.get("date_start")
     date_end = request.query.get("date_end")
+    full_mode = request.query.get("full_mode")
     limit = request.query.get("limit")
     page = request.query.get("page")
 
@@ -241,6 +242,7 @@ async def get_production_report_data(request: Request):
             schema_ids = schema_ids,
             date_start = date_start,
             date_end = date_end,
+            full_mode = full_mode,
             limit = limit,
             page = page
         )
