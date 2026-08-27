@@ -8,15 +8,11 @@
       <!-- Кнопка переключения режима: полный отчёт / пагинация -->
       <el-button
         size="small"
-        :type="isFullMode ? 'danger' : 'primary'"
+        type="primary"
         @click="toggleMode"
       >
-        <template #icon>
-          <el-icon :size="14">
-            <component :is="isFullMode ? 'Sqr' : 'List'" />
-          </el-icon>
-        </template>
-        {{ isFullMode ? 'Пагинация' : 'Полный отчёт' }}
+        <template #icon><el-icon :size="14"><List /></el-icon></template>
+        {{ isFullMode ? 'постраничный отчет' : 'полный отчёт' }}
       </el-button>
 
       <!-- Кнопка экспорта в Excel -->
@@ -130,7 +126,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Download } from '@element-plus/icons-vue'
+import { Download, Checked, List } from '@element-plus/icons-vue'
 import { exportToExcel } from '@/utils/excelExport'
 import { useProductionReportStore } from '@/storeProductionReport'
 import useApplicationStore from '@/store'
@@ -185,7 +181,7 @@ const refresh = async () => {
       schema_ids: reportStore.selectedSchema?.toString() ?? '',
       date_start: reportStore.selectedPeriod?.[0] ?? '',
       date_end: reportStore.selectedPeriod?.[1] ?? '',
-      fullMode: isFullMode.value,
+      full_mode: isFullMode.value,
       limit: isFullMode.value ? 0 : pageSize.value,
       page: isFullMode.value ? 0 : currentPage.value,
     })
@@ -217,7 +213,6 @@ watch(
     mode.value = MODE_PAGINATED
     currentPage.value = 1
     pageSize.value = 100
-    refresh()
   },
   { deep: true }
 )
