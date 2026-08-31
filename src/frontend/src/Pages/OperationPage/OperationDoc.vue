@@ -6,7 +6,7 @@ import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
-import { Delete } from '@element-plus/icons-vue';
+import { Delete, Plus } from '@element-plus/icons-vue';
 import RawMaterialGrid from './RawMaterialGrid.vue';
 import MaterialPage from '../MaterialsPage.vue';
 import DebugDrawerContent from '../DebugDrawerContent.vue';
@@ -35,8 +35,13 @@ let doc_id = 0;
 let operation_id = 0;   
 let doc_changed: boolean;
 
+const materialOptionsLoading = ref(false)
+const materialOptions = ref<{ id: number; name: string }[]>([])
+
 // Переменные для подбора сырья
 const selectedBaseMaterial = ref<frontend.IBaseRawMaterial | undefined>(undefined);
+const selectedAddMaterial = ref<number>();
+const addedMaterial = ref<{ id: number; name: string }[]>([]);
 const rangeMode = ref<'single' | 'range' | 'grid'>('single');
 const singleTareId = ref<number | null>(null);
 const rangeFrom = ref<number | null>(null);
@@ -81,6 +86,11 @@ const uniqueDocRawMaterials = (): frontend.IBaseRawMaterial[] => {
     })) as frontend.IBaseRawMaterial[];
 };
 
+const handleAddRawMaterialOptions = () => {
+  addedMaterial.value = materialOptions.value.filter(item => item.id === selectedAddMaterial.value);
+}
+
+
 const raw_materials_options = computed<frontend.IBaseRawMaterial[]>(() => {
   const baseItems = doc_base_raw_materials.value;
   const addedItems = uniqueDocRawMaterials();
@@ -89,7 +99,19 @@ const raw_materials_options = computed<frontend.IBaseRawMaterial[]>(() => {
 
   const onlyNewInDoc = addedItems.filter(i => !baseIds.has(i.material_id));
 
-  return [...baseItems, ...onlyNewInDoc];
+  // Собираем все ID, которые уже есть в результате
+  const existingIds = new Set([
+    ...baseIds,
+    ...onlyNewInDoc.map(i => i.material_id),
+  ]);
+
+  const onlyNewAddedMaterial = addedMaterial.value
+    .filter(i => !existingIds.has(i.id))
+    .map(i => ({ material_id: i.id, material: i.name }));
+
+  selectedAddMaterial.value = undefined;  
+
+  return [...baseItems, ...onlyNewInDoc, ...onlyNewAddedMaterial];
 });
 
 const selectedTareIds = computed(() => {
@@ -415,6 +437,28 @@ async function addMaterialToRawMaterialsTable(from: number, to: number) {
   
 };
 
+const loadMaterialOptions = async (material_substring: string = '', limit: number = 100) => {
+  materialOptionsLoading.value = true
+  try {
+    const result = await store.searchMaterials(material_substring, limit)
+    materialOptions.value = result
+    console.log(result);
+  } catch (e) {
+    console.error(e)
+  } finally {
+    materialOptionsLoading.value = false
+  }
+}
+
+const handleMaterialSearch = async (material_substring: string) => {
+  if (material_substring.length < 2) {
+    materialOptions.value = []
+    return
+  }
+  await loadMaterialOptions(material_substring, 100)
+}
+
+
 const handleDeleteRow = (row: frontend.IRawMaterial) => {
   if (row.tare_id === null) {
     ElMessageBox.confirm('Удалить все материалы?', 'Подтверждение', {
@@ -531,16 +575,56 @@ const onDrawerClose = () => {
                     <el-text class="table-title">Материалы списанные на операцию</el-text>
                 </div>
 
-                <div class="button-row">
-                  <el-button type="primary" plain @click="openSelection">Подбор материалов по остаткам</el-button>
-                </div>
+                <div class="item-remote-select-wrapper">
+<!--                   <div class="button-row">
+                    <el-button type="primary" plain @click="openSelection">Подбор по остаткам</el-button>
+                  </div>
+ -->
+                  <el-button type="primary" plain @click="openSelection">Подбор по остаткам</el-button>
+                  
+                  <el-select
+                    v-model="selectedAddMaterial"
+                    placeholder="Добавить материал. Начните вводить название"
+                    clearable
+                    filterable
+                    :remote="true"
+                    class="item-remote-select"
+                    :loading="materialOptionsLoading"
+                    :remote-method="handleMaterialSearch"
+                  >
+                    <el-option
+                      v-for="m in materialOptions"
+                      :key="m.id"
+                      :label="m.name"
+                      :value="m.id"
+                      :disabled="m.id === -1"
+                    />
+                    <template v-if="materialOptionsLoading">
+                      <el-option :value="0" disabled label="Загрузка..." />
+                    </template>
+                  </el-select>
+                  <el-button
+                    type="info"
+                    plain
+                    size="small"
+                    @click="handleAddRawMaterialOptions"
+                    title="Добавить материал в список"
+                  >
+                    <template #icon>
+                      <el-icon :size="16">
+                        <Plus />
+                      </el-icon>
+                    </template>
+                  </el-button>
+
+                </div>  
 
                 <div v-if="!isGridMode" class="raw-material-picker-block">
                     <div class="picker-row">
                         <!-- Селект материала -->
                         <el-select
                         v-model="selectedBaseMaterial"
-                        placeholder="Выберите базовый материал"
+                        placeholder="Выберите материал"
                         class="material-select"
                         clearable
                         >
@@ -551,6 +635,7 @@ const onDrawerClose = () => {
                             :value="item"
                         />
                         </el-select>
+
 
                         <!-- Блок выбора номера/диапазона -->
                         <div class="range-input-group">
@@ -831,6 +916,15 @@ const onDrawerClose = () => {
   padding: 16px 0;
 }
 
+.item-remote-select-wrapper {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;     /* центрирует по вертикали */
+  justify-content: flex-start;
+  width: 100%;
+  gap: 8px;                 /* лучше 8px, чем 2px — так не слипается */
+}
+
 @media (max-width: 768px) {
   .page-container {
     flex-direction: column;
@@ -859,5 +953,7 @@ const onDrawerClose = () => {
   .el-button {
     width: 100%;
   }
+
+  
 }
 </style>
