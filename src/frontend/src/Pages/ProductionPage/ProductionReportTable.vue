@@ -46,7 +46,7 @@
 
       <el-table-column prop="weight_in" label="Списано" width="90" align="right">
         <template #default="scope">
-          {{ formatWeight(scope.row.weight_in) }}
+          {{ getFormatter('weight')(scope.row[scope.row.weight_in]) }}
         </template>
       </el-table-column>
 
@@ -61,7 +61,7 @@
 
       <el-table-column prop="weight_out" label="Принято" width="90" align="right">
         <template #default="scope">
-          {{ formatWeight(scope.row.weight_out) }}
+          {{ getFormatter('weight')(scope.row[scope.row.weight_out]) }}
         </template>
       </el-table-column>
 
@@ -74,6 +74,7 @@
 import { ref, computed } from 'vue'
 import { useProductionReportStore } from '@/storeProductionReport'
 import useApplicationStore from '@/store'
+import { formatWeight, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
 
 const reportStore = useProductionReportStore()
 const store = useApplicationStore()
@@ -81,13 +82,13 @@ const store = useApplicationStore()
 const data = ref<any[]>([])
 const isLoading = ref(false)
 
-const formatWeight = (value: number | null | undefined): string => {
-  if (value == null) return '-'
-  return new Intl.NumberFormat('ru-RU', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
+const getFormatter = (type: 'weight' | 'high' | 'integer') => {
+  switch (type) {
+    case 'weight': return formatWeight;
+    case 'high': return formatHighPrecision;
+    case 'integer': return formatInteger;
+  }
+};
 
 const emit = defineEmits<{
   (e: 'cell-dblclick', payload: { column: string; value: string | null | undefined }): void
