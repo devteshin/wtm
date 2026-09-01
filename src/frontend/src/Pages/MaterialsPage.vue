@@ -80,7 +80,7 @@
               @change="handleSwitchDetailedMode"
             />
             <span class="switch-description">
-              {{ isDetailedMode ? 'развернуть материалы' : 'группировать материалы' }}
+              развернуть материалы
             </span>
           </div>
         </el-form-item>
@@ -604,7 +604,7 @@ const detailedSelectionColumns = ref([
 ]);
 
 const selectionIndColumns = [
-  { prop: 'ind', label: 'Ind', width: '80', },
+  { prop: 'ind', label: 'Показатель', width: '100', },
   { prop: 'percent', label: '%', width: '80' },
 ];
 
