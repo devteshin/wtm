@@ -205,7 +205,7 @@
             <el-table
               v-else
               ref="tableRef"
-              :data="formattedTableData"
+              :data="reportStore.tableData"
               reserve-selection
               :row-key="getRowKey"
               style="width: 100%; height: 100%;"
@@ -236,7 +236,13 @@
               :width="column.width"
               :fixed="column.fixed"
               :align="column.align"
-            />
+            >
+              <template #default="scope">
+                {{ formatCell(scope.row[column.prop], column.formatType) }}
+              </template>
+
+
+            </el-table-column>            
             </el-table>
           </div>
         </template>
@@ -259,6 +265,7 @@
                     :label="column.label"
                     :width="column.width"
                     :align="column.align"
+                    header-align="center"
                   >
                      <template #default="scope">
                       {{ formatCell(scope.row[column.prop], column.formatType) }}
@@ -807,14 +814,10 @@ const restoreSelection = () => {
     console.warn('Table not mounted yet, skipping restoreSelection');
     return;
   }
-  if (!formattedTableData.value || formattedTableData.value.length === 0) {
+  if (!reportStore.tableData || reportStore.tableData.length === 0) {
     console.warn('No table data available, skipping restoreSelection');
     return;
   }
-  //if (!reportStore.selectedTableData?.length) {
-  //  console.log('No selected data to restore');
-  //  return;
-  //}
 
   isAutoSelectionUpdate.value = true; // Блокируем обновление
 
@@ -825,7 +828,7 @@ const restoreSelection = () => {
     reportStore.selectionData.map(row => getRowKey(row))
     );
 
-  formattedTableData.value.forEach((row) => {
+  reportStore.tableData.forEach((row) => {
     if (row.stock_name !== 'Итого' && selectionKeys.has(getRowKey(row))) {
       tableRef.value.toggleRowSelection(row, true);
     }
@@ -835,40 +838,8 @@ const restoreSelection = () => {
     isAutoSelectionUpdate.value = false; // Снимаем блокировку после завершения
   });
 
-  //console.log('Selection restored successfully');
-  //console.log(reportStore.selectedTableData);  
 };
 
-const formattedTableData = computed(() => {
-  if (!reportStore.tableData || !Array.isArray(reportStore.tableData)) {
-    return [];
-  }
-
-  return reportStore.tableData.map(row => {
-    const formattedRow = { ...row };
-
-    const numericFields = [
-      'rest_tare_amount',
-      'rest_net_weight',
-      'rest_gross_weight'
-    ];
-
-    const keys = Object.keys(reportStore.tableData[0] || {});
-    keys.forEach(key => {
-      if (key.includes('_percent')) {
-        numericFields.push(key);
-      }
-    });
-
-    numericFields.forEach(field => {
-      if (formattedRow[field] !== undefined) {
-        formattedRow[field] = formatNumber(formattedRow[field]);
-      }
-    });
-
-    return formattedRow;
-  });
-});
 
 const isTotalRow = (row: any): boolean => {
   return row.stock_name === 'Итого';
@@ -880,14 +851,6 @@ const getRowClassName = ({ row }: { row: any }): string => {
   }
   return '';
 };
-
-function formatNumber(value: number | string): string {
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(numValue) || numValue === 0) {
-    return '';
-  }
-  return new Intl.NumberFormat('ru-RU').format(numValue);
-}
 
 
 const isDetailedModeDisabled = computed(() => {
@@ -940,7 +903,7 @@ const selectionDataColumns = computed(() =>
 );  
 
 
-watch(formattedTableData, (newData) => {
+/* watch(formattedTableData, (newData) => {
   if (newData && newData.length > 0 && tableRef.value) {
     nextTick(() => {
       restoreSelection();
@@ -955,6 +918,32 @@ watch(() => tableRef.value, (tableInstance) => {
     });
   }
 });
+ */
+
+// Watcher 1 — реакция на изменение данных таблицы
+watch(
+  () => reportStore.tableData,
+  (newData) => {
+    if (newData && newData.length > 0 && tableRef.value) {
+      nextTick(() => {
+        restoreSelection();
+      });
+    }
+  },
+  { deep: true }
+);
+
+// Watcher 2 — реакция на появление инстанса таблицы (после скрытия скелетона)
+watch(
+  () => tableRef.value,
+  (tableInstance) => {
+    if (tableInstance && reportStore.tableData?.length > 0) {
+      nextTick(() => {
+        restoreSelection();
+      });
+    }
+  }
+);
 
 
 function configuringReportTables() {
