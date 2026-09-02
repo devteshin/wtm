@@ -285,7 +285,11 @@
                     :width="column.width"
                     :fixed="column.fixed"
                     :align="column.align"
-              />
+                  >
+                    <template #default="scope">
+                      {{ formatCell(scope.row[column.prop], column.formatType) }}
+                    </template>
+                  </el-table-column>                
                   <el-table-column
                     label=""
                     width="50"
@@ -357,6 +361,7 @@ interface Column {
   width: string;
   fixed?: string;
   align?: string;
+  formatType?: string;
 };
 
 interface MaterialOption {
@@ -372,7 +377,7 @@ interface SelectionIndicator {
 const getFormatter = (type?: string) => {
   // Если тип не задан или невалиден — возвращаем «как есть»
   if (!type) {
-    return (val: any) => (val == null ? '-' : String(val));
+    return (val: any) => (val == null ? '' : String(val));
   }
 
   switch (type) {
@@ -927,10 +932,12 @@ const selectionColumn = computed(() =>
 );
 
 const dataColumns = computed(() =>
-  isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns);  
+  isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns
+);  
 
 const selectionDataColumns = computed(() =>
-  isSelectionDetailedMode.value ? reportStore.detailedSelectionColumns  : reportStore.selectionColumns);  
+  isSelectionDetailedMode.value ? reportStore.detailedSelectionColumns  : reportStore.selectionColumns
+);  
 
 
 watch(formattedTableData, (newData) => {
@@ -971,7 +978,8 @@ function configuringReportTables() {
           { prop: item_element + '_percent', 
             label: item_element + ', ' + store.materials_meta?.material_group_list.find(item => item.code === item_element)?.umi ,
             width: '100',
-            align: 'right'
+            align: 'right',
+            formatType: 'percent'
           }
         );
     }
@@ -1489,7 +1497,6 @@ watch(
 }
 
 :deep(.total-row td) {
-  border-bottom: 2px solid #3b82f6 !important;
   background-color: #e0f2fe !important;
 }
 

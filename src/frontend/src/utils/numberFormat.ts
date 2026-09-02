@@ -20,7 +20,7 @@ export const integerFormatter = createNumberFormatter('ru-RU', 0);
 export const formatNumber = (
   value: number | null | undefined,
   formatter: Intl.NumberFormat,
-  emptyValue: string = '-'
+  emptyValue: string = ''
 ): string => {
   if (value == null) return emptyValue;
   return formatter.format(value);
