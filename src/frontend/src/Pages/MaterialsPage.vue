@@ -223,6 +223,7 @@
               :key="column.type"
               :type="column.type"
               :width="column.width"
+              :align="column.align"
               :selectable="column.selectable"
             />
 
@@ -234,6 +235,7 @@
               :label="column.label"
               :width="column.width"
               :fixed="column.fixed"
+              :align="column.align"
             />
             </el-table>
           </div>
@@ -256,6 +258,7 @@
                   :prop="column.prop"
                   :label="column.label"
                   :width="column.width"
+                  :align="column.align"
                 />
                 </el-table>
               </div>
@@ -277,7 +280,8 @@
                     :label="column.label"
                     :width="column.width"
                     :fixed="column.fixed"
-                  />
+                    :align="column.align"
+              />
                   <el-table-column
                     label=""
                     width="50"
@@ -346,6 +350,7 @@ interface Column {
   label: string;
   width: string;
   fixed?: string;
+  align?: string;
 };
 
 interface MaterialOption {
@@ -565,47 +570,47 @@ watch(
 );
 
 const basicColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
-  { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
-  { prop: 'tare_type', label: 'Тара', width: '80' },
-  { prop: 'material_mark', label: 'Вид', width: '100' },
-  { prop: 'material_group', label: 'Группа', width: '100' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
+  { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left', align: 'left' },
+  { prop: 'material', label: 'Материал', width: '300', fixed: 'left', align: 'left' },
+  { prop: 'tare_type', label: 'Тара', width: '80', align: 'left' },
+  { prop: 'material_mark', label: 'Вид', width: '100', align: 'left' },
+  { prop: 'material_group', label: 'Группа', width: '100', align: 'left' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right' }
 ]);
 
 const detailedColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left' },
-  { prop: 'material', label: 'Материал', width: '300', fixed: 'left' },
-  { prop: 'tare_type', label: 'Тара', width: '80' },
-  { prop: 'tare_id', label: 'Номер', width: '80' },
-  { prop: 'tare_mark', label: 'Маркировка', width: '120' },
-  { prop: 'material_mark', label: 'Вид', width: '100' },
-  { prop: 'material_group', label: 'Группа', width: '100' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100' },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100' }
+  { prop: 'stock_name', label: 'Склад', width: '80', fixed: 'left', align: 'left' },
+  { prop: 'material', label: 'Материал', width: '300', fixed: 'left', align: 'left' },
+  { prop: 'tare_type', label: 'Тара', width: '80', align: 'left' },
+  { prop: 'tare_id', label: 'Номер', width: '80', align: 'left' },
+  { prop: 'tare_mark', label: 'Маркировка', width: '120', align: 'left' },
+  { prop: 'material_mark', label: 'Вид', width: '100', align: 'left' },
+  { prop: 'material_group', label: 'Группа', width: '100', align: 'left' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right' }
 ]);
 
 const selectionColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80' },
-  { prop: 'material', label: 'Материал', width: '300' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100' }
+  { prop: 'stock_name', label: 'Склад', width: '80', align: 'left' },
+  { prop: 'material', label: 'Материал', width: '300', align: 'left' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right' }
 ]);
 
 const detailedSelectionColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80' },
-  { prop: 'material', label: 'Материал', width: '300' },
-  { prop: 'tare_id', label: 'Номер', width: '80' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100' }
+  { prop: 'stock_name', label: 'Склад', width: '80', align: 'left' },
+  { prop: 'material', label: 'Материал', width: '300', align: 'left' },
+  { prop: 'tare_id', label: 'Номер', width: '80', align: 'left' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right' }
 ]);
 
 const selectionIndColumns = [
-  { prop: 'ind', label: 'Показатель', width: '100', },
-  { prop: 'percent', label: '%', width: '80' },
+  { prop: 'ind', label: 'Показатель', width: '100', align: 'center' },
+  { prop: 'percent', label: '%', width: '80', align: 'right' },
 ];
 
 
@@ -661,20 +666,31 @@ onMounted(async () => {
       materialOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedMaterial.value.includes(item.id)) || [];
     }
 
+    // для того чтобы применить возможное изменение свойств basicColumns, detailedColumns, selectionColumns, detailedSelectionColumns
+    // при воостановлении из localstorage переписываем их
+    // необходимо когда добавляем/удаляем или изменяем свой
+    const existingPercentBasic = reportStore.basicColumns.filter(
+      col => col.prop.includes('_percent')
+    );
+    const existingPercentDetailed = reportStore.detailedColumns.filter(
+      col => col.prop.includes('_percent')
+    );
 
-    // Инициализируем колонки, если они не загружены
-    if (!reportStore.basicColumns.length) {
-      reportStore.basicColumns = [...basicColumns.value];
-    }
-    if (!reportStore.detailedColumns.length) {
-      reportStore.detailedColumns = [...detailedColumns.value];
-    }
-    if (!reportStore.selectionColumns.length) {
-      reportStore.selectionColumns = [...selectionColumns.value];
-    }
-    if (!reportStore.detailedSelectionColumns.length) {
-      reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value];
-    }
+    reportStore.basicColumns = [...basicColumns.value, ...existingPercentBasic];
+    reportStore.detailedColumns = [...detailedColumns.value, ...existingPercentDetailed];
+
+    const existingPercentSel = reportStore.selectionColumns.filter(
+      col => col.prop.includes('_percent')
+    );
+    const existingPercentSelDetailed = reportStore.detailedSelectionColumns.filter(
+      col => col.prop.includes('_percent')
+    );
+
+    reportStore.selectionColumns = [...selectionColumns.value, ...existingPercentSel];
+    reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value, ...existingPercentSelDetailed];
+
+
+
   } finally {
     store.loading = false;
     materialOptionsLoading.value = false;
@@ -876,6 +892,7 @@ const selectionColumn = computed(() =>
     ? [{
         type: 'selection',
         width: '55',
+        align: 'center',
         selectable: isRowSelectable
       }]
     : []
@@ -925,7 +942,8 @@ function configuringReportTables() {
       percent_items.push(
           { prop: item_element + '_percent', 
             label: item_element + ', ' + store.materials_meta?.material_group_list.find(item => item.code === item_element)?.umi ,
-            width: '100'
+            width: '100',
+            align: 'right'
           }
         );
     }
