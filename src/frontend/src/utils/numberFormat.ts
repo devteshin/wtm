@@ -9,7 +9,7 @@ export const createNumberFormatter = (
   });
 
 // Форматировщик для веса (2 знака) — как у тебя было
-export const weightFormatter = createNumberFormatter('ru-RU', 2);
+export const twoDecimalFormatter  = createNumberFormatter('ru-RU', 2);
 
 // Форматировщик для высокой точности (3 знака)
 export const highPrecisionFormatter = createNumberFormatter('ru-RU', 3);
@@ -27,8 +27,8 @@ export const formatNumber = (
 };
 
 // Удобные обертки
-export const formatWeight = (v: number | null | undefined) =>
-  formatNumber(v, weightFormatter);
+export const formatTwoDecimal = (v: number | null | undefined) =>
+  formatNumber(v, twoDecimalFormatter );
 
 export const formatHighPrecision = (v: number | null | undefined) =>
   formatNumber(v, highPrecisionFormatter);

@@ -252,14 +252,18 @@
                   border
                   show-overflow-tooltip
                 >
-                <el-table-column
-                  v-for="column in selectionIndColumns"
-                  :key="column.prop"
-                  :prop="column.prop"
-                  :label="column.label"
-                  :width="column.width"
-                  :align="column.align"
-                />
+                  <el-table-column
+                    v-for="column in selectionIndColumns"
+                    :key="column.prop"
+                    :prop="column.prop"
+                    :label="column.label"
+                    :width="column.width"
+                    :align="column.align"
+                  >
+                     <template #default="scope">
+                      {{ formatCell(scope.row[column.prop], column.formatType) }}
+                    </template>
+                  </el-table-column>                
                 </el-table>
               </div>
             </el-aside>
@@ -339,6 +343,8 @@ import { Delete, FolderOpened } from '@element-plus/icons-vue';
 import { watch } from 'vue';
 import { ElMessageBox } from "element-plus";
 import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
+import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
+
 
 const props = defineProps({
     /** ID склада */
@@ -361,6 +367,28 @@ interface MaterialOption {
 interface SelectionIndicator {
   ind: string;
   percent: number;
+};
+
+const getFormatter = (type?: string) => {
+  // Если тип не задан или невалиден — возвращаем «как есть»
+  if (!type) {
+    return (val: any) => (val == null ? '-' : String(val));
+  }
+
+  switch (type) {
+    case 'weight': return formatTwoDecimal;
+    case 'percent': return formatTwoDecimal;
+    case 'high': return formatHighPrecision;
+    case 'integer': return formatInteger;
+    default:
+      // Неизвестный тип → тоже «как есть», чтобы не ломать отображение
+      return (val: any) => (val == null ? '-' : String(val));
+  }
+};
+
+const formatCell = (value: any, type?: string) => {
+  const formatter = getFormatter(type);
+  return formatter(value);
 };
 
 const store = useApplicationStore()
@@ -575,9 +603,9 @@ const basicColumns = ref([
   { prop: 'tare_type', label: 'Тара', width: '80', align: 'left' },
   { prop: 'material_mark', label: 'Вид', width: '100', align: 'left' },
   { prop: 'material_group', label: 'Группа', width: '100', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right' },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right' }
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right', formatType: 'weight' }
 ]);
 
 const detailedColumns = ref([
@@ -588,29 +616,29 @@ const detailedColumns = ref([
   { prop: 'tare_mark', label: 'Маркировка', width: '120', align: 'left' },
   { prop: 'material_mark', label: 'Вид', width: '100', align: 'left' },
   { prop: 'material_group', label: 'Группа', width: '100', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right' },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right' }
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right', formatType: 'weight' }
 ]);
 
 const selectionColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80', align: 'left' },
   { prop: 'material', label: 'Материал', width: '300', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right' }
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' }
 ]);
 
 const detailedSelectionColumns = ref([
   { prop: 'stock_name', label: 'Склад', width: '80', align: 'left' },
   { prop: 'material', label: 'Материал', width: '300', align: 'left' },
   { prop: 'tare_id', label: 'Номер', width: '80', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right' }
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' }
 ]);
 
 const selectionIndColumns = [
   { prop: 'ind', label: 'Показатель', width: '100', align: 'center' },
-  { prop: 'percent', label: '%', width: '80', align: 'right' },
+  { prop: 'percent', label: '%', width: '80', align: 'right', formatType: 'percent' },
 ];
 
 

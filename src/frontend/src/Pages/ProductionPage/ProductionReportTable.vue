@@ -74,7 +74,7 @@
 import { ref, computed } from 'vue'
 import { useProductionReportStore } from '@/storeProductionReport'
 import useApplicationStore from '@/store'
-import { formatWeight, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
+import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
 
 const reportStore = useProductionReportStore()
 const store = useApplicationStore()
@@ -84,7 +84,7 @@ const isLoading = ref(false)
 
 const getFormatter = (type: 'weight' | 'high' | 'integer') => {
   switch (type) {
-    case 'weight': return formatWeight;
+    case 'weight': return formatTwoDecimal;
     case 'high': return formatHighPrecision;
     case 'integer': return formatInteger;
   }
