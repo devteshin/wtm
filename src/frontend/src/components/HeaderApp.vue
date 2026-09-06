@@ -101,7 +101,8 @@ const route = useRoute();
 });
  */
 const routes = computed(() => {
-    const stockID = route.params.stockID as string;
+    //const stockID = route.params.stockID as string;
+    const stockID = store.currentStockID;
     const role = store.currentUser?.role_id;
     const menuRoutes: Array<{ label: string; path: string; icon: string }> = [];
 
@@ -113,21 +114,19 @@ const routes = computed(() => {
             icon: "Guide"
         });
 
-        if (stockID) {
-            menuRoutes.push(
-                { label: "Задачи",      path: `/stock/${stockID}`,                        icon: "MessageBox" },
-                { label: "Операции",    path: `/stock/${stockID}/operations`,             icon: "MessageBox" },
-                { label: "Материалы",   path: `/stock/${stockID}/materials`,              icon: "MessageBox" },
-                { label: "Производство", path: `/stock/${stockID}/production`,            icon: "MessageBox" }
-            );
-        }
+        menuRoutes.push(
+            { label: "Задачи",      path: `/stock/${stockID}`,                        icon: "MessageBox" },
+            { label: "Операции",    path: `/stock/${stockID}/operations`,             icon: "MessageBox" },
+            { label: "Материалы",   path: `/material`,              icon: "MessageBox" },
+            { label: "Производство", path: `/production`,            icon: "MessageBox" }
+        );
     }
 
     // role_id = 2 — только Материалы и Производство
     if (role === 2) {
         menuRoutes.push(
-            { label: "Материалы",    path: `/stock/${stockID}/materials`,   icon: "MessageBox" },
-            { label: "Производство", path: `/stock/${stockID}/production`,  icon: "MessageBox" }
+            { label: "Материалы",    path: `/material`,   icon: "MessageBox" },
+            { label: "Производство", path: `/production`,  icon: "MessageBox" }
         );
     }
 

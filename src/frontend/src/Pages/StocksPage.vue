@@ -31,14 +31,18 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 const store = useApplicationStore();
 /** Обработчик нажатия строки таблицы - переход на список заданий на складе */
-const handleRowClick = (row: frontend.IStock) => router.push(`/stock/${row.id}`);
+//const handleRowClick = (row: frontend.IStock) => router.push(`/stock/${row.id}`);
+const handleRowClick = (row: frontend.IStock) => {
+  store.currentStockID = row.id;
+  router.push(`/stock/${row.id}`);
+};
 /** Получение данных от API со списком складов */
 onMounted(async () => {
     if (store.currentUser?.role_id === 1) {
         await store.fetchStocks();
         if (store.stocks.length === 1) await handleRowClick(store.stocks[0] as frontend.IStock);
     } else {
-        router.push(`/stock/materials`)
+        router.push(`/material`)
     }
 });
 

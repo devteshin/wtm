@@ -15,6 +15,8 @@ export default defineStore("app_store", () => {
     /** проверка токена клиента внутри браузера */
     const checkToken = () => api.checkToken();
 
+    const currentStockID = ref(0);
+
     /** список операций */
     const operations = ref<Array<frontend.IOperationsList>>([]);
     /** список документов операции */
@@ -339,6 +341,7 @@ export default defineStore("app_store", () => {
         arrival,
         isAuth,
         currentUser,
+        currentStockID,
         checkToken,
         changePassword,
         logOut,

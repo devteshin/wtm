@@ -52,7 +52,7 @@ const routes: Array<RouteRecordRaw> = [
         })
     },
     {
-        path: "/materials",
+        path: "/material",
         component: () => import("@/Pages/MaterialsPage.vue"),
     },
     {
