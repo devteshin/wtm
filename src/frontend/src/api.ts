@@ -33,6 +33,7 @@ type user = {
     id: string;
     employee_name: string;
     login: string;
+    role_id: number;
 }
 
 class ClientAPI {
@@ -68,9 +69,9 @@ class ClientAPI {
         return this.token ? { token: this.token } : {};
     }
 
-    async fetchMaterialsMeta(stockID: number) {
+    async fetchMaterialsMeta() {
         this.checkToken();
-        const response = await fetch(`${BASE_URL}/${STOCK}/${stockID}/materials`, { headers: this.requestHeaders() });
+        const response = await fetch(`${BASE_URL}/materials`, { headers: this.requestHeaders() });
         if (response.status === 403) {
             window.localStorage.removeItem("token");
             location.href = "/login";

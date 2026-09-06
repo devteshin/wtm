@@ -161,7 +161,7 @@ async def select_selection_data(
     return report_result
 
 
-async def select_materials_meta(conn: Connection, user_id: int, stock_id: int):
+async def select_materials_meta(conn: Connection):
     q_stock = "SELECT id, name FROM stock WHERE app = 1"
     q_element = "SELECT code, name, min_value, max_value, umi, type FROM element ORDER BY code"
     q_process = "SELECT id, process_name AS name FROM technical_process ORDER BY process_name"
@@ -469,6 +469,7 @@ SELECT
     , s.login
     , s.employee_name
     , s.can_login
+    , s.role_id
 FROM
     staff s
 WHERE

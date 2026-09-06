@@ -130,12 +130,9 @@ async def get_stocks(request: Request):
     return await jsonify(stocks, request)
 
 async def get_materials_meta(request: Request):
-    stock_id = request.match_info.get("stockID", None)
-    if stock_id is None:
-        raise HTTPBadRequest()
     materials_meta = []
     async with request.app["db"].acquire() as conn:
-        materials_meta = await select_materials_meta(conn, request.user_id, stock_id)
+        materials_meta = await select_materials_meta(conn)
     return await jsonify(materials_meta, request)
 
 async def search_materials_handler(request: Request):

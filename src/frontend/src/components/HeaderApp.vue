@@ -99,17 +99,4 @@ const routes = computed(() => {
     return menuRoutes;
 });
 
-// const orientation = ref("landscape-primary");
-// const isLandscape = computed(() => orientation.value === "landscape-primary");
-// onMounted(() => {
-//     try {
-//         orientation.value = screen.orientation.type;
-//         window.addEventListener("orientationchange", () => {
-//             orientation.value = screen.orientation.type;
-//         }, false);
-//     } catch (error) {
-//         // eslint-disable-next-line
-//         console.warn(error);
-//     }
-// });
 </script>
