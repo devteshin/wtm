@@ -167,9 +167,6 @@ async def search_operations_handler(request: Request):
 
 
 async def get_materials_data(request: Request):
-    stock_id = request.match_info.get("stockID", None)
-    if stock_id is None:
-        raise HTTPBadRequest()
     
     materials = request.query.get("materials")
     stocks = request.query.get("stocks")
@@ -184,8 +181,6 @@ async def get_materials_data(request: Request):
     async with request.app["db"].acquire() as conn:
         materials_data = await select_materials_data(
             conn,
-            request.user_id,
-            stock_id,
             materials=materials,
             stocks=stocks,
             material_groups=material_groups,

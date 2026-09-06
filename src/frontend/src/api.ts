@@ -80,7 +80,7 @@ class ClientAPI {
         return body;
     }
 
-    async fetchMaterialsData(stockID: number, params: frontend.IMaterialsQueryParams = {}) {
+    async fetchMaterialsData(params: frontend.IMaterialsQueryParams = {}) {
         this.checkToken();
 
         const queryParams = new URLSearchParams();
@@ -90,7 +90,7 @@ class ClientAPI {
             }
         });
 
-        const url = `${BASE_URL}/${STOCK}/${stockID}/materials_data${
+        const url = `${BASE_URL}/materials_data${
             queryParams.toString() ? `?${queryParams.toString()}` : ''
         }`;        
 

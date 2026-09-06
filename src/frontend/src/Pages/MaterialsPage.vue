@@ -699,7 +699,7 @@ onMounted(async () => {
   materialOptionsLoading.value = true
   try {
     if (!store.materials_meta) {
-      await store.fetchMaterialsMeta(props.stockID);
+      await store.fetchMaterialsMeta();
     }
     reportStore.loadFromStorage();
     if (selectedMaterial.value.length) {
@@ -1131,7 +1131,7 @@ const makeMaterialReport = async () => {
 
 
   try {
-    await store.fetchMaterialsData(props.stockID, {
+    await store.fetchMaterialsData({
       materials: selectedMaterial.value.toString(),
       stocks: reportStore.selectedStore.toString(),
       material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),

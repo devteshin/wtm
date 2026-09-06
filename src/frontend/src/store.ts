@@ -55,8 +55,8 @@ export default defineStore("app_store", () => {
     const doLogin = (payload: frontend.ILoginPayload) => api.doLogin(payload);
 
     /** запрос к API для получения данных для отчета по остаткам материалов */
-    const fetchMaterialsData = (stockID: number, params?: frontend.IMaterialsQueryParams) => {
-        return api.fetchMaterialsData(stockID, params).then(body => materials_data.value = body).finally(() => loading.value = false);
+    const fetchMaterialsData = (params?: frontend.IMaterialsQueryParams) => {
+        return api.fetchMaterialsData(params).then(body => materials_data.value = body).finally(() => loading.value = false);
     };
 
     /** запрос к API для получения данных для отчета по производству */
@@ -89,8 +89,8 @@ export default defineStore("app_store", () => {
         return api.fetchSelectionData(params).then(body => targetRef.value = body).finally(() => loading.value = false);
     };
     /** запрос к API для получения данных для отчета по остаткам материалов */
-    const fetchMaterialsMeta = (stockID: number) => {
-        return api.fetchMaterialsMeta(stockID).then(body => materials_meta.value = body).finally(() => loading.value = false);
+    const fetchMaterialsMeta = () => {
+        return api.fetchMaterialsMeta().then(body => materials_meta.value = body).finally(() => loading.value = false);
     };
     /** запрос к API для получения списка операций */
     const fetchOperations = (stockID: number, activeOperationMode: boolean) => {

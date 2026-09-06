@@ -21,8 +21,6 @@ MATERIAL_KIND_PROBE = 1
 
 async def select_materials_data(
     conn: Connection, 
-    user_id: int, 
-    stock_id: int,
     materials: str = '',
     stocks: str = '',
     material_groups: str = '',
