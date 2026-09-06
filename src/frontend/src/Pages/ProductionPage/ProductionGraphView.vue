@@ -20,27 +20,26 @@
 
       <el-button size="small" @click="resetView" plain type="primary">Сброс</el-button>
 
-    <span class="separator-line" />
+      <span class="separator-line" />
 
-      <el-button
-        size="small"
-        type="success"
-        @click="saveGraphAsSvg"
-      >
+      <el-button size="small" type="success" @click="saveGraphAsSvg">
         <template #icon><el-icon :size="14"><Download /></el-icon></template>
-      Сохранить как SVG
+        Сохранить как SVG
       </el-button>
-
     </div>
 
-    <!-- ВАЖНО: overflow: auto здесь даёт изолированный скролл -->
-    <div
-      ref="svgContainer"
-      class="mermaid-render-area"
-      @mousedown="onPanStart"
-      @mouseleave="onPanEnd"
-      @mouseup="onPanEnd"
-    >
+    <!-- Обёртка: позиционирует оверлеи поверх SVG-контейнера -->
+    <div class="graph-stage">
+      <!-- Контейнер ТОЛЬКО для Mermaid. Vue сюда не лезет. -->
+      <div
+        ref="svgContainer"
+        class="mermaid-render-area"
+        @mousedown="onPanStart"
+        @mouseleave="onPanEnd"
+        @mouseup="onPanEnd"
+      />
+
+      <!-- Оверлеи в отдельном слое, не внутри svgContainer -->
       <div v-if="loading" class="overlay-loader">Строим граф...</div>
       <div v-else-if="error" class="error-state">{{ error }}</div>
     </div>
@@ -296,11 +295,12 @@ const renderMermaid = (mermaidStr: string) => {
   rawBlock.innerHTML = source
   svgContainer.value.appendChild(rawBlock)
 
-  void svgContainer.value.offsetHeight // принудительный reflow
+  void svgContainer.value.offsetHeight
 
+  // Передаём сам элемент, а не селектор '.mermaid'
   ;(window as any).mermaid.init(
     { flowchart: { useMaxWidth: true } },
-    '.mermaid'
+    rawBlock
   )
 
   attachWheelListener()
@@ -412,37 +412,38 @@ const saveGraphAsSvg = () => {
   color: #333;
 }
 
-/* ГЛАВНОЕ: изолированный скролл + ограничение ширины */
-.mermaid-render-area {
+/* Обёртка: позиционирует оверлеи поверх SVG-контейнера */
+.graph-stage {
   flex: 1;
-  min-height: 0; /* обязательно для flex-скролла */
-  width: 100%;
-  overflow: auto; /* вместо visible */
-  text-align: center;
-  box-sizing: border-box;
-  cursor: grab;
+  min-height: 0;
   position: relative;
-  /* Опционально: тонкая рамка, чтобы видеть границы области */
-  border: 1px solid transparent;
+  overflow: auto;
+}
+
+/* Контейнер ТОЛЬКО для Mermaid. Vue сюда не лезет. */
+.mermaid-render-area {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  cursor: grab;
 }
 
 .mermaid-render-area:active {
   cursor: grabbing;
 }
 
-/* Ограничиваем размер SVG, чтобы он не вылезал */
 .mermaid-render-area svg {
-  max-width: 100%; /* не шире контейнера */
+  max-width: 100%;
   max-height: none;
   width: auto !important;
   height: auto !important;
   display: block;
-  /* margin: 0 auto убран — он конфликтует с transform и скроллом */
   transform-origin: 0 0;
   will-change: transform;
   pointer-events: auto;
 }
 
+/* Оверлеи в отдельном слое, не внутри svgContainer */
 .overlay-loader {
   position: absolute;
   inset: 0;
@@ -453,15 +454,21 @@ const saveGraphAsSvg = () => {
   z-index: 5;
   color: #333;
   font-weight: 500;
+  pointer-events: none;
 }
 
 .error-state {
-  padding: 24px;
-  text-align: center;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #dc2626;
   background: #fef2f2;
   border: 1px solid #fee2e2;
   border-radius: 6px;
-  margin-top: 16px;
+  z-index: 5;
+  pointer-events: none;
 }
+
 </style>
