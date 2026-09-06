@@ -66,7 +66,8 @@ import { computed } from "vue";
 const store = useApplicationStore();
 const handleLogOut = () => store.logOut();
 const route = useRoute();
-const routes = computed(() => {
+
+/* const routes = computed(() => {
     const menuRoutes = [
         {
             label: "Список складов",
@@ -98,5 +99,40 @@ const routes = computed(() => {
     }
     return menuRoutes;
 });
+ */
+const routes = computed(() => {
+    const stockID = route.params.stockID as string;
+    const role = store.currentUser?.role_id;
+    const menuRoutes: Array<{ label: string; path: string; icon: string }> = [];
+
+    // role_id = 1 — полное меню
+    if (role === 1) {
+        menuRoutes.push({
+            label: "Список складов",
+            path: "/",
+            icon: "Guide"
+        });
+
+        if (stockID) {
+            menuRoutes.push(
+                { label: "Задачи",      path: `/stock/${stockID}`,                        icon: "MessageBox" },
+                { label: "Операции",    path: `/stock/${stockID}/operations`,             icon: "MessageBox" },
+                { label: "Материалы",   path: `/stock/${stockID}/materials`,              icon: "MessageBox" },
+                { label: "Производство", path: `/stock/${stockID}/production`,            icon: "MessageBox" }
+            );
+        }
+    }
+
+    // role_id = 2 — только Материалы и Производство
+    if (role === 2) {
+        menuRoutes.push(
+            { label: "Материалы",    path: `/stock/${stockID}/materials`,   icon: "MessageBox" },
+            { label: "Производство", path: `/stock/${stockID}/production`,  icon: "MessageBox" }
+        );
+    }
+
+    return menuRoutes;
+});
+
 
 </script>

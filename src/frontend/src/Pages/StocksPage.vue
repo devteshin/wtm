@@ -34,8 +34,12 @@ const store = useApplicationStore();
 const handleRowClick = (row: frontend.IStock) => router.push(`/stock/${row.id}`);
 /** Получение данных от API со списком складов */
 onMounted(async () => {
-    await store.fetchStocks();
-    if (store.stocks.length === 1) await handleRowClick(store.stocks[0] as frontend.IStock);
+    if (store.currentUser?.role_id === 1) {
+        await store.fetchStocks();
+        if (store.stocks.length === 1) await handleRowClick(store.stocks[0] as frontend.IStock);
+    } else {
+        router.push(`/stock/materials`)
+    }
 });
 
 /** Список столбцов для таблицы */

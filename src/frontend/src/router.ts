@@ -52,18 +52,12 @@ const routes: Array<RouteRecordRaw> = [
         })
     },
     {
-        path: "/stock/:stockID/materials",
+        path: "/materials",
         component: () => import("@/Pages/MaterialsPage.vue"),
-        props: route => ({
-            stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null
-        })
     },
     {
-        path: "/stock/:stockID/production",
+        path: "/production",
         component: () => import("@/Pages/ProductionPage/ProductionPage.vue"),
-        props: route => ({
-            stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null
-        })
     },
 
 

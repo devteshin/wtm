@@ -346,10 +346,6 @@ import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 
 const reportTableRef = ref<typeof ProductionReportTableView | null>(null)
 
-const props = defineProps({
-  stockID: { type: Number, required: true },
-})
-
 const store = useApplicationStore()
 const reportStore = useProductionReportStore()
 
@@ -426,7 +422,7 @@ onMounted(async () => {
 
   try {
 
-    await store.fetchMaterialsMeta(props.stockID)
+    await store.fetchMaterialsMeta()
  
     reportStore.loadFromStorage()
     if (selectedProduct.value.length) {

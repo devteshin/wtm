@@ -148,7 +148,7 @@ const loadGridNumbers = async () => {
   //return
   try {
     console.log(props.stockID);
-    await store.fetchMaterialsData(props.stockID, {
+    await store.fetchMaterialsData({
       materials: selectedBaseMaterial.value?.material_id.toString(),
       stocks: props.stockID.toString(),
       material_groups: '',

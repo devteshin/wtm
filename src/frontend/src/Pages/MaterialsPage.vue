@@ -357,11 +357,6 @@ import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
 
 
-const props = defineProps({
-    /** ID склада */
-    stockID: { type: Number, required: true },
-});
-
 interface Column {
   prop: string;
   label: string;
