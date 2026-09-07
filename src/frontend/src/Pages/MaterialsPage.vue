@@ -598,8 +598,10 @@ watch(
     selectionColumns: reportStore.selectionColumns
   }),
   (newValues) => {
+    const ts = performance.now();
     reportStore.setFilters(newValues);
     reportStore.saveToStorage();
+    console.log('[watcher] setFilters + saveToStorage', performance.now() - ts, 'ms');
   },
   { deep: true }
 );
@@ -691,19 +693,19 @@ onMounted(async () => {
   startLoading();
 
   store.loading = true;
-  materialOptionsLoading.value = true
+  materialOptionsLoading.value = true;
   try {
-    if (!store.materials_meta) {
-      await store.fetchMaterialsMeta();
-    }
+    await store.fetchMaterialsMeta();
+    
     reportStore.loadFromStorage();
+
     if (selectedMaterial.value.length) {
       materialOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedMaterial.value.includes(item.id)) || [];
     }
 
     // для того чтобы применить возможное изменение свойств basicColumns, detailedColumns, selectionColumns, detailedSelectionColumns
     // при воостановлении из localstorage переписываем их
-    // необходимо когда добавляем/удаляем или изменяем свой
+    // необходимо когда добавляем/удаляем или изменяем свойcтва
     const existingPercentBasic = reportStore.basicColumns.filter(
       col => col.prop.includes('_percent')
     );
@@ -725,20 +727,10 @@ onMounted(async () => {
     reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value, ...existingPercentSelDetailed];
 
 
-
   } finally {
     store.loading = false;
     materialOptionsLoading.value = false;
   }
-
-  nextTick(() => {
-    setTimeout(() => {
-      if (store.materials_meta?.material_list && !isOptionsLoaded.value) {
-        materialOptions.value = [...store.materials_meta.material_list];
-        isOptionsLoaded.value = true;
-      }
-    }, 500);
-  });
 
 });
 
@@ -849,19 +841,23 @@ const getRowClassName = ({ row }: { row: any }): string => {
 
 
 const isDetailedModeDisabled = computed(() => {
-  if (selectedMaterial.value && selectedMaterial.value.length > 0) {
-    return false;
-  };
-  isDetailedMode.value = false;
-  return true;
+  return !(selectedMaterial.value && selectedMaterial.value.length > 0);
+});
+
+watch(isDetailedModeDisabled, (disabled) => {
+  if (disabled) {
+    isDetailedMode.value = false;
+  }
 });
 
 const isSelectionModeDisabled = computed(() => {
-  if (isDetailedMode.value) {
-    return false;
-  };
-  isSelectionEnabled.value = false;
-  return true;
+  return !isDetailedMode.value;
+});
+
+watch(isSelectionModeDisabled, (disabled) => {
+  if (disabled) {
+    isSelectionEnabled.value = false;
+  }
 });
 
 const isElementOrderModeDisabled = computed(() => {
@@ -897,23 +893,6 @@ const selectionDataColumns = computed(() =>
   isSelectionDetailedMode.value ? reportStore.detailedSelectionColumns  : reportStore.selectionColumns
 );  
 
-
-/* watch(formattedTableData, (newData) => {
-  if (newData && newData.length > 0 && tableRef.value) {
-    nextTick(() => {
-      restoreSelection();
-    });
-  }
-}, { deep: true });
-
-watch(() => tableRef.value, (tableInstance) => {
-  if (tableInstance && formattedTableData.value?.length > 0) {
-    nextTick(() => {
-      restoreSelection();
-    });
-  }
-});
- */
 
 // Watcher 1 — реакция на изменение данных таблицы
 watch(
@@ -1137,8 +1116,7 @@ const makeMaterialReport = async () => {
       element_order: elementOrder()
     });
 
-    console.log("store.materials_data", store.materials_data);
-
+    
     if (store.materials_data && Array.isArray(store.materials_data)) {
       reportStore.tableData = store.materials_data;
       if (reportStore.tableData.length > 1) {
