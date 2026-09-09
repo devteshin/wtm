@@ -1,6 +1,23 @@
 import { RouteRecordRaw, createRouter, createWebHistory } from "vue-router";
-
+import { ElMessage } from "element-plus";
+import type { RouteLocationNormalized, NavigationGuardNext } from "vue-router";
 import useApplicationStore from "@/store";
+
+function guardValidStockId(
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext
+) {
+  const stockID = Number(to.params.stockID);
+
+  if (!Number.isInteger(stockID) || stockID <= 0) {
+    ElMessage.error('Некорректный ID склада');
+    return next({ path: "/" }); // редирект на "/"
+  }
+
+  next();
+}
+
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -16,7 +33,8 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/Pages/TasksListPage.vue"),
         props: route => ({
             stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null
-        })
+        }),
+        beforeEnter: guardValidStockId,
     },
     {
         path: "/stock/:stockID/task/:taskID/material/:materialID",
@@ -25,14 +43,16 @@ const routes: Array<RouteRecordRaw> = [
             stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null,
             taskID: (typeof route.params.taskID === "string") ? parseInt(route.params.taskID) : null,
             materialID: (typeof route.params.materialID === "string") ? parseInt(route.params.materialID) : null
-        })
+        }),
+        beforeEnter: guardValidStockId,
     },
     {
         path: "/stock/:stockID/operations",
         component: () => import("@/Pages/OperationsListPage.vue"),
         props: route => ({
             stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null
-        })
+        }),
+        beforeEnter: guardValidStockId,
     },
     {
         path: "/stock/:stockID/operation/:operationID",
@@ -40,7 +60,8 @@ const routes: Array<RouteRecordRaw> = [
         props: route => ({
             stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null,
             operationID: (typeof route.params.operationID === "string") ? parseInt(route.params.operationID) : null
-        })
+        }),
+        beforeEnter: guardValidStockId,
     },
     {
         path: "/stock/:stockID/operation/:operationID/doc/:docID/",
@@ -49,7 +70,8 @@ const routes: Array<RouteRecordRaw> = [
             stockID: (typeof route.params.stockID === "string") ? parseInt(route.params.stockID) : null,
             operationID: (typeof route.params.operationID === "string") ? parseInt(route.params.operationID) : null,
             docID: (typeof route.params.docID === "string") ? parseInt(route.params.docID) : null
-        })
+        }),
+        beforeEnter: guardValidStockId,
     },
     {
         path: "/material",

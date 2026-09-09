@@ -15,7 +15,7 @@ export default defineStore("app_store", () => {
     /** проверка токена клиента внутри браузера */
     const checkToken = () => api.checkToken();
 
-    const currentStockID = ref(0);
+    const currentStockID = ref(Number(localStorage.getItem("currentStockID")) || 0);
 
     /** список операций */
     const operations = ref<Array<frontend.IOperationsList>>([]);
@@ -258,25 +258,30 @@ export default defineStore("app_store", () => {
     };
 
     /** ID таймера */
-    let timer: NodeJS.Timer;
+    let timer: number | null = null;
     /** интервал в ms для setInterval */
     const delay = 15_000;
     /** запуск автообновления */
-    const doAutofetch = (stockID: number, taskID: number, materialID: number, tareType: string) => {
+        const doAutofetch = (stockID: number, taskID: number, materialID: number, tareType: string) => {
+        stopAutofetch(); // на всякий случай останавливаем старый, если был
         timer = setInterval(() => {
             fetchTask(stockID, taskID, materialID, tareType, false);
-        }, delay);
-    };
+        }, delay) as unknown as number;
+        };
     /** остановка автообновления */
     const stopAutofetch = () => {
-        clearInterval(timer as unknown as number);
+    if (timer !== null) {
+        clearInterval(timer);
+        timer = null; // сбрасываем, чтобы знать, что таймера нет
+    }
     };
-
     /** т.к. процесс выхода (logout) не требует фиксации на бэке, то достаточно просто стереть токен из памяти */
     const logOut = () => {
         api.currentUser = null;
         api.token = null;
         window.localStorage.removeItem("token");
+        localStorage.removeItem("currentStockID");
+        currentStockID.value = 0;                         
         location.href = "/login";
     };
 

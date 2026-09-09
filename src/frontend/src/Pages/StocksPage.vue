@@ -34,6 +34,7 @@ const store = useApplicationStore();
 //const handleRowClick = (row: frontend.IStock) => router.push(`/stock/${row.id}`);
 const handleRowClick = (row: frontend.IStock) => {
   store.currentStockID = row.id;
+  localStorage.setItem("currentStockID", String(row.id));
   router.push(`/stock/${row.id}`);
 };
 /** Получение данных от API со списком складов */
