@@ -144,6 +144,7 @@ const exportToExcelClick = () => {
 </script>
 
 <style scoped>
+
 .tables-wrapper {
   display: flex;
   flex-direction: column;
