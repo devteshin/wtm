@@ -197,13 +197,15 @@ async def get_production_graph_data(request: Request):
     
     graph_type = request.query.get("type")
     item_ids = request.query.get("item_ids")
+    with_coeff = request.query.get("with_coeff")
 
     production_graph_data = {}
     async with request.app["db"].acquire() as conn:
         production_graph_data = await select_production_graph_data(
             conn,
             graph_type = graph_type,
-            item_ids = item_ids
+            item_ids = item_ids,
+            with_coeff = with_coeff
         )
 
     return await jsonify(production_graph_data, request)

@@ -91,8 +91,14 @@ async def select_production_report_data(
 async def select_production_graph_data(
     conn: Connection, 
             graph_type: str = '',
-            item_ids: str = ''
+            item_ids: str = '',
+            with_coeff: bool | str = False
     ):
+
+    if isinstance(with_coeff, str):
+        with_coeff_int = 1 if with_coeff.lower() in ('true', '1') else 0
+    else:
+        with_coeff_int = int(with_coeff)
 
     if not item_ids:
         raise ValueError("item_ids is required for graph")
@@ -102,7 +108,7 @@ async def select_production_graph_data(
     async with conn.cursor() as cur:
         try:
             if graph_type == "product":  
-                await cur.callproc("make_products_chain", [item_ids])
+                await cur.callproc("make_products_chain", [item_ids, with_coeff_int])
                 await cur.execute("SELECT * FROM tmp_graph_product_chain")
                 graph_data["product_chain"] = await cur.fetchall()
                 await cur.execute("SELECT * FROM tmp_graph_material_chain")
@@ -113,8 +119,11 @@ async def select_production_graph_data(
                 graph_data["material_node"] = await cur.fetchall()
                 await cur.execute("SELECT * FROM tmp_graph_raw_material_node")
                 graph_data["raw_material_node"] = await cur.fetchall()
-                await cur.execute("SELECT operation_sequence, koeff, next_operation FROM tmp_operations_chain")
-                graph_data["operation_sequences"] = await cur.fetchall()
+                if with_coeff_int == 1:
+                    await cur.execute("SELECT operation_sequence, koeff, next_operation FROM tmp_operations_chain")
+                    graph_data["operation_sequences"] = await cur.fetchall()
+                else:
+                    graph_data["operation_sequences"] = []    
 
             if graph_type == "material":  
                 await cur.callproc("make_materials_chain", [item_ids])

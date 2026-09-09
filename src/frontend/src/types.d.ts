@@ -225,6 +225,7 @@ declare namespace frontend {
     export type IProductionGraphQueryParams = {
         type?: string;
         item_ids?: string;
+        with_coeff?: boolean;
     }
 
     export type ISelectionQueryParams = {

@@ -317,6 +317,7 @@ const renderGraph = async () => {
     await store.fetchProductionGraphData({
       type: props.type,
       item_ids,
+      with_coeff: withCoefficients.value
     })
 
     const mermaidStr = get_mermaid_code(withCoefficients.value)

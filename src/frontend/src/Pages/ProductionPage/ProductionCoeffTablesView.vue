@@ -101,6 +101,7 @@ const fetchData = async () => {
     await store.fetchProductionGraphData({
       type: 'product',
       item_ids,
+      with_coeff: true
     })
   } catch (e: any) {
     console.error('fetchData error:', e)
