@@ -216,6 +216,7 @@
               :row-class-name="getRowClassName"
               @cell-dblclick="(row, column, cell, event) => onCellDblClick(row, column, cell, event)"
               @selection-change="handleSelectionChange"
+              @row-click="onRowClick"
             >
             <!-- Колонка выбора (если включена) -->
             <el-table-column
@@ -464,6 +465,8 @@ const tableCondition = computed({
 //const materialOptions = ref<MaterialOption[]>([]);
 const isOptionsLoaded = ref(false);
 
+let lastClickedIndex = -1;
+
 const updateSelectionData = (selection: any[]) => {
   const selectionToAdd: typeof reportStore.tableData[number][] = [];
   const selectionToRemove: typeof reportStore.tableData[number][] = [];
@@ -561,8 +564,37 @@ const handleDeleteSelectionTableRow = async (row: any) => {
   }
 };
 
+function onRowClick(row, column, event) {
+  const rows = reportStore.tableData
+  const currentIndex = rows.indexOf(row)
+  console.log(currentIndex);
+
+  if (currentIndex === -1) return
+
+  if (event.shiftKey && lastClickedIndex !== -1) {
+
+    event.preventDefault()
+    window.getSelection()?.removeAllRanges()
+
+    const start = Math.min(lastClickedIndex, currentIndex)
+    const end = Math.max(lastClickedIndex, currentIndex)
+
+    isAutoSelectionUpdate.value = true
+    for (let i = start; i <= end; i++) {
+      const r = rows[i]
+      if (isRowSelectable(r)) {
+        tableRef.value.toggleRowSelection(r, true)
+      }
+    }
+    isAutoSelectionUpdate.value = false
+    const selection = tableRef.value.getSelectionRows()
+    handleSelectionChange(selection);
+  }
+
+  lastClickedIndex = currentIndex
+}
+
 const handleSelectionChange = async (selection: any[]) => {
-  //reportStore.setSelectedTableData(selection.map(row => ({ ...row })));
     if (!isAutoSelectionUpdate.value) {
       updateSelectionData(selection);
       try {
