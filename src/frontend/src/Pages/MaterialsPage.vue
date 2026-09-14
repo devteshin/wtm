@@ -1246,12 +1246,6 @@ const onAddItem = () => {
   })
 };
 
-// Функция поиска ID материала по названию
-const findMaterialIdByName = (name: string): number | undefined => {
-  if (!name) return undefined;
-
-  return store.materials_meta?.material_list?.find(item => item.name === name)?.id;
-};
 
 const onCellDblClick = (row: any, column: any, cell: HTMLElement, event: MouseEvent) => {
   const columnProp = column.property; // именно property, а не prop
