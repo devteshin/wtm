@@ -105,7 +105,7 @@ import useApplicationStore from "@/store";
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import { useRouter } from "vue-router";
 import OperationItems from "../Pages/OperationPage/OperationItems.vue";
-import MaterialPage from '../Pages/MaterialsPage.vue';
+import MaterialPage from '../Pages/MaterialsPage/MaterialsPage.vue';
 
 import { Plus, Edit } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";

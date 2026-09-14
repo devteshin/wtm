@@ -75,7 +75,7 @@ const routes: Array<RouteRecordRaw> = [
     },
     {
         path: "/material",
-        component: () => import("@/Pages/MaterialsPage.vue"),
+        component: () => import("@/Pages/MaterialsPage/MaterialsPage.vue"),
     },
     {
         path: "/production",

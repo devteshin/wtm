@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
 import { Delete, Plus } from '@element-plus/icons-vue';
 import RawMaterialGrid from './RawMaterialGrid.vue';
-import MaterialPage from '../MaterialsPage.vue';
+import MaterialPage from '../MaterialsPage/MaterialsPage.vue';
 import DebugDrawerContent from '../DebugDrawerContent.vue';
 
 
