@@ -331,7 +331,6 @@
 import { ref, computed, nextTick, onMounted, Ref } from 'vue'
 import useApplicationStore from '@/store'
 import { useProductionReportStore } from '@/storeProductionReport'
-import ProductionReportTable from './ProductionReportTable.vue'
 import ProductionReportTableView from './ProductionReportTableView.vue'
 import ProductionGraphView from './ProductionGraphView.vue'
 import ProductionCoeffTablesView from './ProductionCoeffTablesView.vue'
