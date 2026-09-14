@@ -317,11 +317,6 @@
         <!-- Таблица отчёта (показывается, когда граф закрыт) -->
         <div class="report-table-wrapper" v-else>
 
-<!--            <ProductionReportTable
-            ref="reportTableRef"
-            @cell-dblclick="onCellDblClick"
-          />
- -->          
           <ProductionReportTableView
             ref="reportTableRef"
             @cell-dblclick="onCellDblClick"
