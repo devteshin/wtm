@@ -1253,20 +1253,6 @@ const findMaterialIdByName = (name: string): number | undefined => {
   return store.materials_meta?.material_list?.find(item => item.name === name)?.id;
 };
 
-// Функция поиска ID склада по названию
-const findStockIdByName = (name: string): number | undefined => {
-  if (!name) return undefined;
-
-  return store.materials_meta?.stock_list?.find(item => item.name === name)?.id;
-};
-
-// Функция добавления материала в выборку
-const addMaterialToselectedMaterial = (materialId: number) => {
-  if (!selectedMaterial.value.includes(materialId)) {
-    selectedMaterial.value = [...selectedMaterial.value, materialId];
-  }
-};
-
 const onCellDblClick = (row: any, column: any, cell: HTMLElement, event: MouseEvent) => {
   const columnProp = column.property; // именно property, а не prop
   const value = row[columnProp];
