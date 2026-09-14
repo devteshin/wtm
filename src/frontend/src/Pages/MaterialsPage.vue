@@ -565,9 +565,11 @@ const handleDeleteSelectionTableRow = async (row: any) => {
 };
 
 function onRowClick(row, column, event) {
+  if (!isSelectionEnabled.value){
+    return;
+  }
   const rows = reportStore.tableData
   const currentIndex = rows.indexOf(row)
-  console.log(currentIndex);
 
   if (currentIndex === -1) return
 
