@@ -128,7 +128,8 @@ const routes = computed(() => {
     if (role === 2) {
         menuRoutes.push(
             { label: "Материалы", path: `/material`, icon: "MessageBox" },
-            { label: "Производство", path: `/production`, icon: "MessageBox" }
+            { label: "Производство", path: `/production`, icon: "MessageBox" },
+            { label: "Показатели", path: `/metrics`, icon: "MessageBox" }
         );
     }
 
