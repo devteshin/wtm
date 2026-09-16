@@ -46,9 +46,6 @@ import useApplicationStore from '@/store'
 import { Download } from '@element-plus/icons-vue'
 import { exportToExcel } from '@/utils/excelExport'
 
-//const props = defineProps<{
-//  ids: number[]
-//}>()
 
 const store = useApplicationStore()
 

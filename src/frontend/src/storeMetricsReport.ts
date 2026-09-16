@@ -1,6 +1,7 @@
-// stores/useProductionReportStore.ts
+// stores/useMetricsReportStore.ts
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { MetricType } from '@/components/metricsConfig'
 
 export const useMetricsReportStore = defineStore('metricsReport', () => {
   const selectedStore = ref<number[]>([])
@@ -10,6 +11,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
   const selectedOperation = ref<number[]>([])
   const selectedSchema = ref<number[]>([])
   const selectedPeriod = ref<[string, string] | null>(null)
+  const selectedMetricType = ref<MetricType>('storage_lifetime')
 
   // Действия
   const setFilters = (filters: Partial<{
@@ -20,6 +22,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedOperation: number[]
     selectedSchema: number[]
     selectedPeriod: [string, string] | null
+    selectedMetricType: MetricType
   }>) => {
     if (filters.selectedStore !== undefined) {
       selectedStore.value = filters.selectedStore
@@ -42,6 +45,9 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     if (filters.selectedPeriod !== undefined) {
       selectedPeriod.value = filters.selectedPeriod
     }
+    if (filters.selectedMetricType !== undefined) {
+      selectedMetricType.value = filters.selectedMetricType
+    }
   }
 
   const resetFilters = () => {
@@ -52,6 +58,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedOperation.value = []
     selectedSchema.value = []
     selectedPeriod.value = null
+    selectedMetricType.value = 'storage_lifetime'
   }
 
   const loadFromStorage = () => {
@@ -67,6 +74,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
           selectedOperation: data.selectedOperation || [],
           selectedSchema: data.selectedSchema || [],
           selectedPeriod: data.selectedPeriod || null,
+          selectedMetricType: data.selectedMetricType || 'storage_lifetime',
         })
       }
     } catch (error) {
@@ -83,6 +91,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
       selectedOperation: selectedOperation.value,
       selectedSchema: selectedSchema.value,
       selectedPeriod: selectedPeriod.value,
+      selectedMetricType: selectedMetricType.value,
       timestamp: Date.now()
     }
     localStorage.setItem('reportMetricsFiltersState', JSON.stringify(stateToSave))
@@ -96,7 +105,8 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedProcess,
     selectedOperation,
     selectedSchema,
-    selectedPeriod,  
+    selectedPeriod,
+    selectedMetricType,  
 
     // Экспортируем действия
     setFilters,

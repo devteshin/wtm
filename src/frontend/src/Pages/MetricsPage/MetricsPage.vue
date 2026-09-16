@@ -2,26 +2,46 @@
   <el-container class="page-container">
     <el-aside width="400px" class="sidebar">
 
-      <ReportFilters
-        ref="filtersRef"
-        v-model:period="selectedPeriod"
-        v-model:store-filter="selectedStore"
-        v-model:schema="selectedSchema"
-        v-model:process="selectedProcess"
-        v-model:operation="selectedOperation"
-        v-model:material="selectedMaterial"
-        v-model:product="selectedProduct"
-        show-period
-        show-store
-        show-schema
-        show-process
-        show-operation
-        show-material
-        show-product
-        :show-operation-graph = "false"
-        :show-material-graph = "false"
-        :show-product-graph = "false"
-        :show-product-coeff-tables = "false"
+      <el-form label-position="top" class="filter-form">
+
+        <!-- Селект вида метрик — в самом верху -->
+        <el-form-item label="Вид отчёта">
+          <el-select
+            v-model="selectedMetricType"
+            placeholder="Выберите вид отчёта"
+            style="width: 100%"
+            @change="handleMetricTypeChange"
+          >
+            <el-option
+              v-for="opt in metricTypeOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
+        </el-form-item>
+
+        <!-- Общие фильтры -->
+        <ReportFilters
+          ref="filtersRef"
+          v-model:period="selectedPeriod"
+          v-model:store-filter="selectedStore"
+          v-model:schema="selectedSchema"
+          v-model:process="selectedProcess"
+          v-model:operation="selectedOperation"
+          v-model:material="selectedMaterial"
+          v-model:product="selectedProduct"
+          :show-period="metricConfig.showPeriod"
+          :show-store="metricConfig.showStore"
+          :show-schema="metricConfig.showSchema"
+          :show-process="metricConfig.showProcess"
+          :show-operation="metricConfig.showOperation"
+          :show-material="metricConfig.showMaterial"
+          :show-product="metricConfig.showProduct"
+          :show-operation-graph="metricConfig.showOperationGraph"
+          :show-material-graph="metricConfig.showMaterialGraph"
+          :show-product-graph="metricConfig.showProductGraph"
+          :show-product-coeff-tables="metricConfig.showProductCoeffTables"
         >
           <template #actions>
             <div style="margin-top: 24px;">
@@ -30,17 +50,33 @@
                 @click="handleMakeReport"
                 class="apply-button"
                 style="width: 100%"
+                :disabled="!selectedMetricType"
               >
                 Сформировать
               </el-button>
             </div>
           </template>
         </ReportFilters>
+
+      </el-form>
+
     </el-aside>
 
     <el-container class="right-container">
       <el-main class="content-area">
 
+        <!-- Динамический компонент отчёта -->
+        <component
+          :is="currentReportComponent"
+          v-if="currentReportComponent && isReportVisible"
+          :key="selectedMetricType"
+          ref="reportComponentRef"
+        />
+
+        <!-- Заглушка, пока не выбрана метрика -->
+        <div v-else class="skeleton-placeholder">
+          Выберите вид отчёта и нажмите «Сформировать»
+        </div>
 
       </el-main>
     </el-container>
@@ -48,66 +84,82 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, Ref } from 'vue'
+import { ref, computed, shallowRef, type Component } from 'vue'
 import useApplicationStore from '@/store'
 import { useMetricsReportStore } from '@/storeMetricsReport'
 import ReportFilters from '@/components/ReportFilters.vue'
-import { ElMessageBox } from 'element-plus'
-import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
+import { metricTypeOptions, getMetricConfig, type MetricType } from '@/components/metricsConfig'
 
-//const reportTableRef = ref<typeof ProductionReportTableView | null>(null)
+// Импорт компонентов отчётов
+import StorageLifetimeReport from './StorageLifetimeReport.vue'
+import TurnoverReport from './TurnoverReport.vue'
+import DeficitReport from './DeficitReport.vue'
+
+const reportComponents: Record<string, Component> = {
+  StorageLifetimeReport,
+  TurnoverReport,
+  DeficitReport,
+}
+
 const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
+const reportComponentRef = ref<any>(null)
 
-const store = useApplicationStore()
 const reportStore = useMetricsReportStore()
 
-// ── v-model прокси для ReportFilters ──
-// (нужны и для onCellDblClick — addUniqueIdsByValue работает с Ref)
+// ── Метрика ──
+
+const selectedMetricType = computed({
+  get: () => reportStore.selectedMetricType,
+  set: (value) => reportStore.setFilters({ selectedMetricType: value }),
+})
+
+const metricConfig = computed(() => getMetricConfig(selectedMetricType.value))
+
+const currentReportComponent = computed(() => {
+  const name = metricConfig.value.component
+  return reportComponents[name] ?? null
+})
+
+// Показывать отчёт только после нажатия «Сформировать»
+const isReportVisible = ref(false)
+
+const handleMetricTypeChange = () => {
+  // При смене метрики скрываем текущий отчёт
+  isReportVisible.value = false
+}
+
+// ── v-model прокси ──
 
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
   set: (value) => reportStore.setFilters({ selectedStore: value }),
 })
-
 const selectedMaterial = computed({
   get: () => reportStore.selectedMaterial,
   set: (value) => reportStore.setFilters({ selectedMaterial: value }),
 })
-
 const selectedProduct = computed({
   get: () => reportStore.selectedProduct,
   set: (value) => reportStore.setFilters({ selectedProduct: value }),
 })
-
 const selectedProcess = computed({
   get: () => reportStore.selectedProcess,
   set: (value) => reportStore.setFilters({ selectedProcess: value }),
 })
-
 const selectedOperation = computed({
   get: () => reportStore.selectedOperation,
   set: (value) => reportStore.setFilters({ selectedOperation: value }),
 })
-
 const selectedSchema = computed({
   get: () => reportStore.selectedSchema,
   set: (value) => reportStore.setFilters({ selectedSchema: value }),
 })
-
 const selectedPeriod = computed({
   get: () => reportStore.selectedPeriod,
   set: (value) => reportStore.setFilters({ selectedPeriod: value }),
 })
 
-// ── Граф / таблицы списания ──
-
-const isGraphVisible = ref(false)
-const isCoeffTablesVisible = ref(false)
-const graphType = ref<'material' | 'product' | 'operation' | null>(null)
-const graphIds = ref<number[]>([])
-const coeffTablesIds = ref<number[]>([])
-
-// ── loadFromStorage в setup — до onMounted дочернего компонента ──
+// ── Восстановление из storage ──
 
 reportStore.loadFromStorage()
 
@@ -115,50 +167,8 @@ reportStore.loadFromStorage()
 
 const handleMakeReport = () => {
   reportStore.saveToStorage()
-  //reportTableRef.value?.refresh()
-}
-
-// ── Двойной клик по ячейке таблицы ──
-
-const onCellDblClick = ({ column, value }: { column: string; value: string | null | undefined }) => {
-  if (value == null || value === '-' || value === '') return
-
-  const valuesArray = value.split(',').map(item => item.trim()).filter(Boolean)
-  if (valuesArray.length === 0) return
-
-  let optionList: Array<{ id: number; name: string }> = []
-  let selectedRef: Ref<Array<number>> | undefined
-
-  switch (column) {
-    case 'process':
-      optionList = store.materials_meta?.process_list ?? []
-      selectedRef = selectedProcess
-      break
-    case 'operation':
-      optionList = store.materials_meta?.operation_list ?? []
-      selectedRef = selectedOperation
-      break
-    case 'material':
-      optionList = store.materials_meta?.material_list ?? []
-      selectedRef = selectedMaterial
-      break
-    case 'product':
-      optionList = store.materials_meta?.material_list ?? []
-      selectedRef = selectedProduct
-      break
-    default:
-      console.warn('Неизвестная колонка для дабл-клика:', column)
-      return
-  }
-
-  if (!selectedRef) return
-
-  addUniqueIdsByValue(optionList, selectedRef, value)
-
-  // Обновляем опции внутри ReportFilters
-  if (column === 'operation' || column === 'material' || column === 'product') {
-    filtersRef.value?.refreshOptions(column, selectedRef.value)
-  }
+  isReportVisible.value = true
+  // reportComponentRef.value?.refresh()  // если у компонента отчёта есть refresh
 }
 
 </script>
@@ -207,65 +217,5 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
   margin-top: 16px;
 }
 
-.item-remote-select-wrapper {
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-  gap: 2px; /* Расстояние между селектом и кнопками, а также между кнопками */
-}
-
-/* Селект: занимает всё свободное место */
-.item-remote-select {
-  flex: 1;
-  height: 100%;
-  min-width: 0; /* Позволяет селекту сжиматься при нехватке места */
-}
-
-/* Кнопки: убираем все внешние отступы, которые добавляет Element Plus */
-.item-remote-select-wrapper .el-button {
-  height: 100%;
-  margin: 0 !important; /* ГЛАВНОЕ: принудительно убираем margin у кнопок */
-  padding: 6px 8px; /* Комфортный внутренний отступ, чтобы иконка не прилипала к краю */
-  min-width: auto; /* Отключаем стандартную минимальную ширину кнопки */
-  box-sizing: border-box;
-}
-
-/* Убираем лишние отступы у контента form-item */
-.el-form-item__content {
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 100%;
-}
-
-/* Граф */
-.graph-wrapper {
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 200px);
-}
-
-.graph-header {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e6e9ef;
-  margin-bottom: 12px;
-}
-
-.graph-header h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.report-table-wrapper {
-  flex: 1; /* Растягивается на всё свободное место */
-  min-height: 0; /* КРИТИЧНО: позволяет вложенным элементам со скроллом сжиматься */
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  /* Убираем height: 100% отсюда! Это ломает расчет высоты внутри flex-контейнеров */
-}
 
 </style>
