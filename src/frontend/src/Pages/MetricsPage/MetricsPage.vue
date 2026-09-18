@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, shallowRef, type Component } from 'vue'
+import { ref, computed, shallowRef, type Component, nextTick } from 'vue'
 import useApplicationStore from '@/store'
 import { useMetricsReportStore } from '@/storeMetricsReport'
 import ReportFilters from '@/components/ReportFilters.vue'
@@ -165,10 +165,11 @@ reportStore.loadFromStorage()
 
 // ── Кнопка «Сформировать» ──
 
-const handleMakeReport = () => {
+const handleMakeReport = async () => {
   reportStore.saveToStorage()
   isReportVisible.value = true
-  // reportComponentRef.value?.refresh()  // если у компонента отчёта есть refresh
+  await nextTick()
+  reportComponentRef.value?.fetchData()
 }
 
 </script>
