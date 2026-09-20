@@ -60,6 +60,12 @@ declare namespace frontend {
         [key: string]: number;
     }    
 
+    export type IMetricsInventoryAging = {
+        inventory_date: string
+        aging_bucket: string
+        net_weight: number
+    }    
+
     export type IProductionReportDataWithLimit = {
         data: Array<IProductionReportData>
         total: number
@@ -206,6 +212,12 @@ declare namespace frontend {
         detailed_mode?: string;
         only_non_zero_mode?: boolean;
         element_order?: string;
+    }
+
+    export type IMetricsInventoryAgingQueryParams = {
+        slice_date?: date;
+        slice_qty?: number;
+        stock_ids?: string;
     }
 
     export type IProductionReportQueryParams = {

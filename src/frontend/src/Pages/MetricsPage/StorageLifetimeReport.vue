@@ -107,6 +107,7 @@ import type { ECharts } from 'echarts'
 import { Download } from '@element-plus/icons-vue'
 import { exportToExcel } from '@/utils/excelExport'
 import { useMetricsReportStore } from '@/storeMetricsReport'
+import useApplicationStore from '@/store'
 
 // --- Типы ---
 interface SnapshotRow {
@@ -116,6 +117,7 @@ interface SnapshotRow {
 }
 
 // --- Стор ---
+const store = useApplicationStore()
 const reportStore = useMetricsReportStore()
 
 // --- Состояние ---
@@ -300,23 +302,19 @@ const initChart = () => {
 // --- Загрузка данных ---
 
 const fetchData = async () => {
-  // Читаем фильтры из стора
-  const storeIds = reportStore.selectedStore // массив ID складов
-  if (!storeIds || storeIds.length === 0) {
-    rawData.value = []
-    return
-  }
 
   loading.value = true
   error.value = null
   try {
-    // TODO: Заменить на реальный API-запрос
-    // const ids = storeIds.join(',')
-    // const period = reportStore.selectedPeriod
-    // const res = await fetch(`/api/inventory-aging?warehouse_ids=${ids}&period=${period}`)
-    // rawData.value = await res.json()
+    await store.fetchMetricsInventoryAging({
+      slice_date: reportStore.selectedPeriod?.[1] ?? '',
+      slice_qty: 6,
+      stock_ids: reportStore.selectedStore?.toString() ?? '',
+    });
 
-    // Mock-данные
+    rawData.value = store.metrics_inventory_aging;
+
+/*     // Mock-данные
     rawData.value = [
       { inventory_date: '2026-09-01', aging_bucket: '0-30', net_weight: 692468.00 },
       { inventory_date: '2026-09-01', aging_bucket: '31-90', net_weight: 622641.00 },
@@ -342,7 +340,7 @@ const fetchData = async () => {
       { inventory_date: '2026-04-01', aging_bucket: '31-90', net_weight: 165792.00 },
       { inventory_date: '2026-04-01', aging_bucket: '91-180', net_weight: 839912.00 },
       { inventory_date: '2026-04-01', aging_bucket: '181+', net_weight: 1455467.65 },
-    ]
+    ] */
   } catch (e) {
     error.value = 'Ошибка загрузки данных: ' + (e as Error).message
   } finally {

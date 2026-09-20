@@ -4,7 +4,7 @@ from db import (check_user, select_task, select_tasks, change_password, select_m
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
                 check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations,
-                select_production_report_data, select_production_graph_data
+                select_production_report_data, select_production_graph_data, select_metrics_inventory_aging
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -209,6 +209,25 @@ async def get_production_graph_data(request: Request):
         )
 
     return await jsonify(production_graph_data, request)
+
+async def get_metrics_inventory_aging(request: Request):
+
+    slice_date = request.query.get("slice_date")    
+    slice_qty = request.query.get("slice_qty")    
+    stock_ids = request.query.get("stock_ids")
+
+    production_report_data = []
+    async with request.app["db"].acquire() as conn:
+        production_report_data = await select_metrics_inventory_aging(
+            conn,
+            slice_date = slice_date,
+            slice_qty=slice_qty,
+            stock_ids = stock_ids
+        )
+
+    return await jsonify(production_report_data, request)
+
+
 
 async def get_production_report_data(request: Request):
     

@@ -48,6 +48,25 @@ async def select_materials_data(
 
     return report_result
 
+async def select_metrics_inventory_aging(
+    conn: Connection, 
+    slice_date: str = '',
+    slice_qty: int = 1,    
+    stock_ids: str = ''
+    ):
+
+    async with conn.cursor() as cur:
+        try:
+            await cur.callproc("make_inventory_aging_history", [slice_date, slice_qty, stock_ids])
+            report_result = await cur.fetchall()
+
+        except Exception as e:
+            print(f"ERROR callproc \"make_inventory_aging_history\": {e}")
+            return {[]}
+
+    return report_result
+
+
 async def select_production_report_data(
     conn: Connection, 
             stock_ids: str = '',
