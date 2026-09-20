@@ -62,7 +62,7 @@ async def select_metrics_inventory_aging(
 
         except Exception as e:
             print(f"ERROR callproc \"make_inventory_aging_history\": {e}")
-            return {[]}
+            return []
 
     return report_result
 
