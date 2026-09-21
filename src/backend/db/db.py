@@ -58,6 +58,11 @@ async def select_metrics_inventory_aging(
     async with conn.cursor() as cur:
         try:
             await cur.callproc("make_inventory_aging_history", [slice_date, slice_qty, stock_ids])
+            q = """
+            SELECT * FROM tmp_inventory_aging_history
+            ORDER BY inventory_date DESC, FIELD(aging_bucket, '0-30', '31-90', '91-180', '181+');
+            """
+            await cur.execute(q)
             report_result = await cur.fetchall()
 
         except Exception as e:

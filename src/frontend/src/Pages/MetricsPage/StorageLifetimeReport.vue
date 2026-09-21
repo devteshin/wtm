@@ -313,6 +313,8 @@ const fetchData = async () => {
     });
 
     rawData.value = store.metrics_inventory_aging;
+    console.log(store.metrics_inventory_aging);
+    console.log(rawData.value);
 
 /*     // Mock-данные
     rawData.value = [
