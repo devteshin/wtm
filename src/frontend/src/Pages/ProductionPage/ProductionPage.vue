@@ -11,6 +11,7 @@
         v-model:operation="selectedOperation"
         v-model:material="selectedMaterial"
         v-model:product="selectedProduct"
+        :show-date = false
         show-period
         show-store
         show-schema

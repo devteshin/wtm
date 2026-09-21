@@ -24,11 +24,11 @@
           <div class="kpi-value">{{ formatNumber(totalWeight) }} кг</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Неликвид (181+)</div>
+          <div class="kpi-label">Устаревшие запасы (181+)</div>
           <div class="kpi-value danger">{{ formatNumber(currentDeadWeight) }} кг</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Доля неликвида</div>
+          <div class="kpi-label">Доля устаревших запасов</div>
           <div class="kpi-value" :class="deadShare > 40 ? 'danger' : 'warning'">
             {{ formatPercent(deadShare) }}
           </div>
@@ -307,7 +307,7 @@ const fetchData = async () => {
   error.value = null
   try {
     await store.fetchMetricsInventoryAging({
-      slice_date: reportStore.selectedPeriod?.[1] ?? '',
+      slice_date: reportStore.selectedDate ?? '',
       slice_qty: 6,
       stock_ids: reportStore.selectedStore?.toString() ?? '',
     });
@@ -316,33 +316,6 @@ const fetchData = async () => {
     console.log(store.metrics_inventory_aging);
     console.log(rawData.value);
 
-/*     // Mock-данные
-    rawData.value = [
-      { inventory_date: '2026-09-01', aging_bucket: '0-30', net_weight: 692468.00 },
-      { inventory_date: '2026-09-01', aging_bucket: '31-90', net_weight: 622641.00 },
-      { inventory_date: '2026-09-01', aging_bucket: '91-180', net_weight: 568324.00 },
-      { inventory_date: '2026-09-01', aging_bucket: '181+', net_weight: 1470630.15 },
-      { inventory_date: '2026-08-01', aging_bucket: '0-30', net_weight: 912611.00 },
-      { inventory_date: '2026-08-01', aging_bucket: '31-90', net_weight: 557125.00 },
-      { inventory_date: '2026-08-01', aging_bucket: '91-180', net_weight: 471021.00 },
-      { inventory_date: '2026-08-01', aging_bucket: '181+', net_weight: 1609490.15 },
-      { inventory_date: '2026-07-01', aging_bucket: '0-30', net_weight: 690984.00 },
-      { inventory_date: '2026-07-01', aging_bucket: '31-90', net_weight: 634047.00 },
-      { inventory_date: '2026-07-01', aging_bucket: '91-180', net_weight: 296844.00 },
-      { inventory_date: '2026-07-01', aging_bucket: '181+', net_weight: 1731565.65 },
-      { inventory_date: '2026-06-01', aging_bucket: '0-30', net_weight: 685218.00 },
-      { inventory_date: '2026-06-01', aging_bucket: '31-90', net_weight: 684706.00 },
-      { inventory_date: '2026-06-01', aging_bucket: '91-180', net_weight: 293541.00 },
-      { inventory_date: '2026-06-01', aging_bucket: '181+', net_weight: 1688145.65 },
-      { inventory_date: '2026-05-01', aging_bucket: '0-30', net_weight: 899756.00 },
-      { inventory_date: '2026-05-01', aging_bucket: '31-90', net_weight: 453879.00 },
-      { inventory_date: '2026-05-01', aging_bucket: '91-180', net_weight: 353830.00 },
-      { inventory_date: '2026-05-01', aging_bucket: '181+', net_weight: 1662607.65 },
-      { inventory_date: '2026-04-01', aging_bucket: '0-30', net_weight: 800429.00 },
-      { inventory_date: '2026-04-01', aging_bucket: '31-90', net_weight: 165792.00 },
-      { inventory_date: '2026-04-01', aging_bucket: '91-180', net_weight: 839912.00 },
-      { inventory_date: '2026-04-01', aging_bucket: '181+', net_weight: 1455467.65 },
-    ] */
   } catch (e) {
     error.value = 'Ошибка загрузки данных: ' + (e as Error).message
   } finally {

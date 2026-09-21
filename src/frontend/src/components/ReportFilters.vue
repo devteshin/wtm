@@ -7,6 +7,7 @@ import { FolderOpened, Histogram, Grid } from '@element-plus/icons-vue'
 
 const props = withDefaults(defineProps<{
   // v-model bindings
+  dateFilter?: string | null
   period?: [string, string] | null
   storeFilter?: number[]
   schema?: number[]
@@ -16,6 +17,7 @@ const props = withDefaults(defineProps<{
   product?: number[]
 
   // Видимость полей
+  showDate?: boolean
   showPeriod?: boolean
   showStore?: boolean
   showSchema?: boolean
@@ -30,6 +32,7 @@ const props = withDefaults(defineProps<{
   showProductGraph?: boolean
   showProductCoeffTables?: boolean
 }>(), {
+  dateFilter: null,
   period: null,
   storeFilter: () => [],
   schema: () => [],
@@ -37,6 +40,7 @@ const props = withDefaults(defineProps<{
   operation: () => [],
   material: () => [],
   product: () => [],
+  showDate: true,
   showPeriod: true,
   showStore: true,
   showSchema: true,
@@ -51,6 +55,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
+  'update:dateFilter': [value: string | null]
   'update:period': [value: [string, string] | null]
   'update:storeFilter': [value: number[]]
   'update:schema': [value: number[]]
@@ -68,6 +73,10 @@ const appStore = useApplicationStore()
 
 // ── v-model прокси ──
 
+const dateModel = computed({
+  get: () => props.dateFilter,
+  set: (val) => emit('update:dateFilter', val),
+})
 const periodModel = computed({
   get: () => props.period,
   set: (val) => emit('update:period', val),
@@ -246,6 +255,19 @@ defineExpose({ refreshOptions })
 
 <template>
   <el-form label-position="top" class="filter-form">
+
+    <!-- Дата -->
+    <el-form-item v-if="showDate" label="Дата">
+      <el-date-picker
+        v-model="dateModel"
+        type="date"
+        format="DD.MM.YYYY"
+        value-format="YYYY-MM-DD"
+        clearable
+        :default-value="new Date()"
+      />
+    </el-form-item>
+    <slot name="after-date" />
 
     <!-- Период -->
     <el-form-item v-if="showPeriod" label="Период">

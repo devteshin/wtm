@@ -10,6 +10,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
   const selectedProcess = ref<number[]>([])
   const selectedOperation = ref<number[]>([])
   const selectedSchema = ref<number[]>([])
+  const selectedDate = ref<string | null>(null)
   const selectedPeriod = ref<[string, string] | null>(null)
   const selectedMetricType = ref<MetricType>('storage_lifetime')
 
@@ -21,6 +22,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedProcess: number[]
     selectedOperation: number[]
     selectedSchema: number[]
+    selectedDate: string | null
     selectedPeriod: [string, string] | null
     selectedMetricType: MetricType
   }>) => {
@@ -42,6 +44,9 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     if (filters.selectedSchema !== undefined) {
       selectedSchema.value = filters.selectedSchema
     }
+    if (filters.selectedDate !== undefined) {
+      selectedDate.value = filters.selectedDate
+    }
     if (filters.selectedPeriod !== undefined) {
       selectedPeriod.value = filters.selectedPeriod
     }
@@ -57,6 +62,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedProcess.value = []
     selectedOperation.value = []
     selectedSchema.value = []
+    selectedDate.value = null
     selectedPeriod.value = null
     selectedMetricType.value = 'storage_lifetime'
   }
@@ -73,6 +79,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
           selectedProcess: data.selectedProcess || [],
           selectedOperation: data.selectedOperation || [],
           selectedSchema: data.selectedSchema || [],
+          selectedDate: data.selectedDate || null,
           selectedPeriod: data.selectedPeriod || null,
           selectedMetricType: data.selectedMetricType || 'storage_lifetime',
         })
@@ -90,6 +97,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
       selectedProcess: selectedProcess.value,
       selectedOperation: selectedOperation.value,
       selectedSchema: selectedSchema.value,
+      selectedDate: selectedDate.value,
       selectedPeriod: selectedPeriod.value,
       selectedMetricType: selectedMetricType.value,
       timestamp: Date.now()
@@ -105,6 +113,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedProcess,
     selectedOperation,
     selectedSchema,
+    selectedDate,
     selectedPeriod,
     selectedMetricType,  
 

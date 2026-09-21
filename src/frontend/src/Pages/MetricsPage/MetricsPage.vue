@@ -24,6 +24,7 @@
         <!-- Общие фильтры -->
         <ReportFilters
           ref="filtersRef"
+          v-model:date-filter="selectedDate"
           v-model:period="selectedPeriod"
           v-model:store-filter="selectedStore"
           v-model:schema="selectedSchema"
@@ -31,6 +32,7 @@
           v-model:operation="selectedOperation"
           v-model:material="selectedMaterial"
           v-model:product="selectedProduct"
+          :show-date="metricConfig.showDate"
           :show-period="metricConfig.showPeriod"
           :show-store="metricConfig.showStore"
           :show-schema="metricConfig.showSchema"
@@ -158,6 +160,11 @@ const selectedPeriod = computed({
   get: () => reportStore.selectedPeriod,
   set: (value) => reportStore.setFilters({ selectedPeriod: value }),
 })
+const selectedDate = computed({
+  get: () => reportStore.selectedDate,
+  set: (value) => reportStore.setFilters({ selectedDate: value }),
+})
+
 
 // ── Восстановление из storage ──
 
