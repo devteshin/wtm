@@ -186,7 +186,7 @@ const formRef = ref<FormInstance | undefined>(undefined)
 const loading = ref(true)                 
 const isRemoteSearch = ref(true)
 
-let taskId = 0;
+const taskId = ref<number | null>(null)
 let isTaskItemsBlocked = false;
 let taskItemsKeyMaterial: frontend.ITaskItemsKeyMaterial = [];
 
@@ -260,12 +260,10 @@ const loadOperation = async (id: number) => {
 
   const productId = operation.productId === 0 ? null : operation.productId
   const processId = operation.processId === 0 ? null : operation.processId
-  taskId = operation.taskId;
+  taskId.value = operation.taskId;
   isTaskItemsBlocked = operation.isTaskItemsBlocked;
   taskItemsKeyMaterial = operation.taskItemsKeyMaterial;
   
-  console.log("operation", operation);
-
   if (productId) {
     productOptions.value.push({id: productId, name: operation.productName});
   }
@@ -340,10 +338,8 @@ const handleSave = async () => {
     executorIds: form.value.executorIds,
     isCompleted: form.value.isCompleted,
     documentTemplateId: form.value.documentTemplateId ?? 0,
-    taskId: taskId
+    taskId: taskId.value
   }
-
-  console.log(payload);
 
   const operation_id = await store.updateOperation(payload)
   if (!operation_id) {
@@ -402,8 +398,9 @@ const handleProductSearch = async (material_substring: string) => {
 }
 
 const onOpenMaterialSelection = () => {
-  console.log('Opening material selection');
-  emit('open-material-selection', taskId, currentOperationId.value, taskItemsKeyMaterial)
+  if (taskId.value) {
+    emit('open-material-selection', taskId.value, currentOperationId.value, taskItemsKeyMaterial)
+  }
 }
 
 

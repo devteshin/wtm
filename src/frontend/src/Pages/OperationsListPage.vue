@@ -63,6 +63,7 @@
   <el-drawer
     v-model="drawerVisible"
     title="Операция"
+    destroy-on-close
     :before-close="handleCloseDrawer"
     @close="onFormClose"
     size="60%"
@@ -85,6 +86,7 @@
     v-model="selectionDrawerVisible"
     title="Подбор материалов"
     direction="rtl"
+    destroy-on-close
     :size="drawerSize"
     @close="onSelectionFormClose"
   >
@@ -185,7 +187,6 @@ const columns = [
 
 const drawerSize = computed<number>(() => {
   const w = window.innerWidth;
-  console.log(w);
   if (w <= 768) {
     return Math.floor(0.98 * w);       
   }
@@ -200,14 +201,11 @@ function setContextMaterialsSelection(task_items: frontend.ITaskItemsKeyMaterial
     reportStore.selectedStore = [props.stockID];
   };
   reportStore.isSelectionDetailedMode = true;
-  reportStore.isSelectionEnabled = true;
   reportStore.isSelectionControlEnabled = true;
   reportStore.isOnlyNonZeroMode = true;
+  reportStore.isOperationListAutoGenerateReport = true;
 
   if (task_items.length > 0)  {
-    reportStore.isSelectionEnabled = true;
-    reportStore.isDetailedMode = true;
-    reportStore.isOperationListAutoGenerateReport = true;
     reportStore.selectedMaterial = [...new Set(task_items.map(item => item.material_id)) ]
     reportStore.setSelectionData(
       task_items.map(item => ({
@@ -215,6 +213,8 @@ function setContextMaterialsSelection(task_items: frontend.ITaskItemsKeyMaterial
       stock_id: props.stockID
     }))
     );
+    reportStore.isSelectionEnabled = true;
+    reportStore.isDetailedMode = true;
 
   } else {
     reportStore.setTableData([]);
@@ -223,8 +223,9 @@ function setContextMaterialsSelection(task_items: frontend.ITaskItemsKeyMaterial
     reportStore.selectedMaterial = [];
     reportStore.isSelectionEnabled = false;
     reportStore.isDetailedMode = false;
-    reportStore.isOperationListAutoGenerateReport = false;
   };
+
+  reportStore.saveToStorage()
   
 }; 
 
@@ -243,14 +244,9 @@ const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
     return;
   }
 
-  console.log('updated_task_id:', updated_task_id);
-  console.log('updated_operation_id:', updated_operation_id);
-
   if (!updated_operation_id) {
     return;
   }
-
-  console.log('Items:', items);
 
   const payload = {
     stockId: props.stockID,
@@ -258,8 +254,6 @@ const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
     taskId: updated_task_id,
     taskItems: items
   }
-
-  console.log(payload);
 
   const task_id = await store.updateTask(payload)
   if (!task_id) {

@@ -532,12 +532,10 @@ const handleDeleteSelectionTableRow = async (row: any) => {
       reportStore.setSelectionData([]);
     } else {
       if (reportStore.isSelectionDetailedMode) {
-        console.log("row", row);
         reportStore.selectionData = reportStore.selectionData.filter(
           (item) => !(item.key_material === row.key_material && item.stock_id === row.stock_id)
         );
       } else {
-        console.log("row", row);
         reportStore.selectionData = reportStore.selectionData.filter(
           (item) => !(item.material === row.material && item.stock_name === row.stock_name)
         );
@@ -632,10 +630,8 @@ watch(
     selectionColumns: reportStore.selectionColumns
   }),
   (newValues) => {
-    const ts = performance.now();
     reportStore.setFilters(newValues);
     reportStore.saveToStorage();
-    console.log('[watcher] setFilters + saveToStorage', performance.now() - ts, 'ms');
   },
   { deep: true }
 );
@@ -724,7 +720,6 @@ const startLoading = () => {
 };
 
 onMounted(async () => {
-  console.log('=== REPORT COMPONENT MOUNTED ===');
   startLoading();
 
   store.loading = true;
@@ -766,8 +761,6 @@ onMounted(async () => {
       isOperationDocMode.value = true;
       reportStore.isOperationDocAutoGenerateReport = false;
 
-      console.log('reportStore.selectedStore.length && reportStore.selectedMaterial.length');
-      console.log(reportStore.selectedStore.length, reportStore.selectedMaterial.length)
       if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
         await handleMakeReport();
       }
@@ -850,7 +843,6 @@ const tableRef = ref<any>(null);
 const restoreSelection = () => {
     // Проверка доступности выбора
   if (!isSelectionEnabled.value) {
-    console.log('Selection is disabled, skipping restore');
     return;
   }
 
@@ -866,7 +858,6 @@ const restoreSelection = () => {
 
   isAutoSelectionUpdate.value = true; // Блокируем обновление
 
-  console.log('Proceeding with selection restoration...');
   tableRef.value.clearSelection();
 
   const selectionKeys = new Set(
@@ -1330,38 +1321,6 @@ const handleApplySelection = () => {
 const handleDrawerClose = () => {
   emit('close');
 };
-
-/* watch(
-  () => reportStore.isOperationDocAutoGenerateReport,
-  async (newValue) => {
-    if (!newValue) return;
-
-    if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
-      await handleMakeReport();
-    };  
-    isOperationDocMode.value = true;
-    reportStore.isOperationDocAutoGenerateReport = false;
-  },
-  { immediate: true }
-);
-
-watch(
-  () => reportStore.isOperationListAutoGenerateReport,
-  async (newValue) => {
-      console.log("isOperationListAutoGenerateReport", newValue);
-
-    if (!newValue) return;
-
-    if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
-      console.log("Generating Report...");
-      await handleMakeReport();
-    };  
-    isOperationListMode.value = true;
-    reportStore.isOperationListAutoGenerateReport = false;
-  },
-  { immediate: true }
-);
- */
 
 </script>
 

@@ -147,7 +147,6 @@ const loadGridNumbers = async () => {
   //gridNumbers.value = Array.from({ length: 1000 }, (_, i) => i + 1);
   //return
   try {
-    console.log(props.stockID);
     await store.fetchMaterialsData({
       materials: selectedBaseMaterial.value?.material_id.toString(),
       stocks: props.stockID.toString(),
@@ -158,8 +157,6 @@ const loadGridNumbers = async () => {
       only_non_zero_mode: true,
       element_order: ''
     });
-
-    console.log(store.materials_data);
 
     if (store.materials_data && Array.isArray(store.materials_data)) {
       gridNumbers.value = store.materials_data.map(item => item.tare_id);
@@ -289,7 +286,6 @@ const closeDoc = async () =>  {
 
 const openSelection = async () =>  {
   if (await saveDoc()) {
-    console.log('openSelection')
     reportStore.isOperationDocAutoGenerateReport = true;
     setContextMaterialsSelection();
     drawerVisible.value = true;
@@ -298,7 +294,6 @@ const openSelection = async () =>  {
 
 function setContextMaterialsSelection() {
   if (raw_materials_options.value.length > 0){
-    console.log('raw_materials_options.value.length > 0')
     const newselectedMaterials = raw_materials_options.value.filter(item => !reportStore.selectedMaterial.includes(item.material_id)).map(item => item.material_id);
     reportStore.selectedMaterial = [...reportStore.selectedMaterial, ...newselectedMaterials];
     reportStore.isDetailedMode = true;
@@ -318,8 +313,6 @@ function setContextMaterialsSelection() {
 
   reportStore.saveToStorage();
 
-  console.log('reportStore.selectedMaterial, reportStore.selectedStore')
-  console.log(reportStore.selectedMaterial, reportStore.selectedStore)
 }; 
 
 const saveDoc = async (): Promise<boolean> => {
@@ -438,7 +431,6 @@ async function addMaterialToRawMaterialsTable(from: number, to: number) {
     }
 
     key_material_list = tareIds.map(id => `${selectedBaseMaterial.value?.material_id}_${id}`).join('|')
-    console.log(key_material_list);
     try {
       await store.fetchSelectionData({
         stock_list: `${props.stockID}`,  
@@ -470,7 +462,6 @@ const loadMaterialOptions = async (material_substring: string = '', limit: numbe
   try {
     const result = await store.searchMaterials(material_substring, limit)
     materialOptions.value = result
-    console.log(result);
   } catch (e) {
     console.error(e)
   } finally {
@@ -537,7 +528,6 @@ const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
 
 const drawerSize = computed<number>(() => {
   const w = window.innerWidth;
-  console.log(w);
   if (w <= 768) {
     return Math.floor(0.98 * w);       
   }
