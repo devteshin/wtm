@@ -84,7 +84,7 @@
           >
             <template #default="{ row }">{{ formatNumber(row[date]) }}</template>
           </el-table-column>
-          <el-table-column label="Δ (апр→сен)" align="right" width="140" fixed="right">
+          <el-table-column label="тренд за 6 месяцев" align="right" width="140" fixed="right">
             <template #default="{ row }">
               <span :class="getTrendClass(row)">
                 {{ getTrendSymbol(row) }} {{ formatNumber(Math.abs(getTrendValue(row))) }}
@@ -313,8 +313,6 @@ const fetchData = async () => {
     });
 
     rawData.value = store.metrics_inventory_aging;
-    console.log(store.metrics_inventory_aging);
-    console.log(rawData.value);
 
   } catch (e) {
     error.value = 'Ошибка загрузки данных: ' + (e as Error).message
@@ -331,13 +329,23 @@ const fetchData = async () => {
 const exportToExcelClick = () => {
   exportLoading.value = true
   try {
-    const headers = ['Корзина', ...sortedDates.value.map(formatMonth), 'Изменение']
-    const rows = pivotTableData.value.map(row => [
-      row.bucket,
-      ...sortedDates.value.map(d => row[d]),
-      getTrendValue(row),
-    ])
-    //exportToExcel(headers, rows, 'Сроки хранения')
+    const sheets = [
+      {
+        name: 'Сроки хранения материалов',
+        columns: [
+          { key: 'bucket', header: 'Корзина' },
+          { key: sortedDates.value[0], header: sortedDates.value[0] },
+          { key: sortedDates.value[1], header: sortedDates.value[1] },
+          { key: sortedDates.value[2], header: sortedDates.value[2] },
+          { key: sortedDates.value[3], header: sortedDates.value[3] },
+          { key: sortedDates.value[4], header: sortedDates.value[4] },
+          { key: sortedDates.value[5], header: sortedDates.value[5] },
+        ], 
+        data: pivotTableData.value,
+      },
+    ]
+
+    exportToExcel(sheets, 'storage_liftime')
   } finally {
     exportLoading.value = false
   }

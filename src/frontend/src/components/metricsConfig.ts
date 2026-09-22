@@ -18,8 +18,8 @@ export interface MetricFilterConfig {
 
 export const metricTypeOptions = [
   { value: 'storage_lifetime', label: 'Сроки хранения материалов' },
-  { value: 'turnover',         label: 'Оборачиваемость материалов' },
-  { value: 'deficit',          label: 'Дефицит материалов' },
+  //{ value: 'turnover',         label: 'Оборачиваемость материалов' },
+  //{ value: 'deficit',          label: 'Дефицит материалов' },
 ] as const
 
 export type MetricType = typeof metricTypeOptions[number]['value']
@@ -33,7 +33,7 @@ const configs: Record<MetricType, MetricFilterConfig> = {
     showProductGraph: false, showProductCoeffTables: false,
     component: 'StorageLifetimeReport',
   },
-  turnover: {
+   turnover: {
     showDate: true,  showPeriod: true,  showStore: true,  showSchema: false,
     showProcess: false, showOperation: false, showMaterial: true,
     showProduct: false,
@@ -48,7 +48,7 @@ const configs: Record<MetricType, MetricFilterConfig> = {
     showOperationGraph: false, showMaterialGraph: false,
     showProductGraph: true, showProductCoeffTables: false,
     component: 'DeficitReport',
-  },
+  }, 
 }
 
 export function getMetricConfig(type: MetricType): MetricFilterConfig {
