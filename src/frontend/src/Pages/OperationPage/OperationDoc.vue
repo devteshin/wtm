@@ -255,13 +255,21 @@ const closeDoc = async () =>  {
       cancelButtonText: 'Нет',
       type: 'warning',
       distinguishCancelAndClose: true,
-      callback: (action) => {
+      callback: async (action) => {
         if (action === 'confirm') {
-          saveDoc().then(() => {
+          if(await saveDoc()){
             router.push(`/stock/${props.stockID}/operation/${operation_id}`);
-          }).catch((error) => {
-            ElMessage.error('Ошибка сохранения: ' + error.message);
-          });        } 
+          } else {
+            ElMessage.error('Ошибка сохранения');
+            return;
+          }
+
+          //saveDoc().then(() => {
+          //  router.push(`/stock/${props.stockID}/operation/${operation_id}`);
+          //}).catch((error) => {
+          //  ElMessage.error('Ошибка сохранения: ' + error.message);
+          //});
+        }
         else if (action === 'cancel') {
           router.push(`/stock/${props.stockID}/operation/${operation_id}`);
         } 
@@ -280,14 +288,17 @@ const closeDoc = async () =>  {
 };
 
 const openSelection = async () =>  {
-  await saveDoc();
-  reportStore.isOperationDocAutoGenerateReport = true;
-  setContextMaterialsSelection();
-  drawerVisible.value = true;
+  if (await saveDoc()) {
+    console.log('openSelection')
+    reportStore.isOperationDocAutoGenerateReport = true;
+    setContextMaterialsSelection();
+    drawerVisible.value = true;
+  }
 };
 
 function setContextMaterialsSelection() {
   if (raw_materials_options.value.length > 0){
+    console.log('raw_materials_options.value.length > 0')
     const newselectedMaterials = raw_materials_options.value.filter(item => !reportStore.selectedMaterial.includes(item.material_id)).map(item => item.material_id);
     reportStore.selectedMaterial = [...reportStore.selectedMaterial, ...newselectedMaterials];
     reportStore.isDetailedMode = true;
@@ -304,34 +315,49 @@ function setContextMaterialsSelection() {
   
   reportStore.isSelectionControlEnabled = true;
   reportStore.isOnlyNonZeroMode = true;
+
+  reportStore.saveToStorage();
+
+  console.log('reportStore.selectedMaterial, reportStore.selectedStore')
+  console.log(reportStore.selectedMaterial, reportStore.selectedStore)
 }; 
 
-const saveDoc = async () =>  {
-  if (doc_number.value == '' ||  doc_date.value == '' || doc_items.value.map(item => item.material).find(item => item === "")) {
-    return
-  };
-  
+const saveDoc = async (): Promise<boolean> => {
+  // Валидация входных данных
+  if (
+    doc_number.value === '' ||
+    doc_date.value === '' ||
+    doc_items.value.map((item) => item.material).find((m) => m === '')
+  ) {
+    return false;
+  }
+
   const docParams = {
-      stockID: props.stockID,
-      docID: doc_id,
-      docNumber: doc_number.value.trim(),
-      docDate: doc_date.value,
-      arrival_items: doc_items.value.filter(item => item.gross_weight > 0 && item.tare_type != ''),
-      production_items: doc_raw_materials.value
+    stockID: props.stockID,
+    docID: doc_id,
+    docNumber: doc_number.value.trim(),
+    docDate: doc_date.value,
+    arrival_items: doc_items.value.filter(
+      (item) => item.gross_weight > 0 && item.tare_type !== ''
+    ),
+    production_items: doc_raw_materials.value,
   };
 
-try {
-  let success = await store.updateArrival(docParams);
-  if (success) {
-    doc_changed = false;
-    isNewDoc = false;
-  } else {
-    console.error('Сохранение не удалось');
+  try {
+    const success = await store.updateArrival(docParams);
+
+    if (success) {
+      doc_changed = false;
+      isNewDoc = false;
+      return true;
+    } else {
+      console.error('Сохранение не удалось: сервер вернул false');
+      return false;
+    }
+  } catch (error) {
+    console.error('Ошибка API:', error);
+    return false;
   }
-} catch (error) {
-  console.error('Ошибка API:', error);
-};
-  
 };
 
 function addMaterial() {
@@ -355,7 +381,9 @@ const addMaterialBySelection = async () => {
 
   if (rangeMode.value === 'grid') {
     if (doc_changed) {
-      await saveDoc()
+      if (!await saveDoc()) {
+        return;
+      }
     };
     await loadGridNumbers()
     isGridMode.value = true;
@@ -751,6 +779,7 @@ const onDrawerClose = () => {
       v-model="drawerVisible"
       title="Подбор материалов"
       direction="rtl"
+      destroy-on-close
       :size="drawerSize"
       @close="onDrawerClose"
     >

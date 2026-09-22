@@ -724,6 +724,7 @@ const startLoading = () => {
 };
 
 onMounted(async () => {
+  console.log('=== REPORT COMPONENT MOUNTED ===');
   startLoading();
 
   store.loading = true;
@@ -759,6 +760,29 @@ onMounted(async () => {
 
     reportStore.selectionColumns = [...selectionColumns.value, ...existingPercentSel];
     reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value, ...existingPercentSelDetailed];
+
+    // Проверяем флаги и запускаем отчёт
+    if (reportStore.isOperationDocAutoGenerateReport) {
+      isOperationDocMode.value = true;
+      reportStore.isOperationDocAutoGenerateReport = false;
+
+      console.log('reportStore.selectedStore.length && reportStore.selectedMaterial.length');
+      console.log(reportStore.selectedStore.length, reportStore.selectedMaterial.length)
+      if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
+        await handleMakeReport();
+      }
+    }
+
+    if (reportStore.isOperationListAutoGenerateReport) {
+      isOperationListMode.value = true;
+      reportStore.isOperationListAutoGenerateReport = false;
+
+      if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
+        await handleMakeReport();
+      }
+    }
+
+
 
 
   } finally {
@@ -1307,7 +1331,7 @@ const handleDrawerClose = () => {
   emit('close');
 };
 
-watch(
+/* watch(
   () => reportStore.isOperationDocAutoGenerateReport,
   async (newValue) => {
     if (!newValue) return;
@@ -1337,7 +1361,7 @@ watch(
   },
   { immediate: true }
 );
-
+ */
 
 </script>
 
