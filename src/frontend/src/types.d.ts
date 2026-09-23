@@ -4,6 +4,7 @@ declare namespace frontend {
         material_list: Array<IMaterial> 
         stock_list: Array<IStock>
         material_group_list: Array<IMaterialGroups>
+        supplier_list: Array<ISupplier>
         process_list: Array<IProcess>
         operation_list: Array<IOpertion>
         processing_schemes: Array<IProcessingSchem>
@@ -19,6 +20,11 @@ declare namespace frontend {
         name: string
     }
     
+    export type ISupplier = {
+        id: number
+        name: string
+    }
+
     export type IProcess = {
         id: number
         name: string

@@ -5,6 +5,7 @@ export interface MetricFilterConfig {
   showPeriod: boolean
   showStore: boolean
   showSchema: boolean
+  showSupplier: boolean
   showProcess: boolean
   showOperation: boolean
   showMaterial: boolean
@@ -27,7 +28,7 @@ export type MetricType = typeof metricTypeOptions[number]['value']
 const configs: Record<MetricType, MetricFilterConfig> = {
   storage_lifetime: {
     showDate: true,  showPeriod: false,  showStore: true,  showSchema: false,
-    showProcess: false, showOperation: false, showMaterial: true,
+    showSupplier: true, showProcess: true, showOperation: false, showMaterial: true,
     showProduct: false,
     showOperationGraph: false, showMaterialGraph: false,
     showProductGraph: false, showProductCoeffTables: false,

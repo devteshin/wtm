@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
   storeFilter?: number[]
   schema?: number[]
   process?: number[]
+  supplier?: number[]
   operation?: number[]
   material?: number[]
   product?: number[]
@@ -21,6 +22,7 @@ const props = withDefaults(defineProps<{
   showPeriod?: boolean
   showStore?: boolean
   showSchema?: boolean
+  showSupplier?: boolean
   showProcess?: boolean
   showOperation?: boolean
   showMaterial?: boolean
@@ -36,6 +38,7 @@ const props = withDefaults(defineProps<{
   period: null,
   storeFilter: () => [],
   schema: () => [],
+  supplier: () => [],
   process: () => [],
   operation: () => [],
   material: () => [],
@@ -44,6 +47,7 @@ const props = withDefaults(defineProps<{
   showPeriod: true,
   showStore: true,
   showSchema: true,
+  showSupplier: true,
   showProcess: true,
   showOperation: true,
   showMaterial: true,
@@ -59,6 +63,7 @@ const emit = defineEmits<{
   'update:period': [value: [string, string] | null]
   'update:storeFilter': [value: number[]]
   'update:schema': [value: number[]]
+  'update:supplier': [value: number[]]
   'update:process': [value: number[]]
   'update:operation': [value: number[]]
   'update:material': [value: number[]]
@@ -88,6 +93,10 @@ const storeModel = computed({
 const schemaModel = computed({
   get: () => props.schema,
   set: (val) => emit('update:schema', val),
+})
+const supplierModel = computed({
+  get: () => props.supplier,
+  set: (val) => emit('update:supplier', val),
 })
 const processModel = computed({
   get: () => props.process,
@@ -199,12 +208,14 @@ async function handleLoadAllProductOptions() {
 // ── Static loading (schema, process — ждут fetchMaterialsMeta) ──
 
 const schemaOptionsLoading = ref(false)
+const supplierOptionsLoading = ref(false)
 const processOptionsLoading = ref(false)
 
 // ── Инициализация ──
 
 onMounted(async () => {
   schemaOptionsLoading.value = true
+  supplierOptionsLoading.value = true
   processOptionsLoading.value = true
   productOptionsLoading.value = true
   materialOptionsLoading.value = true
@@ -230,6 +241,7 @@ onMounted(async () => {
     }
   } finally {
     schemaOptionsLoading.value = false
+    supplierOptionsLoading.value = false
     processOptionsLoading.value = false
     productOptionsLoading.value = false
     materialOptionsLoading.value = false
@@ -320,6 +332,29 @@ defineExpose({ refreshOptions })
       </el-select>
     </el-form-item>
     <slot name="after-schema" />
+
+    <!-- Поставщик -->
+    <el-form-item v-if="showSupplier" label="Поставщик">
+      <el-select
+        v-model="supplierModel"
+        placeholder="Выберите поставщика"
+        clearable
+        multiple
+        filterable
+        :loading="supplierOptionsLoading"
+      >
+        <el-option
+          v-for="s in appStore.materials_meta?.supplier_list"
+          :key="s.id"
+          :label="s.name"
+          :value="s.id"
+        />
+        <template v-if="supplierOptionsLoading">
+          <el-option :value="0" disabled label="Загрузка..." />
+        </template>
+      </el-select>
+    </el-form-item>
+    <slot name="after-supplier" />
 
     <!-- Техпроцесс -->
     <el-form-item v-if="showProcess" label="Техпроцесс">

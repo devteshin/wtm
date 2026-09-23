@@ -7,6 +7,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
   const selectedStore = ref<number[]>([])
   const selectedMaterial = ref<number[]>([])
   const selectedProduct = ref<number[]>([])
+  const selectedSupplier = ref<number[]>([])
   const selectedProcess = ref<number[]>([])
   const selectedOperation = ref<number[]>([])
   const selectedSchema = ref<number[]>([])
@@ -19,6 +20,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedStore: number[]
     selectedMaterial: number[]
     selectedProduct: number[]
+    selectedSupplier: number[]
     selectedProcess: number[]
     selectedOperation: number[]
     selectedSchema: number[]
@@ -34,6 +36,9 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     }
     if (filters.selectedProduct !== undefined) {
       selectedProduct.value = filters.selectedProduct
+    }
+    if (filters.selectedSupplier !== undefined) {
+      selectedSupplier.value = filters.selectedSupplier
     }
     if (filters.selectedProcess !== undefined) {
       selectedProcess.value = filters.selectedProcess
@@ -59,6 +64,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedStore.value = []
     selectedMaterial.value = []
     selectedProduct.value = []
+    selectedSupplier.value = []
     selectedProcess.value = []
     selectedOperation.value = []
     selectedSchema.value = []
@@ -76,6 +82,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
           selectedStore: data.selectedStore || [],
           selectedMaterial: data.selectedMaterial || [],
           selectedProduct: data.selectedProduct || [],
+          selectedSupplier: data.selectedSupplier || [],
           selectedProcess: data.selectedProcess || [],
           selectedOperation: data.selectedOperation || [],
           selectedSchema: data.selectedSchema || [],
@@ -94,6 +101,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
       selectedStore: selectedStore.value,
       selectedMaterial: selectedMaterial.value,
       selectedProduct: selectedProduct.value,
+      selectedSupplier: selectedSupplier.value,
       selectedProcess: selectedProcess.value,
       selectedOperation: selectedOperation.value,
       selectedSchema: selectedSchema.value,
@@ -110,6 +118,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedStore,
     selectedMaterial,
     selectedProduct,
+    selectedSupplier,
     selectedProcess,
     selectedOperation,
     selectedSchema,

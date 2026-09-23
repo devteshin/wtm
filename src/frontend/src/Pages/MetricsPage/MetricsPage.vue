@@ -28,6 +28,7 @@
           v-model:period="selectedPeriod"
           v-model:store-filter="selectedStore"
           v-model:schema="selectedSchema"
+          v-model:supplier="selectedSupplier"
           v-model:process="selectedProcess"
           v-model:operation="selectedOperation"
           v-model:material="selectedMaterial"
@@ -36,6 +37,7 @@
           :show-period="metricConfig.showPeriod"
           :show-store="metricConfig.showStore"
           :show-schema="metricConfig.showSchema"
+          :show-supplier="metricConfig.showSupplier"
           :show-process="metricConfig.showProcess"
           :show-operation="metricConfig.showOperation"
           :show-material="metricConfig.showMaterial"
@@ -143,6 +145,10 @@ const selectedMaterial = computed({
 const selectedProduct = computed({
   get: () => reportStore.selectedProduct,
   set: (value) => reportStore.setFilters({ selectedProduct: value }),
+})
+const selectedSupplier = computed({
+  get: () => reportStore.selectedSupplier,
+  set: (value) => reportStore.setFilters({ selectedSupplier: value }),
 })
 const selectedProcess = computed({
   get: () => reportStore.selectedProcess,

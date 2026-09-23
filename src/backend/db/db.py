@@ -196,6 +196,7 @@ async def select_materials_meta(conn: Connection):
     q_stock = "SELECT id, name FROM stock WHERE app = 1"
     q_element = "SELECT code, name, min_value, max_value, umi, type FROM element ORDER BY code"
     q_process = "SELECT id, process_name AS name FROM technical_process ORDER BY process_name"
+    q_supplier = "SELECT id, name FROM companies ORDER BY name"
     q_processing_schemes = "SELECT id, name FROM production_sequences ORDER BY name"
 
     async with conn.cursor() as cur:
@@ -204,6 +205,9 @@ async def select_materials_meta(conn: Connection):
 
         await cur.execute(q_element)
         material_group_list = await cur.fetchall()
+
+        await cur.execute(q_supplier)
+        supplier_list = await cur.fetchall()
 
         await cur.execute(q_process)
         process_list = await cur.fetchall()
@@ -218,6 +222,7 @@ async def select_materials_meta(conn: Connection):
         "material_list": material_list,
         "stock_list": stock_list,
         "material_group_list": material_group_list,
+        "supplier_list": supplier_list,
         "process_list": process_list,
         "operation_list": operation_list,
         "processing_schemes": processing_schemes
