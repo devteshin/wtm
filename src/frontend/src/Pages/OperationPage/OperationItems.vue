@@ -186,7 +186,7 @@ const formRef = ref<FormInstance | undefined>(undefined)
 const loading = ref(true)                 
 const isRemoteSearch = ref(true)
 
-const taskId = ref<number | null>(null)
+const taskId = ref<number>(0)
 let isTaskItemsBlocked = false;
 let taskItemsKeyMaterial: frontend.ITaskItemsKeyMaterial = [];
 
