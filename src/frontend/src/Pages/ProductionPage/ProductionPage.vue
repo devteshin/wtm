@@ -15,6 +15,7 @@
         show-period
         show-store
         show-schema
+        :show-supplier="false"
         show-process
         show-operation
         show-material

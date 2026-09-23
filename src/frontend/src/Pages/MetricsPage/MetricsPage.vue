@@ -21,6 +21,14 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item  v-if="selectedMetricType = 'storage_lifetime'" label="Вид материалов">
+          <el-checkbox-group v-model="checkedArrivalDocType" :min="1">
+            <el-checkbox v-for="arrival_type in arrivalDocTypes" :key="arrival_type" :label="arrival_type" :value="arrival_type">
+              {{ arrival_type }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+
         <!-- Общие фильтры -->
         <ReportFilters
           ref="filtersRef"
@@ -98,6 +106,9 @@ import { metricTypeOptions, getMetricConfig, type MetricType } from '@/component
 import StorageLifetimeReport from './StorageLifetimeReport.vue'
 import TurnoverReport from './TurnoverReport.vue'
 import DeficitReport from './DeficitReport.vue'
+
+const checkedArrivalDocType = ref(['сырье', 'продукты'])
+const arrivalDocTypes = ['сырье', 'продукты']
 
 const reportComponents: Record<string, Component> = {
   StorageLifetimeReport,
