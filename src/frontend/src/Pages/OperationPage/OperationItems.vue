@@ -398,9 +398,7 @@ const handleProductSearch = async (material_substring: string) => {
 }
 
 const onOpenMaterialSelection = () => {
-  if (taskId.value) {
-    emit('open-material-selection', taskId.value, currentOperationId.value, taskItemsKeyMaterial)
-  }
+  emit('open-material-selection', taskId.value, currentOperationId.value, taskItemsKeyMaterial)
 }
 
 
