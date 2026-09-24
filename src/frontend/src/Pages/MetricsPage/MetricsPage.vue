@@ -21,14 +21,24 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item  v-if="selectedMetricType = 'storage_lifetime'" label="Вид материалов">
-          <el-checkbox-group v-model="checkedArrivalDocType" :min="1">
-            <el-checkbox v-for="arrival_type in arrivalDocTypes" :key="arrival_type" :label="arrival_type" :value="arrival_type">
-              {{ arrival_type }}
-            </el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-
+          <el-form-item
+            v-if="config.showMaterial"
+            label="Вид материалов"
+          >
+            <el-checkbox-group
+              v-model="reportStore.checkedArrivalDocType"
+              :min="1"
+            >
+              <el-checkbox
+                v-for="arrival_type in arrivalDocTypes"
+                :key="arrival_type"
+                :label="arrival_type"
+                :value="arrival_type"
+              >
+                {{ arrival_type }}
+              </el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
         <!-- Общие фильтры -->
         <ReportFilters
           ref="filtersRef"
@@ -107,8 +117,14 @@ import StorageLifetimeReport from './StorageLifetimeReport.vue'
 import TurnoverReport from './TurnoverReport.vue'
 import DeficitReport from './DeficitReport.vue'
 
-const checkedArrivalDocType = ref(['сырье', 'продукты'])
-const arrivalDocTypes = ['сырье', 'продукты']
+const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
+const reportComponentRef = ref<any>(null)
+
+const reportStore = useMetricsReportStore()
+
+const arrivalDocTypes = ['сырье', 'продукты'] as const
+
+const config = computed(() => getMetricConfig(reportStore.selectedMetricType))
 
 const reportComponents: Record<string, Component> = {
   StorageLifetimeReport,
@@ -116,10 +132,6 @@ const reportComponents: Record<string, Component> = {
   DeficitReport,
 }
 
-const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
-const reportComponentRef = ref<any>(null)
-
-const reportStore = useMetricsReportStore()
 
 // ── Метрика ──
 

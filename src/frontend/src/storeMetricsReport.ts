@@ -1,7 +1,14 @@
 // stores/useMetricsReportStore.ts
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { MetricType } from '@/components/metricsConfig'
+
+const ARRIVAL_TYPE_MAP = {
+  'сырье': 0,
+  'продукты': 1,
+} as const
+
+type ArrivalTypeKey = keyof typeof ARRIVAL_TYPE_MAP
 
 export const useMetricsReportStore = defineStore('metricsReport', () => {
   const selectedStore = ref<number[]>([])
@@ -14,6 +21,13 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
   const selectedDate = ref<string | null>(null)
   const selectedPeriod = ref<[string, string] | null>(null)
   const selectedMetricType = ref<MetricType>('storage_lifetime')
+  const checkedArrivalDocType = ref<string[]>(['сырье', 'продукты'])
+  const arrivalTypeCode = computed<number | null>(() => {
+    if (checkedArrivalDocType.value.length === 1) {
+      return ARRIVAL_TYPE_MAP[checkedArrivalDocType.value[0]]
+    }
+    return null
+  })
 
   // Действия
   const setFilters = (filters: Partial<{
@@ -27,6 +41,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedDate: string | null
     selectedPeriod: [string, string] | null
     selectedMetricType: MetricType
+    checkedArrivalDocType: string[]
   }>) => {
     if (filters.selectedStore !== undefined) {
       selectedStore.value = filters.selectedStore
@@ -58,6 +73,9 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     if (filters.selectedMetricType !== undefined) {
       selectedMetricType.value = filters.selectedMetricType
     }
+    if (filters.checkedArrivalDocType !== undefined) {
+      checkedArrivalDocType.value = filters.checkedArrivalDocType
+    }
   }
 
   const resetFilters = () => {
@@ -71,6 +89,8 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedDate.value = null
     selectedPeriod.value = null
     selectedMetricType.value = 'storage_lifetime'
+    checkedArrivalDocType.value = ['сырье', 'продукты']
+    
   }
 
   const loadFromStorage = () => {
@@ -89,6 +109,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
           selectedDate: data.selectedDate || null,
           selectedPeriod: data.selectedPeriod || null,
           selectedMetricType: data.selectedMetricType || 'storage_lifetime',
+          checkedArrivalDocType: data.checkedArrivalDocType || ['сырье', 'продукты'],
         })
       }
     } catch (error) {
@@ -108,6 +129,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
       selectedDate: selectedDate.value,
       selectedPeriod: selectedPeriod.value,
       selectedMetricType: selectedMetricType.value,
+      checkedArrivalDocType: checkedArrivalDocType.value,
       timestamp: Date.now()
     }
     localStorage.setItem('reportMetricsFiltersState', JSON.stringify(stateToSave))
@@ -125,7 +147,8 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
     selectedDate,
     selectedPeriod,
     selectedMetricType,  
-
+    checkedArrivalDocType,
+    arrivalTypeCode,
     // Экспортируем действия
     setFilters,
     resetFilters,

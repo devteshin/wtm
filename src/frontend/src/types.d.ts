@@ -224,6 +224,10 @@ declare namespace frontend {
         slice_date?: date;
         slice_qty?: number;
         stock_ids?: string;
+        supplier_ids? :string;
+        process_ids?: string;
+        material_ids? :string;
+        arrival_type?: number | null
     }
 
     export type IProductionReportQueryParams = {

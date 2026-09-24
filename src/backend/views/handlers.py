@@ -215,6 +215,15 @@ async def get_metrics_inventory_aging(request: Request):
     slice_date = request.query.get("slice_date")    
     slice_qty = request.query.get("slice_qty")    
     stock_ids = request.query.get("stock_ids")
+    supplier_ids = request.query.get("supplier_ids")
+    process_ids = request.query.get("process_ids")
+    material_ids = request.query.get("material_ids")
+    arrival_type_raw = request.query.get("arrival_type")
+    arrival_type: int | None = None
+    if arrival_type_raw is not None:
+        val = int(arrival_type_raw)
+        if val in (0, 1):
+            arrival_type = val
 
     production_report_data = []
     async with request.app["db"].acquire() as conn:
@@ -222,7 +231,11 @@ async def get_metrics_inventory_aging(request: Request):
             conn,
             slice_date = slice_date,
             slice_qty=slice_qty,
-            stock_ids = stock_ids
+            stock_ids = stock_ids,
+            supplier_ids = supplier_ids,
+            process_ids = process_ids,
+            material_ids = material_ids,
+            arrival_type = arrival_type
         )
 
     return await jsonify(production_report_data, request)

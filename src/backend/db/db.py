@@ -52,12 +52,16 @@ async def select_metrics_inventory_aging(
     conn: Connection, 
     slice_date: str = '',
     slice_qty: int = 1,    
-    stock_ids: str = ''
+    stock_ids: str = '',
+    supplier_ids: str = '',
+    process_ids: str = '',
+    material_ids: str = '',
+    arrival_type: int | None = None   
     ):
 
     async with conn.cursor() as cur:
         try:
-            await cur.callproc("make_inventory_aging_history", [slice_date, slice_qty, stock_ids])
+            await cur.callproc("make_inventory_aging_history", [slice_date, slice_qty, stock_ids, supplier_ids, process_ids, material_ids, arrival_type])
             q = """
             SELECT * FROM tmp_inventory_aging_history
             ORDER BY inventory_date DESC, FIELD(aging_bucket, '0-30', '31-90', '91-180', '181+');

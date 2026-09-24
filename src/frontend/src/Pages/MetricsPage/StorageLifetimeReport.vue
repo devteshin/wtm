@@ -310,6 +310,10 @@ const fetchData = async () => {
       slice_date: reportStore.selectedDate ?? '',
       slice_qty: 6,
       stock_ids: reportStore.selectedStore?.toString() ?? '',
+      supplier_ids: reportStore.selectedSupplier?.toString() ?? '',
+      process_ids: reportStore.selectedProcess?.toString() ?? '',
+      material_ids: reportStore.selectedMaterial?.toString() ?? '',
+      arrival_type: reportStore.arrivalTypeCode,
     });
 
     rawData.value = store.metrics_inventory_aging;
