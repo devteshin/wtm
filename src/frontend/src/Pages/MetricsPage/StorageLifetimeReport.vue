@@ -69,7 +69,7 @@
       <!-- Сводная таблица за 6 месяцев -->
       <div class="table-card">
         <h4 class="table-title">Сводная таблица за 6 месяцев</h4>
-        <el-table :data="pivotTableData" border size="small" style="width: 100%">
+        <el-table ref="tableRef" :data="pivotTableData" border size="small" style="width: 100%" :key="tableRenderKey">
           <el-table-column prop="bucket" label="Корзина" width="120" fixed>
             <template #default="{ row }">
               <el-tag :type="getTagType(row.bucket)" size="small">{{ row.bucket }}</el-tag>
@@ -108,6 +108,7 @@ import { Download } from '@element-plus/icons-vue'
 import { exportToExcel } from '@/utils/excelExport'
 import { useMetricsReportStore } from '@/storeMetricsReport'
 import useApplicationStore from '@/store'
+import { ElTable } from 'element-plus'
 
 // --- Типы ---
 interface SnapshotRow {
@@ -128,6 +129,9 @@ const rawData = ref<SnapshotRow[]>([])
 const chartRef = ref<HTMLElement | null>(null)
 let chart: ECharts | null = null
 let resizeObserver: ResizeObserver | null = null
+
+const tableRef = ref<any>(null)
+const tableRenderKey = ref(0)
 
 // --- Константы ---
 const BUCKETS = ['0-30', '31-90', '91-180', '181+'] as const
@@ -317,6 +321,14 @@ const fetchData = async () => {
     });
 
     rawData.value = store.metrics_inventory_aging;
+
+    tableRenderKey.value++  // принудительно пересоздаём таблицу
+    await nextTick() // Важно: ждём, чтобы computed-поля (pivotTableData и т.п.) пересчитались
+
+    // Принудительно пересчитываем ширину колонок
+    if (tableRef.value) {
+      tableRef.value.doLayout()
+    }
 
   } catch (e) {
     error.value = 'Ошибка загрузки данных: ' + (e as Error).message
