@@ -76,6 +76,7 @@
       :userID="Number(store.currentUser?.id)"
       @close="drawerVisible = false"
       @open-material-selection="openSelectionDrawer"
+      @operation-saved="onOperationSaved"
     />
     <div v-else class="empty-state">
       Недостаточно данных для отображения формы
@@ -167,7 +168,7 @@ const onFormClose = async () => {
 
 const onSelectionFormClose = async () => {
   selectionDrawerVisible.value = false;
-  drawerVisible.value = true 
+  drawerVisible.value = true; 
 }
 
 
@@ -229,9 +230,16 @@ function setContextMaterialsSelection(task_items: frontend.ITaskItemsKeyMaterial
   
 }; 
 
+const onOperationSaved = (operationId: number) => {
+  if (!currentOperationID.value) {
+    currentOperationID.value=operationId
+  }
+};
+
 const openSelectionDrawer = (taskId: number, operationId: number, taskItemsKeyMaterial: frontend.ITaskItemsKeyMaterial) => {
-  updated_task_id= taskId,
-  updated_operation_id= operationId,
+  updated_task_id = taskId
+  updated_operation_id = operationId
+
   drawerVisible.value = false
   
   setContextMaterialsSelection(taskItemsKeyMaterial);
@@ -266,24 +274,6 @@ const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
   drawerVisible.value = true 
 
 
-/*   const existingIds = new Set(
-    doc_raw_materials.value.map(i => `${i.material_id}_${i.tare_id}`)
-  );
-
-  const newItems = items.filter(
-    item => !existingIds.has(`${item.material_id}_${item.tare_id}`)
-  );
-
-  if (newItems.length === 0) {
-    ElMessage.info('Все выбранные позиции уже есть в документе');
-    drawerVisible.value = false;
-    return;
-  }
-
-  doc_raw_materials.value = [...doc_raw_materials.value, ...newItems];
-  ElMessage.success(`Добавлено ${newItems.length} позиций`);
-  drawerVisible.value = false;
- */
 };
 
 

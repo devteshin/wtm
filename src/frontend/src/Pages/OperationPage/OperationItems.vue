@@ -179,6 +179,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'close'): void,
   (e: 'open-material-selection', taskId: number, operationId: number, taskItemsKeyMaterial: frontend.ITaskItemsKeyMaterial): void
+  (e: 'operation-saved', operationId: number): void
 }>()
 
 // --- Состояния ---
@@ -350,6 +351,8 @@ const handleSave = async () => {
   currentOperationId.value = operation_id
   originalForm.value = { ...form.value }
   ElMessage.success(`Операция ${form.value.operationName} сохранена`)
+
+  emit('operation-saved', currentOperationId.value)
 }
 
 const handleDelete = async () => {
