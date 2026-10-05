@@ -6,23 +6,26 @@
       <div v-if="status === 'Загрузка...'" class="loading-state">
         <p>Загрузка карты...</p>
       </div>
-      <div v-else v-html="svgContent" class="svg-host"></div>
 
-      <!-- Оверлей теперь ВНУТРИ svg-wrapper -->
-      <div class="overlay-wrapper">
-        <div
-          v-for="zone in parsedZones"
-          :key="zone.id"
-          class="overlay-zone"
-          :style="{
-            left: zone.x + 'px',
-            top: zone.y + 'px',
-            width: zone.width + 'px',
-            height: zone.height + 'px'
-          }"
-          @click="onZoneClick(zone)"
-        >
-          {{ zone.id }}
+      <!-- Внутренний контейнер: SVG + оверлей скроллятся вместе -->
+      <div v-else class="scroll-content">
+        <div v-html="svgContent" class="svg-host"></div>
+
+        <div class="overlay-wrapper">
+          <div
+            v-for="zone in parsedZones"
+            :key="zone.id"
+            class="overlay-zone"
+            :style="{
+              left: zone.x + 'px',
+              top: zone.y + 'px',
+              width: zone.width + 'px',
+              height: zone.height + 'px'
+            }"
+            @click="onZoneClick(zone)"
+          >
+            {{ zone.id }}
+          </div>
         </div>
       </div>
     </div>
@@ -36,8 +39,8 @@
         <li v-for="zone in parsedZones" :key="zone.id" class="zone-item">
           <span class="id-badge">{{ zone.id }}</span>
           <span class="coords">
-            X: {{ zone.x.toFixed(0) }} | Y: {{ zone.y.toFixed(0) }} |
-            W: {{ zone.width.toFixed(0) }} | H: {{ zone.height.toFixed(0) }}
+            X: {{ zone.x.toFixed(1) }} | Y: {{ zone.y.toFixed(1) }} |
+            W: {{ zone.width.toFixed(1) }} | H: {{ zone.height.toFixed(1) }}
           </span>
         </li>
       </ul>
@@ -93,34 +96,41 @@ const initParser = () => {
     return;
   }
 
-  // Берём реальную позицию контейнера на экране
-  const containerRect = svgContainer.value.getBoundingClientRect();
+  // Вычисляем масштаб: реальный размер SVG / размер viewBox
+  const svgRect = svgElement.getBoundingClientRect();
+  const viewBox = svgElement.viewBox?.baseVal;
+
+  let scaleX = 1;
+  let scaleY = 1;
+
+  if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
+    scaleX = svgRect.width / viewBox.width;
+    scaleY = svgRect.height / viewBox.height;
+  }
+
+  console.log('Масштаб SVG:', { scaleX, scaleY, svgW: svgRect.width, vbW: viewBox?.width });
 
   parsedZones.value = Array.from(rects)
     .map((rect) => {
       const id = rect.id;
       if (!id) return null;
 
-      // Реальная позиция и размер rect на экране
-      const bbox = rect.getBoundingClientRect();
-
-      // Смещаем относительно контейнера (а не всей страницы)
+      // Внутренние координаты × масштаб = экранные пиксели
       return {
         id,
-        x: bbox.left - containerRect.left,
-        y: bbox.top - containerRect.top,
-        width: bbox.width,
-        height: bbox.height,
+        x: rect.x.baseVal.value * scaleX,
+        y: rect.y.baseVal.value * scaleY,
+        width: rect.width.baseVal.value * scaleX,
+        height: rect.height.baseVal.value * scaleY,
       };
     })
     .filter((item) => item !== null);
 
   status.value = `Найдено зон: ${parsedZones.value.length}`;
-  console.log(parsedZones.value);
 };
 
 const onZoneClick = (zone) => {
-  console.log('Клик по зоне:', zone.id);
+  console.log('Клик по зоне:', zone.id, zone);
 };
 
 onMounted(() => {
@@ -146,10 +156,18 @@ onMounted(() => {
   position: relative;
 }
 
+/* Внутренний контейнер растягивается под натуральный размер SVG */
+.scroll-content {
+  position: relative;
+  display: inline-block;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+/* SVG в натуральном размере — НЕ заставляем его вписываться в контейнер */
 .svg-host :deep(svg) {
-  width: 100%;
-  height: 100%;
   display: block;
+  /* Никаких width: 100% ! */
 }
 
 .loading-state {
@@ -200,6 +218,7 @@ onMounted(() => {
   margin-right: 10px;
 }
 
+/* Оверлей внутри scroll-content — скроллится вместе с SVG */
 .overlay-wrapper {
   position: absolute;
   top: 0;
