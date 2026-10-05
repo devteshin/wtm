@@ -89,6 +89,10 @@ const routes: Array<RouteRecordRaw> = [
         path: "/zone_parser",
         component: () => import("@/Pages/TestParser.vue")
     },
+    {
+        path: "/zone_map",
+        component: () => import("@/Pages/ZoneMap.vue")
+    },
 
 
 ];
