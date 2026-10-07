@@ -1,7 +1,7 @@
 <template>
   <div class="parent-container">
     <SvgZoneMap
-      src="/test_plan.svg"
+      src="/zone_plan.svg"
       @zone-click="onZoneClick"
     />
   </div>
