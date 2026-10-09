@@ -12,6 +12,7 @@ type ArrivalTypeKey = keyof typeof ARRIVAL_TYPE_MAP
 
 export const useMetricsReportStore = defineStore('metricsReport', () => {
   const selectedStore = ref<number[]>([])
+  const selectedMaterialGroup = ref<number[]>([])
   const selectedMaterial = ref<number[]>([])
   const selectedProduct = ref<number[]>([])
   const selectedSupplier = ref<number[]>([])
@@ -32,6 +33,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
   // Действия
   const setFilters = (filters: Partial<{
     selectedStore: number[]
+    selectedMaterialGroup: number[]
     selectedMaterial: number[]
     selectedProduct: number[]
     selectedSupplier: number[]
@@ -45,6 +47,9 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
   }>) => {
     if (filters.selectedStore !== undefined) {
       selectedStore.value = filters.selectedStore
+    }
+    if (filters.selectedMaterialGroup !== undefined) {
+      selectedMaterialGroup.value = filters.selectedMaterialGroup
     }
     if (filters.selectedMaterial !== undefined) {
       selectedMaterial.value = filters.selectedMaterial
@@ -80,6 +85,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
 
   const resetFilters = () => {
     selectedStore.value = []
+    selectedMaterialGroup.value = []
     selectedMaterial.value = []
     selectedProduct.value = []
     selectedSupplier.value = []
@@ -100,6 +106,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
         const data = JSON.parse(saved)
         setFilters({
           selectedStore: data.selectedStore || [],
+          selectedMaterialGroup: data.selectedMaterialGroup || [],
           selectedMaterial: data.selectedMaterial || [],
           selectedProduct: data.selectedProduct || [],
           selectedSupplier: data.selectedSupplier || [],
@@ -120,6 +127,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
   const saveToStorage = () => {
     const stateToSave = {
       selectedStore: selectedStore.value,
+      selectedMaterialGroup: selectedMaterialGroup.value,
       selectedMaterial: selectedMaterial.value,
       selectedProduct: selectedProduct.value,
       selectedSupplier: selectedSupplier.value,
@@ -138,6 +146,7 @@ export const useMetricsReportStore = defineStore('metricsReport', () => {
   return {
     // Экспортируем реактивные переменные
     selectedStore,
+    selectedMaterialGroup,
     selectedMaterial,
     selectedProduct,
     selectedSupplier,

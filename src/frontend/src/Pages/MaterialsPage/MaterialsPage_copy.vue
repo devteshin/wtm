@@ -2,154 +2,192 @@
   <el-container class="page-container">
     <!-- Левый блок: панель с формой -->
     <el-aside width="400px" class="sidebar">
+      <el-form label-position="top" class="filter-form">
+        <el-form-item label="Склад">
+          <el-select v-model="selectedStore" placeholder="Склад" clearable multiple>
+            <el-option
+              v-for="item in store.materials_meta?.stock_list"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
 
-      <ReportFilters
-        ref="filtersRef"
-        v-model:store-filter="selectedStore"
-        v-model:material="selectedMaterial"
-        v-model:material-group="selectedMaterialGroup"
-        :show-date = false
-        :show-period = false
-        show-store
-        :show-schema = false
-        :show-supplier = false
-        :show-process = false
-        :show-operation = false
-        show-material-group
-        show-material
-        :show-product = false
-        :show-operation-graph = false
-        :show-material-graph = false
-        :show-product-graph = false
-        :show-product-coeff-tables = false
-        @make-report="handleMakeReport"
-        >
-          <template #after-material>
-            <el-form-item>
-              <div class="switch-container">
-                <el-switch 
-                  v-model="isDetailedMode"
-                  :disabled="isDetailedModeDisabled"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
-                  @change="handleSwitchDetailedMode"
-                />
-                <span class="switch-description">
-                  развернуть материалы
-                </span>
-              </div>
-            </el-form-item>
-            <el-form-item>
-              <div class="switch-container">
-                <el-switch 
-                  v-model="isOnlyNonZeroMode"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
-                />
-                <span class="switch-description">
-                  {{ isOnlyNonZeroMode ? 'только материалы в наличие на складе' : 'все материалы (включая отсутствующие)' }}
-                </span>
-              </div>
-            </el-form-item>
+        <el-form-item label="Сырьевая группа">
+          <el-select v-model="selectedMaterialGroup" placeholder="Сырьевая группа" clearable multiple>
+            <el-option
+              v-for="item in store.materials_meta?.material_group_list.filter(item => item.type != 0)"
+              :key="item.code"
+              :label="item.code"
+              :value="item.code"
+            />
+          </el-select>
+        </el-form-item>
 
-          </template>  
-          <template #actions>
-
-            <el-form-item label="Показатели">
-              <el-table :data="tableCondition" style="width: 100%" max-height="250">
-
-                <el-table-column prop="element" label="">
-                  <template #default="scope">
-                    <el-select v-model="scope.row.element"  style="width: 90px"
-                    >
-                      <el-option
-                        v-for="item in store.materials_meta?.material_group_list
-                            .filter(item => (item.type == 0 || item.type == 1) && !tableCondition.map(item => item.element).includes(item.code))"
-                        :key="item.code"
-                        :label="item.code"
-                        :value="item.code"
-                      />
-                    </el-select>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="min" label="min">
-                  <template #default="scope">
-                    <el-input type="number" v-model.number="scope.row.min" placeholder=""
-                    ></el-input>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="max" label="max">
-                  <template #default="scope">
-                    <el-input type="number" v-model.number="scope.row.max" placeholder=""
-                    ></el-input>
-                  </template>
-                </el-table-column>
-                <el-table-column fixed="right" label="" width="40">
-                  <template #default="scope">
-                    <el-button
-                      link
-                      type="danger"
-                      size="small"
-                      @click.prevent="deleteRow(scope.$index)"
-                    >
-                      <Delete style="width: 16px; height: 16px;" />
-                    </el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-              <el-button class="mt-4" style="width: 100%" @click="onAddItem">
-                Добавить
-              </el-button>            
-            </el-form-item>
-            <el-form-item>
-              <div class="switch-container">
-                <el-switch 
-                  v-model="isElementOrderMode"
-                  :disabled="isElementOrderModeDisabled"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
-                />
-                <span class="switch-description">
-                  {{ isElementOrderMode ? 'сортировка по первому показателю' : 'сортировка по материалам' }}
-                </span>
-              </div>
-            </el-form-item>
-            <el-button
-              type="primary"
-              @click="handleMakeReport"
-              class="apply-button"
+        <el-form-item label="Материал">
+          <div class="item-remote-select-wrapper">
+            <el-select
+              v-model="selectedMaterial"
+              placeholder="Начните вводить название материала"
+              clearable
+              multiple
+              filterable
+              :remote="isRemoteSearchMaterial"
+              class="item-remote-select"
+              :loading="materialOptionsLoading"
+              :remote-method="isRemoteSearchMaterial ? handleMaterialSearch : undefined"
             >
-              Сформировать
+              <el-option
+                v-for="m in materialOptions"
+                :key="m.id"
+                :label="m.name"
+                :value="m.id"
+                :disabled="m.id === -1"
+              />
+              <template v-if="materialOptionsLoading">
+                <el-option :value="0" disabled label="Загрузка..." />
+              </template>
+            </el-select>
+
+            <el-button
+              v-if="isRemoteSearchMaterial"
+              type="info"
+              plain
+              size="small"
+              :loading="materialOptionsLoading"
+              :disabled="materialOptionsLoading"
+              @click="handleLoadAllMaterialOptions"
+              title="Загрузить все опции"
+            >
+              <template #icon>
+                <el-icon :size="16">
+                  <folder-opened />
+                </el-icon>
+              </template>
             </el-button>
-            <el-form-item>
-              <div class="switch-container">
-                <el-switch 
-                  v-model="isSelectionEnabled"
-                  :disabled="isSelectionModeDisabled"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
-                />
-                <span class="switch-description">
-                  {{ isSelectionEnabled ? 'выбор материалов доступен' : 'выбор материалов отключен' }}
-                </span>
-              </div>
-            </el-form-item>
-            <el-form-item>
-              <div class="switch-container">
-                <el-switch 
-                  v-model="isSelectionControlEnabled"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
-                />
-                <span class="switch-description">
-                  {{ isSelectionControlEnabled ? 'подбор материалов открыт' : 'подбор материалов скрыт' }}
-                </span>
-              </div>
-            </el-form-item>
 
-          </template>
-        </ReportFilters>
+          </div>
+        </el-form-item>
 
+        <el-form-item>
+          <div class="switch-container">
+            <el-switch 
+              v-model="isDetailedMode"
+              :disabled="isDetailedModeDisabled"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              @change="handleSwitchDetailedMode"
+            />
+            <span class="switch-description">
+              развернуть материалы
+            </span>
+          </div>
+        </el-form-item>
+        <el-form-item>
+          <div class="switch-container">
+            <el-switch 
+              v-model="isOnlyNonZeroMode"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+            />
+            <span class="switch-description">
+              {{ isOnlyNonZeroMode ? 'только материалы в наличие на складе' : 'все материалы (включая отсутствующие)' }}
+            </span>
+          </div>
+        </el-form-item>
+        <el-form-item label="Показатели">
+          <el-table :data="tableCondition" style="width: 100%" max-height="250">
+
+            <el-table-column prop="element" label="">
+              <template #default="scope">
+                <el-select v-model="scope.row.element"  style="width: 90px"
+                >
+                  <el-option
+                    v-for="item in store.materials_meta?.material_group_list
+                        .filter(item => (item.type == 0 || item.type == 1) && !tableCondition.map(item => item.element).includes(item.code))"
+                    :key="item.code"
+                    :label="item.code"
+                    :value="item.code"
+                  />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column prop="min" label="min">
+              <template #default="scope">
+                <el-input type="number" v-model.number="scope.row.min" placeholder=""
+                ></el-input>
+              </template>
+            </el-table-column>
+            <el-table-column prop="max" label="max">
+              <template #default="scope">
+                <el-input type="number" v-model.number="scope.row.max" placeholder=""
+                ></el-input>
+              </template>
+            </el-table-column>
+            <el-table-column fixed="right" label="" width="40">
+              <template #default="scope">
+                <el-button
+                  link
+                  type="danger"
+                  size="small"
+                  @click.prevent="deleteRow(scope.$index)"
+                >
+                  <Delete style="width: 16px; height: 16px;" />
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-button class="mt-4" style="width: 100%" @click="onAddItem">
+            Добавить
+          </el-button>            
+        </el-form-item>
+        <el-form-item>
+          <div class="switch-container">
+            <el-switch 
+              v-model="isElementOrderMode"
+              :disabled="isElementOrderModeDisabled"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+            />
+            <span class="switch-description">
+              {{ isElementOrderMode ? 'сортировка по первому показателю' : 'сортировка по материалам' }}
+            </span>
+          </div>
+        </el-form-item>
+        <el-button
+          type="primary"
+          @click="handleMakeReport"
+          class="apply-button"
+        >
+          Сформировать
+        </el-button>
+        <el-form-item>
+          <div class="switch-container">
+            <el-switch 
+              v-model="isSelectionEnabled"
+              :disabled="isSelectionModeDisabled"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+            />
+            <span class="switch-description">
+              {{ isSelectionEnabled ? 'выбор материалов доступен' : 'выбор материалов отключен' }}
+            </span>
+          </div>
+        </el-form-item>
+        <el-form-item>
+          <div class="switch-container">
+            <el-switch 
+              v-model="isSelectionControlEnabled"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+            />
+            <span class="switch-description">
+              {{ isSelectionControlEnabled ? 'подбор материалов открыт' : 'подбор материалов скрыт' }}
+            </span>
+          </div>
+        </el-form-item>
+      </el-form>
     </el-aside>
 
     <!-- Правый блок: контейнер с таблицей -->
@@ -313,14 +351,12 @@ import { nextTick, onMounted, onUnmounted, Ref } from "vue";
 import { ref, computed } from "vue";
 import useApplicationStore from "@/store";
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
-import ReportFilters from '@/components/ReportFilters.vue'
 import { Delete, FolderOpened } from '@element-plus/icons-vue';
 import { watch } from 'vue';
 import { ElMessageBox } from "element-plus";
 import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
 
-const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
 
 interface Column {
   prop: string;
@@ -1226,7 +1262,7 @@ const onAddItem = () => {
 };
 
 
- const onCellDblClick = (row: any, column: any, cell: HTMLElement, event: MouseEvent) => {
+const onCellDblClick = (row: any, column: any, cell: HTMLElement, event: MouseEvent) => {
   const columnProp = column.property; // именно property, а не prop
   const value = row[columnProp];
 
@@ -1255,15 +1291,17 @@ const onAddItem = () => {
 
   if (!selectedRef) return;
 
-  addUniqueIdsByValue(optionList, selectedRef, value)
+  addUniqueIdsByValue(optionList, selectedRef, String(value));
 
-  // Обновляем опции внутри ReportFilters
+  // Синхронизация опций
   if (columnProp === 'material') {
-    filtersRef.value?.refreshOptions(columnProp, selectedRef.value)
+    materialOptions.value =
+      store.materials_meta?.material_list.filter((item: any) =>
+        selectedMaterial.value.includes(item.id)
+      ) || [];
   }
-
 };
- 
+
 const emit = defineEmits<{
   (e: 'selection-confirmed', items: frontend.IRawMaterial[]): void;
   (e: 'close'): void;

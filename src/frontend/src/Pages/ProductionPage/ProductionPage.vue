@@ -18,6 +18,7 @@
         :show-supplier="false"
         show-process
         show-operation
+        :show-material-group=false
         show-material
         show-product
         show-operation-graph

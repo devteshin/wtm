@@ -58,6 +58,7 @@
           :show-supplier="metricConfig.showSupplier"
           :show-process="metricConfig.showProcess"
           :show-operation="metricConfig.showOperation"
+          :show-material-group="metricConfig.showMaterialGroup"
           :show-material="metricConfig.showMaterial"
           :show-product="metricConfig.showProduct"
           :show-operation-graph="metricConfig.showOperationGraph"

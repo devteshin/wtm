@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
   process?: number[]
   supplier?: number[]
   operation?: number[]
+  materialGroup?: string[]
   material?: number[]
   product?: number[]
 
@@ -25,6 +26,7 @@ const props = withDefaults(defineProps<{
   showSupplier?: boolean
   showProcess?: boolean
   showOperation?: boolean
+  showMaterialGroup?: boolean
   showMaterial?: boolean
   showProduct?: boolean
 
@@ -41,6 +43,7 @@ const props = withDefaults(defineProps<{
   supplier: () => [],
   process: () => [],
   operation: () => [],
+  materialGroup: () => [],
   material: () => [],
   product: () => [],
   showDate: true,
@@ -50,6 +53,7 @@ const props = withDefaults(defineProps<{
   showSupplier: true,
   showProcess: true,
   showOperation: true,
+  showMaterialGroup: true,
   showMaterial: true,
   showProduct: true,
   showOperationGraph: false,
@@ -66,6 +70,7 @@ const emit = defineEmits<{
   'update:supplier': [value: number[]]
   'update:process': [value: number[]]
   'update:operation': [value: number[]]
+  'update:materialGroup': [value: string[]]
   'update:material': [value: number[]]
   'update:product': [value: number[]]
   'open-graph': [type: 'operation' | 'material' | 'product', ids: number[]]
@@ -105,6 +110,10 @@ const processModel = computed({
 const operationModel = computed({
   get: () => props.operation,
   set: (val) => emit('update:operation', val),
+})
+const materialGroupModel = computed({
+  get: () => props.materialGroup,
+  set: (val) => emit('update:materialGroup', val),
 })
 const materialModel = computed({
   get: () => props.material,
@@ -210,6 +219,7 @@ async function handleLoadAllProductOptions() {
 const schemaOptionsLoading = ref(false)
 const supplierOptionsLoading = ref(false)
 const processOptionsLoading = ref(false)
+const materialGroupOptionsLoading = ref(false)
 
 // ── Инициализация ──
 
@@ -220,6 +230,7 @@ onMounted(async () => {
   productOptionsLoading.value = true
   materialOptionsLoading.value = true
   operationOptionsLoading.value = true
+  materialGroupOptionsLoading.value = true
 
   try {
     await appStore.fetchMaterialsMeta()
@@ -246,6 +257,7 @@ onMounted(async () => {
     productOptionsLoading.value = false
     materialOptionsLoading.value = false
     operationOptionsLoading.value = false
+    materialGroupOptionsLoading.value = false
   }
 })
 
@@ -438,6 +450,28 @@ defineExpose({ refreshOptions })
       </div>
     </el-form-item>
     <slot name="after-operation" />
+
+    <!-- Группа материалов -->
+    <el-form-item v-if="showMaterialGroup" label="Группа материалов">
+      <el-select
+        v-model="materialGroupModel"
+        placeholder="Выберите группу материалов"
+        clearable
+        multiple
+        :loading="materialGroupOptionsLoading"
+      >
+        <el-option
+          v-for="mg in appStore.materials_meta?.material_group_list"
+          :key="mg.code"
+          :label="mg.code"
+          :value="mg.code"
+        />
+        <template v-if="materialGroupOptionsLoading">
+          <el-option :value="0" disabled label="Загрузка..." />
+        </template>
+      </el-select>
+    </el-form-item>
+    <slot name="after-materialGroup" />
 
     <!-- Материал -->
     <el-form-item v-if="showMaterial" label="Материал">
