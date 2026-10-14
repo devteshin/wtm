@@ -37,16 +37,16 @@
         border
         stripe
       >
-        <el-table-column prop="stock_name" label="Склад" width="120" />
-        <el-table-column prop="doc_number" label="Документ" width="120" />
-        <el-table-column prop="doc_date" label="Дата" width="120" />
+        <el-table-column prop="stock_name" label="Склад" min-width="120" />
+        <el-table-column prop="doc_number" label="Документ" min-width="120" />
+        <el-table-column prop="doc_date" label="Дата" min-width="120" />
         <el-table-column prop="zone_label" label="Зона хранения" min-width="140">
           <template #default="scope">
             <span
               class="dbl-click-cell"
               @dblclick.stop="emitCellDblClick('zone', scope.row.zone_label)"
             >
-              {{ scope.row.process ?? '-' }}
+              {{ scope.row.zone_label ?? '-' }}
             </span>
           </template>
         </el-table-column>
@@ -60,8 +60,8 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="employee_name" label="Сотрудник" width="120" />
-        <el-table-column prop="note" label="Комментарий" width="120" />
+        <el-table-column prop="employee_name" label="Сотрудник" min-width="120" />
+        <el-table-column prop="note" label="Комментарий" min-width="120" />
       </el-table>
     </div>
 
@@ -146,6 +146,7 @@ const refresh = async () => {
 
     total.value = Number(result.total) ?? 0
     store.zone_docs = result.data ?? []
+    
   } catch (err) {
     console.error('fetchZoneDocs error:', err)
     store.zone_docs = []
