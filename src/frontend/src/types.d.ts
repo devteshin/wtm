@@ -72,11 +72,25 @@ declare namespace frontend {
         net_weight: number
     }    
 
+    export type IZoneDocsWithLimit = {
+        data: Array<IZoneDocs>
+        total: number
+    }    
+
+    export type IZoneDocs = {
+        stock_name: string
+        doc_number: string
+        doc_date: string
+        zone_label: string
+        material: string
+        employee_name: string
+        note: string
+    }    
+
     export type IProductionReportDataWithLimit = {
         data: Array<IProductionReportData>
         total: number
     }    
-
 
     export type IProductionReportData = {
         operation_date_in: string
@@ -228,6 +242,16 @@ declare namespace frontend {
         process_ids?: string;
         material_ids? :string;
         arrival_type?: number | null
+    }
+
+    export type IZoneDocsQueryParams = {
+        stock_ids?: string;
+        material_ids?: string;
+        date_start?: string;
+        date_end?: string;
+        full_mode?: boolean;
+        page?: number;
+        limit?: number;
     }
 
     export type IProductionReportQueryParams = {

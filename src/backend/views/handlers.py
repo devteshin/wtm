@@ -4,7 +4,7 @@ from db import (check_user, select_task, select_tasks, change_password, select_m
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
                 check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations,
-                select_production_report_data, select_production_graph_data, select_metrics_inventory_aging
+                select_production_report_data, select_production_graph_data, select_metrics_inventory_aging, select_journal_zone_docs
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -240,6 +240,31 @@ async def get_metrics_inventory_aging(request: Request):
 
     return await jsonify(production_report_data, request)
 
+
+async def get_journal_zone_docs(request: Request):
+    
+    stock_ids = request.query.get("stock_ids")
+    material_ids = request.query.get("material_ids")
+    date_start = request.query.get("date_start")
+    date_end = request.query.get("date_end")
+    full_mode = request.query.get("full_mode")
+    limit = request.query.get("limit")
+    page = request.query.get("page")
+
+    journal_zone_docs = []
+    async with request.app["db"].acquire() as conn:
+        journal_zone_docs = await select_journal_zone_docs(
+            conn,
+            stock_ids = stock_ids,
+            material_ids = material_ids,
+            date_start = date_start,
+            date_end = date_end,
+            full_mode = full_mode,
+            limit = limit,
+            page = page
+        )
+
+    return await jsonify(journal_zone_docs, request)
 
 
 async def get_production_report_data(request: Request):

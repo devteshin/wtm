@@ -31,6 +31,8 @@ export default defineStore("app_store", () => {
     const materials_data = ref<frontend.IMaterialsData | null>(null);
     /** данные метрики inventory aging */
     const metrics_inventory_aging = ref<Array<frontend.IMetricsInventoryAging>> ([]);
+    /** список документов размещения с пагинацией */
+    const zone_docs_with_limit = ref<frontend.IZoneDocsWithLimit | null> (null);
     /** данные отчета по производству */
     const production_report_data = ref<Array<frontend.IProductionReportData>> ([]);
     /** данные отчета по производству с пагинацией */
@@ -66,6 +68,11 @@ export default defineStore("app_store", () => {
     /** запрос к API для получения метрик срок хранения материалов */
     const fetchMetricsInventoryAging = (params?: frontend.IMetricsInventoryAgingQueryParams) => {
         return api.fetchMetricsInventoryAging(params).then(body => metrics_inventory_aging.value = body).finally(() => loading.value = false);
+    };
+
+    /** запрос к API для получения документов для журнала докуметов размещения в зонах  */
+    const fetchZoneDocs = (params?: frontend.IZoneDocsQueryParams) => {
+        return api.fetchZoneDocs(params).then(body => zone_docs_with_limit.value = body).finally(() => loading.value = false);
     };
 
     /** запрос к API для получения данных для отчета по производству */
@@ -311,6 +318,7 @@ export default defineStore("app_store", () => {
         fetchMaterialsMeta,
         fetchMaterialsData,
         fetchMetricsInventoryAging,
+        fetchZoneDocs,
         fetchProductionReportData,
         fetchProductionGraphData,
         fetchSelectionData,

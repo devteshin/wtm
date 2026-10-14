@@ -17,6 +17,7 @@ const PRODUCTION_REPORT = "production_report";
 const PRODUCTION_GRAPH = "production_graph";
 const SEARCH_MATERIAL = "search_materials";
 const SEARCH_OPERATION = "search_operations";
+const JOURNAL_ZONE_DOCS = "journal_zone_docs";
 const DOC = "doc";
 const JOB = "job";
 const DNM = "dnm";
@@ -115,6 +116,29 @@ class ClientAPI {
         });
 
         const url = `${BASE_URL}/${METRICS_INVENOTORY_AGING}${
+            queryParams.toString() ? `?${queryParams.toString()}` : ''
+        }`;        
+
+        const response = await fetch(url, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
+    async fetchZoneDocs(params: frontend.IZoneDocsQueryParams = {}) {
+        this.checkToken();
+
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+            }
+        });
+
+        const url = `${BASE_URL}/${JOURNAL_ZONE_DOCS}${
             queryParams.toString() ? `?${queryParams.toString()}` : ''
         }`;        
 

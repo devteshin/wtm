@@ -75,6 +75,41 @@ async def select_metrics_inventory_aging(
 
     return report_result
 
+async def select_journal_zone_docs(
+    conn: Connection, 
+            stock_ids: str = '',
+            material_ids: str = '',
+            date_start: str = '',
+            date_end: str = '',
+            full_mode: bool | str = False,
+            limit: int = 0,
+            page: int = 0
+    ):
+
+    if isinstance(full_mode, str):
+        full_mode_int = 1 if full_mode.lower() in ('true', '1') else 0
+    else:
+        full_mode_int = int(full_mode)
+
+
+    async with conn.cursor() as cur:
+        try:
+            await cur.callproc("journal_zone_docs", [date_start, date_end, stock_ids, material_ids, full_mode_int, limit, page])
+            report_result = await cur.fetchall()
+
+            await cur.execute("SELECT @out_total_journal_zone_docs AS total_count")
+            result = await cur.fetchone()
+            total_count = result.get("total_count", 0)
+
+        except Exception as e:
+            print(f"ERROR callproc \"journal_zone_docs\": {e}")
+            return {"data": [], "total": 0}
+
+    return {
+        "data": report_result,
+        "total": total_count
+    }
+
 
 async def select_production_report_data(
     conn: Connection, 
