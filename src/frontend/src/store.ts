@@ -31,6 +31,8 @@ export default defineStore("app_store", () => {
     const materials_data = ref<frontend.IMaterialsData | null>(null);
     /** данные метрики inventory aging */
     const metrics_inventory_aging = ref<Array<frontend.IMetricsInventoryAging>> ([]);
+    /** список документов размещения */
+    const zone_docs = ref<Array<frontend.IZoneDocs>> ([]);
     /** список документов размещения с пагинацией */
     const zone_docs_with_limit = ref<frontend.IZoneDocsWithLimit | null> (null);
     /** данные отчета по производству */
@@ -351,6 +353,7 @@ export default defineStore("app_store", () => {
         materials_meta,
         materials_data,
         metrics_inventory_aging,
+        zone_docs,
         production_report_data,
         production_graph_data_product,
         production_graph_data_material,

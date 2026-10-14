@@ -24,7 +24,7 @@
       </div>
 
       <div
-        v-else-if="!store.production_report_data.length"
+        v-else-if="!store.zone_docs.length"
         class="empty-state"
       >
         {{ total === 0 ? 'Нет данных по выбранным фильтрам.' : 'Загрузка данных...' }}
@@ -32,29 +32,21 @@
 
       <el-table
         v-else
-        :data="store.production_report_data"
+        :data="store.zone_docs"
         style="height: 100%"
         border
         stripe
       >
-        <el-table-column prop="operation_date_in" label="Дата переработки" width="120" />
-        <el-table-column prop="process" label="Техпроцесс" min-width="140">
+        <el-table-column prop="stock_name" label="Склад" width="120" />
+        <el-table-column prop="doc_number" label="Документ" width="120" />
+        <el-table-column prop="doc_date" label="Дата" width="120" />
+        <el-table-column prop="zone_label" label="Зона хранения" min-width="140">
           <template #default="scope">
             <span
               class="dbl-click-cell"
-              @dblclick.stop="emitCellDblClick('process', scope.row.process)"
+              @dblclick.stop="emitCellDblClick('zone', scope.row.zone_label)"
             >
               {{ scope.row.process ?? '-' }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="operation" label="Операция" min-width="160">
-          <template #default="scope">
-            <span
-              class="dbl-click-cell"
-              @dblclick.stop="emitCellDblClick('operation', scope.row.operation)"
-            >
-              {{ scope.row.operation ?? '-' }}
             </span>
           </template>
         </el-table-column>
@@ -68,27 +60,8 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="weight_in" label="Списано" width="90" align="right">
-          <template #default="scope">
-            {{ formatWeight(scope.row.weight_in) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="product" label="Продукт" min-width="160">
-          <template #default="scope">
-            <span
-              class="dbl-click-cell"
-              @dblclick.stop="emitCellDblClick('product', scope.row.product)"
-            >
-              {{ scope.row.product ?? '-' }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="weight_out" label="Принято" width="90" align="right">
-          <template #default="scope">
-            {{ formatWeight(scope.row.weight_out) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="operation_date_out" label="Дата приема" width="120" />
+        <el-table-column prop="employee_name" label="Сотрудник" width="120" />
+        <el-table-column prop="note" label="Комментарий" width="120" />
       </el-table>
     </div>
 
@@ -117,16 +90,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { Download, Checked, List } from '@element-plus/icons-vue'
-import { exportToExcel } from '@/utils/excelExport'
 import { useProductionReportStore } from '@/storeProductionReport'
+import { useZoneDocsStore } from '@/storeZoneDocs'
 import useApplicationStore from '@/store'
 
 const loading = ref(false)
 const error = ref<string | null>(null)
-const exportLoading = ref(false)
 
 const store = useApplicationStore()
-const reportStore = useProductionReportStore()
+const zoneDocsStore = useZoneDocsStore()
 
 // Режимы отображения
 const MODE_PAGINATED = 'paginated' as const
@@ -162,23 +134,23 @@ const toggleMode = () => {
 const refresh = async () => {
   isLoading.value = true
   try {
-    const result = await store.fetchProductionReportData({
-      stock_ids: reportStore.selectedStore?.toString() ?? '',
-      material_ids: reportStore.selectedMaterial?.toString() ?? '',
-      date_start: reportStore.selectedPeriod?.[0] ?? '',
-      date_end: reportStore.selectedPeriod?.[1] ?? '',
+    const result = await store.fetchZoneDocs({
+      stock_ids: zoneDocsStore.selectedStore?.toString() ?? '',
+      material_ids: zoneDocsStore.selectedMaterial?.toString() ?? '',
+      date_start: zoneDocsStore.selectedPeriod?.[0] ?? '',
+      date_end: zoneDocsStore.selectedPeriod?.[1] ?? '',
       full_mode: isFullMode.value,
       limit: isFullMode.value ? 0 : pageSize.value,
       page: isFullMode.value ? 0 : currentPage.value,
     })
 
     total.value = Number(result.total) ?? 0
-    store.production_report_data = result.data ?? []
+    store.zone_docs = result.data ?? []
   } catch (err) {
-    console.error('fetchProductionReportData error:', err)
-    store.production_report_data = []
+    console.error('fetchZoneDocs error:', err)
+    store.zone_docs = []
     total.value = 0
-    error.value = 'Не удалось загрузить данные отчёта'
+    error.value = 'Не удалось загрузить данные'
   } finally {
     isLoading.value = false
   }
@@ -186,13 +158,9 @@ const refresh = async () => {
 
 watch(
   () => [
-    reportStore.selectedStore,
-    reportStore.selectedMaterial,
-    reportStore.selectedProduct,
-    reportStore.selectedProcess,
-    reportStore.selectedOperation,
-    reportStore.selectedSchema,
-    reportStore.selectedPeriod,
+    zoneDocsStore.selectedStore,
+    zoneDocsStore.selectedMaterial,
+    zoneDocsStore.selectedPeriod,
   ],
   () => {
     // При изменении фильтров сбрасываем на первую страницу и режим пагинации
@@ -204,14 +172,6 @@ watch(
 )
 
 defineExpose({ refresh })
-
-const formatWeight = (value: number | null | undefined): string => {
-  if (value == null) return '-'
-  return new Intl.NumberFormat('ru-RU', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
 
 const onCurrentChange = (page: number) => {
   currentPage.value = page
