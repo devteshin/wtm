@@ -2,7 +2,7 @@
   <div class="tables-wrapper">
     <!-- Панель управления -->
     <div class="tables-controls">
-      <h3 class="controls-title">Производство</h3>
+      <h3 class="controls-title">Размещение материалов в зонах хранения</h3>
       <span class="separator-line" />
 
       <!-- Кнопка переключения режима: полный отчёт / пагинация -->
@@ -90,7 +90,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { Download, Checked, List } from '@element-plus/icons-vue'
-import { useProductionReportStore } from '@/storeProductionReport'
 import { useZoneDocsStore } from '@/storeZoneDocs'
 import useApplicationStore from '@/store'
 
@@ -133,6 +132,7 @@ const toggleMode = () => {
 
 const refresh = async () => {
   isLoading.value = true
+  console.log("refresh")
   try {
     const result = await store.fetchZoneDocs({
       stock_ids: zoneDocsStore.selectedStore?.toString() ?? '',

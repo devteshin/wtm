@@ -43,11 +43,11 @@
 
         <div class="report-table-wrapper">
 
-<!--           <ProductionReportTableView
+           <ZoneDocsTableView
             ref="reportTableRef"
             @cell-dblclick="onCellDblClick"
           />
- -->          
+           
         </div>
 
       </el-main>
@@ -62,8 +62,9 @@ import { useZoneDocsStore } from '@/storeZoneDocs'
 import ReportFilters from '@/components/ReportFilters.vue'
 import { ElMessageBox } from 'element-plus'
 import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
+import ZoneDocsTableView from './ZoneDocsTableView.vue'
 
-//const reportTableRef = ref<typeof ProductionReportTableView | null>(null)
+const reportTableRef = ref<typeof ZoneDocsTableView | null>(null)
 const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
 
 const store = useApplicationStore()
@@ -95,7 +96,7 @@ zoneDocsStore.loadFromStorage()
 
 const handleMakeReport = () => {
   zoneDocsStore.saveToStorage()
-  //reportTableRef.value?.refresh()
+  reportTableRef.value?.refresh()
 }
 
 // ── Двойной клик по ячейке таблицы ──
