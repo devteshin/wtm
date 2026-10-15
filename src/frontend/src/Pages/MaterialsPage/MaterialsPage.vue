@@ -16,6 +16,7 @@
         :show-process = false
         :show-operation = false
         show-material-group
+        :show-material-zone = false
         show-material
         :show-product = false
         :show-operation-graph = false

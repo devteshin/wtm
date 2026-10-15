@@ -17,6 +17,7 @@ const props = withDefaults(defineProps<{
   materialGroup?: string[]
   material?: number[]
   product?: number[]
+  materialZone?: string[]
 
   // Видимость полей
   showDate?: boolean
@@ -27,6 +28,7 @@ const props = withDefaults(defineProps<{
   showProcess?: boolean
   showOperation?: boolean
   showMaterialGroup?: boolean
+  showMaterialZone?: boolean
   showMaterial?: boolean
   showProduct?: boolean
 
@@ -44,6 +46,7 @@ const props = withDefaults(defineProps<{
   process: () => [],
   operation: () => [],
   materialGroup: () => [],
+  materialZone: () => [],
   material: () => [],
   product: () => [],
   showDate: true,
@@ -54,6 +57,7 @@ const props = withDefaults(defineProps<{
   showProcess: true,
   showOperation: true,
   showMaterialGroup: true,
+  showMaterialZone: true,
   showMaterial: true,
   showProduct: true,
   showOperationGraph: false,
@@ -71,6 +75,7 @@ const emit = defineEmits<{
   'update:process': [value: number[]]
   'update:operation': [value: number[]]
   'update:materialGroup': [value: string[]]
+  'update:materialZone': [value: string[]]
   'update:material': [value: number[]]
   'update:product': [value: number[]]
   'open-graph': [type: 'operation' | 'material' | 'product', ids: number[]]
@@ -114,6 +119,10 @@ const operationModel = computed({
 const materialGroupModel = computed({
   get: () => props.materialGroup,
   set: (val) => emit('update:materialGroup', val),
+})
+const materialZoneModel = computed({
+  get: () => props.materialZone,
+  set: (val) => emit('update:materialZone', val),
 })
 const materialModel = computed({
   get: () => props.material,
@@ -220,6 +229,7 @@ const schemaOptionsLoading = ref(false)
 const supplierOptionsLoading = ref(false)
 const processOptionsLoading = ref(false)
 const materialGroupOptionsLoading = ref(false)
+const materialZoneOptionsLoading = ref(false)
 
 // ── Инициализация ──
 
@@ -231,6 +241,7 @@ onMounted(async () => {
   materialOptionsLoading.value = true
   operationOptionsLoading.value = true
   materialGroupOptionsLoading.value = true
+  materialZoneOptionsLoading.value = true
 
   try {
     await appStore.fetchMaterialsMeta()
@@ -258,6 +269,7 @@ onMounted(async () => {
     materialOptionsLoading.value = false
     operationOptionsLoading.value = false
     materialGroupOptionsLoading.value = false
+    materialZoneOptionsLoading.value = false
   }
 })
 
@@ -472,6 +484,28 @@ defineExpose({ refreshOptions })
       </el-select>
     </el-form-item>
     <slot name="after-materialGroup" />
+
+    <!-- Зона материалов -->
+    <el-form-item v-if="showMaterialZone" label="Зона хранения материалов">
+      <el-select
+        v-model="materialZoneModel"
+        placeholder="Выберите группу материалов"
+        clearable
+        multiple
+        :loading="materialZoneOptionsLoading"
+      >
+        <el-option
+          v-for="mz in appStore.materials_meta?.zone_list"
+          :key="mz.id"
+          :label="mz.name"
+          :value="mz.id"
+        />
+        <template v-if="materialZoneOptionsLoading">
+          <el-option :value="0" disabled label="Загрузка..." />
+        </template>
+      </el-select>
+    </el-form-item>
+    <slot name="after-materialZone" />
 
     <!-- Материал -->
     <el-form-item v-if="showMaterial" label="Материал">

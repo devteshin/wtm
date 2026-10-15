@@ -8,8 +8,14 @@ declare namespace frontend {
         process_list: Array<IProcess>
         operation_list: Array<IOpertion>
         processing_schemes: Array<IProcessingSchem>
+        zone_list: Array<IZoneList>
     }
 
+    export type IZoneList = {
+        id: string
+        name: string
+    }
+    
     export type IProcessingSchem = {
         id: number
         name: string

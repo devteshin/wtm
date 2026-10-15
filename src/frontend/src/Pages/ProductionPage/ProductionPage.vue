@@ -19,6 +19,7 @@
         show-process
         show-operation
         :show-material-group=false
+        :show-material-zone=false
         show-material
         show-product
         show-operation-graph

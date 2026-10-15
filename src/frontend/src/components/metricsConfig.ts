@@ -9,6 +9,7 @@ export interface MetricFilterConfig {
   showProcess: boolean
   showOperation: boolean
   showMaterialGroup: boolean
+  showMaterialZone: boolean
   showMaterial: boolean
   showProduct: boolean
   showOperationGraph: boolean
@@ -30,7 +31,7 @@ const configs: Record<MetricType, MetricFilterConfig> = {
   storage_lifetime: {
     showDate: true,  showPeriod: false,  showStore: true,  showSchema: false,
     showSupplier: true, showProcess: true, showOperation: false, showMaterial: true,
-    showMaterialGroup: false,
+    showMaterialGroup: false, showMaterialZone: false,
     showProduct: false,
     showOperationGraph: false, showMaterialGraph: false,
     showProductGraph: false, showProductCoeffTables: false,
