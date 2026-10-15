@@ -44,9 +44,9 @@
           <template #default="scope">
             <span
               class="dbl-click-cell"
-              @dblclick.stop="emitCellDblClick('zone', scope.row.zone_label)"
+              @dblclick.stop="emitCellDblClick('zone', scope.row.zone_name)"
             >
-              {{ scope.row.zone_label ?? '-' }}
+              {{ scope.row.zone_name ?? '-' }}
             </span>
           </template>
         </el-table-column>
@@ -136,6 +136,7 @@ const refresh = async () => {
     const result = await store.fetchZoneDocs({
       stock_ids: zoneDocsStore.selectedStore?.toString() ?? '',
       material_ids: zoneDocsStore.selectedMaterial?.toString() ?? '',
+      zone_ids: zoneDocsStore.selectedMaterialZone?.toString() ?? '',
       date_start: zoneDocsStore.selectedPeriod?.[0] ?? '',
       date_end: zoneDocsStore.selectedPeriod?.[1] ?? '',
       full_mode: isFullMode.value,

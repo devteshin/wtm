@@ -245,6 +245,7 @@ async def get_journal_zone_docs(request: Request):
     
     stock_ids = request.query.get("stock_ids")
     material_ids = request.query.get("material_ids")
+    zone_ids = request.query.get("zone_ids")
     date_start = request.query.get("date_start")
     date_end = request.query.get("date_end")
     full_mode = request.query.get("full_mode")
@@ -257,6 +258,7 @@ async def get_journal_zone_docs(request: Request):
             conn,
             stock_ids = stock_ids,
             material_ids = material_ids,
+            zone_ids = zone_ids,
             date_start = date_start,
             date_end = date_end,
             full_mode = full_mode,

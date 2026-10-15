@@ -79,6 +79,7 @@ async def select_journal_zone_docs(
     conn: Connection, 
             stock_ids: str = '',
             material_ids: str = '',
+            zone_ids: str = '',
             date_start: str = '',
             date_end: str = '',
             full_mode: bool | str = False,
@@ -94,7 +95,8 @@ async def select_journal_zone_docs(
 
     async with conn.cursor() as cur:
         try:
-            await cur.callproc("journal_zone_docs", [date_start, date_end, stock_ids, material_ids, full_mode_int, limit, page])
+            print(date_start, date_end, stock_ids, material_ids, zone_ids, full_mode_int, limit, page)
+            await cur.callproc("journal_zone_docs", [date_start, date_end, stock_ids, material_ids, zone_ids, full_mode_int, limit, page])
             report_result = await cur.fetchall()
 
             await cur.execute("SELECT @out_total_journal_zone_docs AS total_count")

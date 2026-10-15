@@ -253,6 +253,7 @@ declare namespace frontend {
     export type IZoneDocsQueryParams = {
         stock_ids?: string;
         material_ids?: string;
+        zone_ids?: string;
         date_start?: string;
         date_end?: string;
         full_mode?: boolean;
