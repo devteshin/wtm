@@ -95,7 +95,6 @@ async def select_journal_zone_docs(
 
     async with conn.cursor() as cur:
         try:
-            print(date_start, date_end, stock_ids, material_ids, zone_ids, full_mode_int, limit, page)
             await cur.callproc("journal_zone_docs", [date_start, date_end, stock_ids, material_ids, zone_ids, full_mode_int, limit, page])
             report_result = await cur.fetchall()
 

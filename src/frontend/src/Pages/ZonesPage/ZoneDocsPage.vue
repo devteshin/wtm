@@ -123,7 +123,7 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
       break
     case 'zone':
       optionList = store.materials_meta?.zone_list ?? []
-      selectedRef = selectedMaterial
+      selectedRef = selectedMaterialZone
       break
     default:
       console.warn('Неизвестная колонка для дабл-клика:', column)

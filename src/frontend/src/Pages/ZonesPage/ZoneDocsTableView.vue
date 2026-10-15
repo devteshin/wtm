@@ -36,11 +36,12 @@
         style="height: 100%"
         border
         stripe
+        :table-layout="tableLayout"
       >
         <el-table-column prop="stock_name" label="Склад" min-width="120" />
         <el-table-column prop="doc_number" label="Документ" min-width="120" />
         <el-table-column prop="doc_date" label="Дата" min-width="120" />
-        <el-table-column prop="zone_label" label="Зона хранения" min-width="140">
+        <el-table-column prop="zone_name" label="Зона хранения" min-width="140">
           <template #default="scope">
             <span
               class="dbl-click-cell"
@@ -90,6 +91,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { Download, Checked, List } from '@element-plus/icons-vue'
+import type { TableInstance } from 'element-plus'
 import { useZoneDocsStore } from '@/storeZoneDocs'
 import useApplicationStore from '@/store'
 
@@ -98,6 +100,8 @@ const error = ref<string | null>(null)
 
 const store = useApplicationStore()
 const zoneDocsStore = useZoneDocsStore()
+
+const tableLayout = ref<TableInstance['tableLayout']>('auto')
 
 // Режимы отображения
 const MODE_PAGINATED = 'paginated' as const

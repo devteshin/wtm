@@ -323,7 +323,7 @@ defineExpose({ refreshOptions })
 
     <!-- Склад -->
     <el-form-item v-if="showStore" label="Склад">
-      <el-select v-model="storeModel" placeholder="Склад" clearable multiple>
+      <el-select v-model="storeModel" placeholder="Выберите склад" clearable multiple>
         <el-option
           v-for="item in appStore.materials_meta?.stock_list"
           :key="item.id"
@@ -489,7 +489,7 @@ defineExpose({ refreshOptions })
     <el-form-item v-if="showMaterialZone" label="Зона хранения материалов">
       <el-select
         v-model="materialZoneModel"
-        placeholder="Выберите группу материалов"
+        placeholder="Выберите зону хранения материалов"
         clearable
         multiple
         :loading="materialZoneOptionsLoading"
