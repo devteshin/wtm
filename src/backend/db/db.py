@@ -237,7 +237,7 @@ async def select_materials_meta(conn: Connection):
     q_process = "SELECT id, process_name AS name FROM technical_process ORDER BY process_name"
     q_supplier = "SELECT id, name FROM companies ORDER BY name"
     q_processing_schemes = "SELECT id, name FROM production_sequences ORDER BY name"
-    q_zones = "SELECT id, label AS name FROM warehouse_zones ORDER BY label"
+    q_zones = "SELECT id, name FROM warehouse_zones ORDER BY name"
 
     async with conn.cursor() as cur:
         await cur.execute(q_stock)

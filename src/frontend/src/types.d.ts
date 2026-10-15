@@ -12,7 +12,7 @@ declare namespace frontend {
     }
 
     export type IZoneList = {
-        id: string
+        id: number
         name: string
     }
     

@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<{
   materialGroup?: string[]
   material?: number[]
   product?: number[]
-  materialZone?: string[]
+  materialZone?: number[]
 
   // Видимость полей
   showDate?: boolean
@@ -75,7 +75,7 @@ const emit = defineEmits<{
   'update:process': [value: number[]]
   'update:operation': [value: number[]]
   'update:materialGroup': [value: string[]]
-  'update:materialZone': [value: string[]]
+  'update:materialZone': [value: number[]]
   'update:material': [value: number[]]
   'update:product': [value: number[]]
   'open-graph': [type: 'operation' | 'material' | 'product', ids: number[]]
@@ -275,7 +275,7 @@ onMounted(async () => {
 
 // ── Expose: обновление опций извне (для onCellDblClick в родителе) ──
 
-function refreshOptions(field: 'operation' | 'material' | 'product', selectedIds: number[]) {
+function refreshOptions(field: 'operation' | 'material' | 'product' | 'zone', selectedIds: number[]) {
   const metaList = field === 'operation'
     ? appStore.materials_meta?.operation_list
     : appStore.materials_meta?.material_list

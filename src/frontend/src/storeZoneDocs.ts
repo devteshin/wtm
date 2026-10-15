@@ -5,20 +5,14 @@ import { ref } from 'vue'
 export const useZoneDocsStore = defineStore('zoneDocs', () => {
   const selectedStore = ref<number[]>([])
   const selectedMaterial = ref<number[]>([])
-  const selectedProduct = ref<number[]>([])
-  const selectedProcess = ref<number[]>([])
-  const selectedOperation = ref<number[]>([])
-  const selectedSchema = ref<number[]>([])
+  const selectedMaterialZone = ref<number[]>([])
   const selectedPeriod = ref<[string, string] | null>(null)
 
   // Действия
   const setFilters = (filters: Partial<{
     selectedStore: number[]
     selectedMaterial: number[]
-    selectedProduct: number[]
-    selectedProcess: number[]
-    selectedOperation: number[]
-    selectedSchema: number[]
+    selectedMaterialZone: number[]
     selectedPeriod: [string, string] | null
   }>) => {
     if (filters.selectedStore !== undefined) {
@@ -27,17 +21,8 @@ export const useZoneDocsStore = defineStore('zoneDocs', () => {
     if (filters.selectedMaterial !== undefined) {
       selectedMaterial.value = filters.selectedMaterial
     }
-    if (filters.selectedProduct !== undefined) {
-      selectedProduct.value = filters.selectedProduct
-    }
-    if (filters.selectedProcess !== undefined) {
-      selectedProcess.value = filters.selectedProcess
-    }
-    if (filters.selectedOperation !== undefined) {
-      selectedOperation.value = filters.selectedOperation
-    }
-    if (filters.selectedSchema !== undefined) {
-      selectedSchema.value = filters.selectedSchema
+    if (filters.selectedMaterialZone !== undefined) {
+      selectedMaterialZone.value = filters.selectedMaterialZone
     }
     if (filters.selectedPeriod !== undefined) {
       selectedPeriod.value = filters.selectedPeriod
@@ -47,10 +32,7 @@ export const useZoneDocsStore = defineStore('zoneDocs', () => {
   const resetFilters = () => {
     selectedStore.value = []
     selectedMaterial.value = []
-    selectedProduct.value = []
-    selectedProcess.value = []
-    selectedOperation.value = []
-    selectedSchema.value = []
+    selectedMaterialZone.value = []
     selectedPeriod.value = null
   }
 
@@ -62,10 +44,7 @@ export const useZoneDocsStore = defineStore('zoneDocs', () => {
         setFilters({
           selectedStore: data.selectedStore || [],
           selectedMaterial: data.selectedMaterial || [],
-          selectedProduct: data.selectedProduct || [],
-          selectedProcess: data.selectedProcess || [],
-          selectedOperation: data.selectedOperation || [],
-          selectedSchema: data.selectedSchema || [],
+          selectedMaterialZone: data.selectedMaterialZone || [],
           selectedPeriod: data.selectedPeriod || null,
         })
       }
@@ -78,10 +57,7 @@ export const useZoneDocsStore = defineStore('zoneDocs', () => {
     const stateToSave = {
       selectedStore: selectedStore.value,
       selectedMaterial: selectedMaterial.value,
-      selectedProduct: selectedProduct.value,
-      selectedProcess: selectedProcess.value,
-      selectedOperation: selectedOperation.value,
-      selectedSchema: selectedSchema.value,
+      selectedMaterialZone: selectedMaterialZone.value,
       selectedPeriod: selectedPeriod.value,
       timestamp: Date.now()
     }
@@ -92,10 +68,7 @@ export const useZoneDocsStore = defineStore('zoneDocs', () => {
     // Экспортируем реактивные переменные
     selectedStore,
     selectedMaterial,
-    selectedProduct,
-    selectedProcess,
-    selectedOperation,
-    selectedSchema,
+    selectedMaterialZone,
     selectedPeriod,  
 
     // Экспортируем действия

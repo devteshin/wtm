@@ -7,6 +7,7 @@
         v-model:period="selectedPeriod"
         v-model:store-filter="selectedStore"
         v-model:material="selectedMaterial"
+        v-model:material-zone="selectedMaterialZone"
         :show-date = false
         show-period
         show-store
@@ -84,6 +85,10 @@ const selectedMaterial = computed({
   set: (value) => zoneDocsStore.setFilters({ selectedMaterial: value }),
 })
 
+const selectedMaterialZone = computed({
+  get: () => zoneDocsStore.selectedMaterialZone,
+  set: (value) => zoneDocsStore.setFilters({ selectedMaterialZone: value }),
+})
 
 const selectedPeriod = computed({
   get: () => zoneDocsStore.selectedPeriod,
@@ -116,6 +121,10 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
       optionList = store.materials_meta?.material_list ?? []
       selectedRef = selectedMaterial
       break
+    case 'zone':
+      optionList = store.materials_meta?.zone_list ?? []
+      selectedRef = selectedMaterial
+      break
     default:
       console.warn('Неизвестная колонка для дабл-клика:', column)
       return
@@ -126,7 +135,7 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
   addUniqueIdsByValue(optionList, selectedRef, value)
 
   // Обновляем опции внутри ReportFilters
-  if (column === 'material') {
+  if (column === 'material' || column === 'zone') {
     filtersRef.value?.refreshOptions(column, selectedRef.value)
   }
 }
