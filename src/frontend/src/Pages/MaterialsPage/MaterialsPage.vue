@@ -1,34 +1,38 @@
 <template>
-  <el-container class="page-container">
-    <!-- Левый блок: панель с формой -->
-    <el-aside width="400px" class="sidebar">
+  <el-splitter class="page-splitter">
+    <el-splitter-panel
+      v-model:size="sidebarSize"
+      :min="280"
+      collapsible
+    >
+      <div class="panel-inner sidebar-inner">
 
-      <ReportFilters
-        ref="filtersRef"
-        v-model:store-filter="selectedStore"
-        v-model:material="selectedMaterial"
-        v-model:material-group="selectedMaterialGroup"
-        :show-date = false
-        :show-period = false
-        show-store
-        :show-schema = false
-        :show-supplier = false
-        :show-process = false
-        :show-operation = false
-        show-material-group
-        :show-material-zone = false
-        show-material
-        :show-product = false
-        :show-operation-graph = false
-        :show-material-graph = false
-        :show-product-graph = false
-        :show-product-coeff-tables = false
-        @make-report="handleMakeReport"
+        <ReportFilters
+          ref="filtersRef"
+          v-model:store-filter="selectedStore"
+          v-model:material="selectedMaterial"
+          v-model:material-group="selectedMaterialGroup"
+          :show-date="false"
+          :show-period="false"
+          show-store
+          :show-schema="false"
+          :show-supplier="false"
+          :show-process="false"
+          :show-operation="false"
+          show-material-group
+          :show-material-zone="false"
+          show-material
+          :show-product="false"
+          :show-operation-graph="false"
+          :show-material-graph="false"
+          :show-product-graph="false"
+          :show-product-coeff-tables="false"
+          @make-report="handleMakeReport"
         >
           <template #after-material>
             <el-form-item>
               <div class="switch-container">
-                <el-switch 
+                <el-switch
                   v-model="isDetailedMode"
                   :disabled="isDetailedModeDisabled"
                   active-color="#13ce66"
@@ -42,7 +46,7 @@
             </el-form-item>
             <el-form-item>
               <div class="switch-container">
-                <el-switch 
+                <el-switch
                   v-model="isOnlyNonZeroMode"
                   active-color="#13ce66"
                   inactive-color="#ff4949"
@@ -52,17 +56,14 @@
                 </span>
               </div>
             </el-form-item>
-
-          </template>  
+          </template>
           <template #actions>
 
             <el-form-item label="Показатели">
               <el-table :data="tableCondition" style="width: 100%" max-height="250">
-
                 <el-table-column prop="element" label="">
                   <template #default="scope">
-                    <el-select v-model="scope.row.element"  style="width: 90px"
-                    >
+                    <el-select v-model="scope.row.element" style="width: 90px">
                       <el-option
                         v-for="item in store.materials_meta?.material_group_list
                             .filter(item => (item.type == 0 || item.type == 1) && !tableCondition.map(item => item.element).includes(item.code))"
@@ -75,14 +76,12 @@
                 </el-table-column>
                 <el-table-column prop="min" label="min">
                   <template #default="scope">
-                    <el-input type="number" v-model.number="scope.row.min" placeholder=""
-                    ></el-input>
+                    <el-input type="number" v-model.number="scope.row.min" placeholder=""></el-input>
                   </template>
                 </el-table-column>
                 <el-table-column prop="max" label="max">
                   <template #default="scope">
-                    <el-input type="number" v-model.number="scope.row.max" placeholder=""
-                    ></el-input>
+                    <el-input type="number" v-model.number="scope.row.max" placeholder=""></el-input>
                   </template>
                 </el-table-column>
                 <el-table-column fixed="right" label="" width="40">
@@ -100,11 +99,12 @@
               </el-table>
               <el-button class="mt-4" style="width: 100%" @click="onAddItem">
                 Добавить
-              </el-button>            
+              </el-button>
             </el-form-item>
+
             <el-form-item>
               <div class="switch-container">
-                <el-switch 
+                <el-switch
                   v-model="isElementOrderMode"
                   :disabled="isElementOrderModeDisabled"
                   active-color="#13ce66"
@@ -115,6 +115,7 @@
                 </span>
               </div>
             </el-form-item>
+
             <el-button
               type="primary"
               @click="handleMakeReport"
@@ -122,9 +123,10 @@
             >
               Сформировать
             </el-button>
+
             <el-form-item>
               <div class="switch-container">
-                <el-switch 
+                <el-switch
                   v-model="isSelectionEnabled"
                   :disabled="isSelectionModeDisabled"
                   active-color="#13ce66"
@@ -137,7 +139,7 @@
             </el-form-item>
             <el-form-item>
               <div class="switch-container">
-                <el-switch 
+                <el-switch
                   v-model="isSelectionControlEnabled"
                   active-color="#13ce66"
                   inactive-color="#ff4949"
@@ -147,109 +149,59 @@
                 </span>
               </div>
             </el-form-item>
-
           </template>
         </ReportFilters>
 
-    </el-aside>
+      </div>
+    </el-splitter-panel>
 
-    <!-- Правый блок: контейнер с таблицей -->
-    <el-container  class="right-container" :class="{ 'has-footer': hasFooter }" direction="vertical">
-      <el-main class="table-container">
-        <!-- Скелетон при инициализации и формировании отчёта -->
-        <el-skeleton v-if="isSkeletonLoading" animated />
+    <el-splitter-panel>
+      <div class="panel-inner">
 
-        <!-- Таблица с данными -->
-        <template v-else>
-          <div class="table-wrapper">
-            <div v-if="!reportStore.tableData?.length" class="no-data-message">
-              Нет данных для отображения
-            </div>
-            <el-table
-              v-else
-              ref="tableRef"
-              :data="reportStore.tableData"
-              reserve-selection
-              :row-key="getRowKey"
-              style="width: 100%; height: 100%;"
-              stripe
-              border
-              show-overflow-tooltip
-              virtual-scroll
-              :row-class-name="getRowClassName"
-              @cell-dblclick="(row, column, cell, event) => onCellDblClick(row, column, cell, event)"
-              @selection-change="handleSelectionChange"
-              @row-click="onRowClick"
-            >
-            <!-- Колонка выбора (если включена) -->
-            <el-table-column
-              v-for="column in selectionColumn"
-              :key="column.type"
-              :type="column.type"
-              :width="column.width"
-              :align="column.align"
-              :selectable="column.selectable"
-            />
+        <el-container
+          class="right-container"
+          :class="{ 'has-footer': hasFooter }"
+          direction="vertical"
+        >
+          <el-main class="table-container">
+            <!-- Скелетон при инициализации и формировании отчёта -->
+            <el-skeleton v-if="isSkeletonLoading" animated />
 
-            <!-- Остальные колонки -->
-            <el-table-column
-              v-for="column in dataColumns"
-              :key="column.prop"
-              :prop="column.prop"
-              :label="column.label"
-              :width="column.width"
-              :fixed="column.fixed"
-              :align="column.align"
-            >
-              <template #default="scope">
-                {{ formatCell(scope.row[column.prop], column.formatType) }}
-              </template>
-
-
-            </el-table-column>            
-            </el-table>
-          </div>
-        </template>
-      </el-main>
-      <el-footer v-if="isSelectionControlEnabled" class="footer-container">
-          <el-container class="footer-layout">
-            <el-aside width="15%" class="footer-block footer-block-1">
+            <!-- Таблица с данными -->
+            <template v-else>
               <div class="table-wrapper">
+                <div v-if="!reportStore.tableData?.length" class="no-data-message">
+                  Нет данных для отображения
+                </div>
                 <el-table
-                  :data="reportStore.selectionIndTableData"
+                  v-else
+                  ref="tableRef"
+                  :data="reportStore.tableData"
+                  reserve-selection
+                  :row-key="getRowKey"
                   style="width: 100%; height: 100%;"
                   stripe
                   border
                   show-overflow-tooltip
+                  virtual-scroll
+                  :row-class-name="getRowClassName"
+                  @cell-dblclick="(row, column, cell, event) => onCellDblClick(row, column, cell, event)"
+                  @selection-change="handleSelectionChange"
+                  @row-click="onRowClick"
                 >
+                  <!-- Колонка выбора (если включена) -->
                   <el-table-column
-                    v-for="column in selectionIndColumns"
-                    :key="column.prop"
-                    :prop="column.prop"
-                    :label="column.label"
+                    v-for="column in selectionColumn"
+                    :key="column.type"
+                    :type="column.type"
                     :width="column.width"
                     :align="column.align"
-                    header-align="center"
-                  >
-                     <template #default="scope">
-                      {{ formatCell(scope.row[column.prop], column.formatType) }}
-                    </template>
-                  </el-table-column>                
-                </el-table>
-              </div>
-            </el-aside>
-            <el-main class="footer-block footer-block-2">
-              <div class="table-wrapper">
-                <el-table
-                  :data="reportStore.selectionTableData"
-                  style="width: 100%; height: 100%;"
-                  stripe
-                  border
-                  show-overflow-tooltip
-                  @cell-dblclick="(row, column, cell, event) => onCellDblClick(row, column, cell, event)"
-                >
+                    :selectable="column.selectable"
+                  />
+
+                  <!-- Остальные колонки -->
                   <el-table-column
-                    v-for="column in selectionDataColumns"
+                    v-for="column in dataColumns"
                     :key="column.prop"
                     :prop="column.prop"
                     :label="column.label"
@@ -260,53 +212,111 @@
                     <template #default="scope">
                       {{ formatCell(scope.row[column.prop], column.formatType) }}
                     </template>
-                  </el-table-column>                
-                  <el-table-column
-                    label=""
-                    width="50"
-                    fixed="right"
-                  >
-                    <template #default="scope">
-                      <el-button
-                        link
-                        type="danger"
-                        size="small"
-                        @click="handleDeleteSelectionTableRow(scope.row)"
-                      >
-                        <Delete style="width: 14px; height: 14px;" />
-                      </el-button>
-                    </template>
                   </el-table-column>
                 </el-table>
               </div>
-            </el-main>
-            <el-aside width="30%" class="footer-block footer-block-3">
-              <el-form label-position="top" class="filter-form">
-                <el-form-item>
-                  <div class="switch-container">
-                    <el-switch 
-                      v-model="isSelectionDetailedMode"
-                      active-color="#13ce66"
-                      inactive-color="#ff4949"
-                      @change="handleSwitchSelectionDetailedMode"
-                    />
-                    <span class="switch-description">
-                      {{ isSelectionDetailedMode ? 'развернуть подбор' : 'группировать подбор' }}
-                    </span>
+            </template>
+          </el-main>
+
+          <el-footer v-if="isSelectionControlEnabled" class="footer-container">
+              <el-container class="footer-layout">
+                <el-aside width="15%" class="footer-block footer-block-1">
+                  <div class="table-wrapper">
+                    <el-table
+                      :data="reportStore.selectionIndTableData"
+                      style="width: 100%; height: 100%;"
+                      stripe
+                      border
+                      show-overflow-tooltip
+                    >
+                      <el-table-column
+                        v-for="column in selectionIndColumns"
+                        :key="column.prop"
+                        :prop="column.prop"
+                        :label="column.label"
+                        :width="column.width"
+                        :align="column.align"
+                        header-align="center"
+                      >
+                        <template #default="scope">
+                          {{ formatCell(scope.row[column.prop], column.formatType) }}
+                        </template>
+                      </el-table-column>                
+                    </el-table>
                   </div>
-                </el-form-item>
-                <el-form-item v-if="isSelectionDetailedMode && (isOperationDocMode || isOperationListMode)" style="margin-top: 16px;">
-                  <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <el-button @click="handleDrawerClose">Отмена</el-button>
-                    <el-button type="primary" @click="handleApplySelection">Применить выбор</el-button>
+                </el-aside>
+                <el-main class="footer-block footer-block-2">
+                  <div class="table-wrapper">
+                    <el-table
+                      :data="reportStore.selectionTableData"
+                      style="width: 100%; height: 100%;"
+                      stripe
+                      border
+                      show-overflow-tooltip
+                      @cell-dblclick="(row, column, cell, event) => onCellDblClick(row, column, cell, event)"
+                    >
+                      <el-table-column
+                        v-for="column in selectionDataColumns"
+                        :key="column.prop"
+                        :prop="column.prop"
+                        :label="column.label"
+                        :width="column.width"
+                        :fixed="column.fixed"
+                        :align="column.align"
+                      >
+                        <template #default="scope">
+                          {{ formatCell(scope.row[column.prop], column.formatType) }}
+                        </template>
+                      </el-table-column>                
+                      <el-table-column
+                        label=""
+                        width="50"
+                        fixed="right"
+                      >
+                        <template #default="scope">
+                          <el-button
+                            link
+                            type="danger"
+                            size="small"
+                            @click="handleDeleteSelectionTableRow(scope.row)"
+                          >
+                            <Delete style="width: 14px; height: 14px;" />
+                          </el-button>
+                        </template>
+                      </el-table-column>
+                    </el-table>
                   </div>
-                </el-form-item>                 
-              </el-form>
-            </el-aside>
-          </el-container>
-      </el-footer>
-    </el-container>
-  </el-container>
+                </el-main>
+                <el-aside width="30%" class="footer-block footer-block-3">
+                  <el-form label-position="top" class="filter-form">
+                    <el-form-item>
+                      <div class="switch-container">
+                        <el-switch 
+                          v-model="isSelectionDetailedMode"
+                          active-color="#13ce66"
+                          inactive-color="#ff4949"
+                          @change="handleSwitchSelectionDetailedMode"
+                        />
+                        <span class="switch-description">
+                          {{ isSelectionDetailedMode ? 'развернуть подбор' : 'группировать подбор' }}
+                        </span>
+                      </div>
+                    </el-form-item>
+                    <el-form-item v-if="isSelectionDetailedMode && (isOperationDocMode || isOperationListMode)" style="margin-top: 16px;">
+                      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <el-button @click="handleDrawerClose">Отмена</el-button>
+                        <el-button type="primary" @click="handleApplySelection">Применить выбор</el-button>
+                      </div>
+                    </el-form-item>                 
+                  </el-form>
+                </el-aside>
+              </el-container>
+          </el-footer>
+        </el-container>
+
+      </div>
+    </el-splitter-panel>
+  </el-splitter>
 </template>
 
 <script setup lang="ts">
@@ -322,6 +332,8 @@ import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
 
 const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
+
+const sidebarSize = ref(400) // стартовая ширина панели фильтров, px  
 
 interface Column {
   prop: string;
@@ -1288,50 +1300,54 @@ const handleDrawerClose = () => {
 </script>
 
 <style scoped>
-.page-container {
-  height: calc(100vh - 120px); /* Занимает всю высоту экрана минус меню */
-  display: flex;
+.page-splitter {
+  height: calc(100vh - 120px);
   width: 100%;
-  box-sizing: border-box;
-  gap: 10px;  
 }
 
-.sidebar {
+.panel-inner {
+  height: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sidebar-inner {
   background-color: #f5f7fa;
   padding: 20px;
-  border-right: 1px solid #e6e9ef;
-  flex-shrink: 0;
-  width: 400px;
   overflow: auto;
+}
+
+.right-container {
+  height: 100%;
+  width: 100%;
 }
 
 /* Таблица занимает 70% высоты, если футер виден, иначе 100% */
 .table-container {
-  flex: 0 0 70%; /* flex-grow: 0, flex-shrink: 0, flex-basis: % */
+  flex: 0 0 70%;
   padding: 0 20px 20px;
   box-sizing: border-box;
-  position: relative; /* Для корректной работы абсолютного позиционирования внутри */
+  position: relative;
 }
 
-/* Если футер скрыт, таблица занимает 100% высоты */
 .right-container:not(.has-footer) .table-container {
   flex: 0 0 100%;
 }
 
-/* Обертка для таблицы с прокруткой */
 .table-wrapper {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  overflow: auto; /* Прокрутка внутри обёртки */
+  overflow: auto;
   border-radius: 4px;
 }
 
-/* Футер занимает 30% высоты правого контейнера */
 .footer-container {
-  flex: 0 0 30%; /* flex-grow: 0, flex-shrink: 0, flex-basis: 30% */
+  flex: 0 0 30%;
   padding: 0px;
   margin-top: 10px;
   background-color: #f8f9fa;
@@ -1358,13 +1374,8 @@ const handleDrawerClose = () => {
   position: relative;
 }
 
-.footer-block-1 {
-  background-color: #f0f7ff;
-}
-
-.footer-block-2 {
-  background-color: #fafafa;
-}
+.footer-block-1 { background-color: #f0f7ff; }
+.footer-block-2 { background-color: #fafafa; }
 
 .footer-block-3 {
   background-color: #fff9f3;
@@ -1373,7 +1384,6 @@ const handleDrawerClose = () => {
 }
 
 @media (max-width: 768px) {
-  /* На мобильных соотношение 60/40, если футер виден */
   .right-container .table-container {
     flex: 0 0 60%;
   }
@@ -1383,15 +1393,11 @@ const handleDrawerClose = () => {
   .footer-layout {
     flex-direction: column;
   }
-  .el-aside,
-  .el-main {
-    width: 100% !important;
-    border-right: none !important; /* Убираем вертикальные границы */
-    border-bottom: 1px solid #e9ecef; /* Добавляем горизонтальные границы */
+  .footer-block {
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
   }
-  /* Убираем нижнюю границу у последнего блока на мобильных */
-  .el-aside:last-child,
-  .el-main:last-child {
+  .footer-block:last-child {
     border-bottom: none;
   }
 }
@@ -1430,13 +1436,6 @@ const handleDrawerClose = () => {
   margin-top: 20px;
   margin-bottom: 20px;
   width: 100%;
-}
-
-.item-remote-select-wrapper {
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-  gap: 2px; /* Расстояние между селектом и кнопками, а также между кнопками */
 }
 
 .no-data-message {

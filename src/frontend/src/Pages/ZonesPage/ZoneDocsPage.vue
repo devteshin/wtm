@@ -32,15 +32,15 @@
         >
           <template #actions>
             <div style="margin-top: 24px;">
-              <el-button
-                type="primary"
-                @click="handleMakeReport"
-                class="apply-button"
+            <el-button
+              type="primary"
+              @click="handleMakeReport"
+              class="apply-button"
                 style="width: 100%"
-              >
-                Сформировать
-              </el-button>
-            </div>
+            >
+              Сформировать
+            </el-button>
+              </div>
           </template>
         </ReportFilters>
       </div>
@@ -54,9 +54,9 @@
             <ZoneDocsTableView
               ref="reportTableRef"
               @cell-dblclick="onCellDblClick"
-            />
-          </div>
-        </el-main>
+                  />
+              </div>
+          </el-main>
       </div>
     </el-splitter-panel>
   </el-splitter>
