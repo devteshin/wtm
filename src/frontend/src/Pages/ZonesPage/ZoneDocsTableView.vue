@@ -67,7 +67,7 @@
 
     <!-- Пагинация: показываем только в режиме пагинации -->
     <div
-      v-if="isPaginatedMode && (total > 0 || store.production_report_data.length > 0)"
+      v-if="isPaginatedMode && (total > 0 || store.zone_docs.length > 0)"
       class="pagination-area"
     >
       <el-pagination
@@ -132,7 +132,6 @@ const toggleMode = () => {
 
 const refresh = async () => {
   isLoading.value = true
-  console.log("refresh")
   try {
     const result = await store.fetchZoneDocs({
       stock_ids: zoneDocsStore.selectedStore?.toString() ?? '',
