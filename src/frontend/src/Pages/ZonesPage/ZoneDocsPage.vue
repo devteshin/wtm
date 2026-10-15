@@ -1,29 +1,34 @@
 <template>
-  <el-container class="page-container">
-    <el-aside width="400px" class="sidebar">
+  <el-splitter class="page-splitter">
+    <el-splitter-panel
+      v-model:size="sidebarSize"
+      :min="280"
+      collapsible
+    >
+      <div class="panel-inner sidebar-inner">
 
-      <ReportFilters
-        ref="filtersRef"
-        v-model:period="selectedPeriod"
-        v-model:store-filter="selectedStore"
-        v-model:material="selectedMaterial"
-        v-model:material-zone="selectedMaterialZone"
-        :show-date = false
-        show-period
-        show-store
-        :show-schema = false
-        :show-supplier="false"
-        :show-process = false
-        :show-operation = false
-        :show-material-group=false
-        show-material-zone
-        show-material
-        :show-product = false
-        :show-operation-graph = false
-        :show-material-graph = false
-        :show-product-graph = false
-        :show-product-coeff-tables = false
-        @make-report="handleMakeReport"
+        <ReportFilters
+          ref="filtersRef"
+          v-model:period="selectedPeriod"
+          v-model:store-filter="selectedStore"
+          v-model:material="selectedMaterial"
+          v-model:material-zone="selectedMaterialZone"
+          show-period
+          show-store
+          show-material-zone
+          show-material
+          :show-date="false"
+          :show-schema="false"
+          :show-supplier="false"
+          :show-process="false"
+          :show-operation="false"
+          :show-material-group="false"
+          :show-product="false"
+          :show-operation-graph="false"
+          :show-material-graph="false"
+          :show-product-graph="false"
+          :show-product-coeff-tables="false"
+          @make-report="handleMakeReport"
         >
           <template #actions>
             <div style="margin-top: 24px;">
@@ -38,23 +43,23 @@
             </div>
           </template>
         </ReportFilters>
-    </el-aside>
+      </div>
 
-    <el-container class="right-container">
-      <el-main class="content-area">
+    </el-splitter-panel>
 
-        <div class="report-table-wrapper">
-
-           <ZoneDocsTableView
-            ref="reportTableRef"
-            @cell-dblclick="onCellDblClick"
-          />
-           
-        </div>
-
-      </el-main>
-    </el-container>
-  </el-container>
+    <el-splitter-panel>
+      <div class="panel-inner">
+        <el-main class="content-area">
+          <div class="report-table-wrapper">
+            <ZoneDocsTableView
+              ref="reportTableRef"
+              @cell-dblclick="onCellDblClick"
+            />
+          </div>
+        </el-main>
+      </div>
+    </el-splitter-panel>
+  </el-splitter>
 </template>
 
 <script setup lang="ts">
@@ -68,6 +73,8 @@ import ZoneDocsTableView from './ZoneDocsTableView.vue'
 
 const reportTableRef = ref<typeof ZoneDocsTableView | null>(null)
 const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
+
+const sidebarSize = ref(400) // стартовая ширина панели фильтров, px
 
 const store = useApplicationStore()
 const zoneDocsStore = useZoneDocsStore()
@@ -143,99 +150,39 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
 </script>
 
 <style scoped>
-.page-container {
+
+.page-splitter {
   height: calc(100vh - 120px);
-  display: flex;
   width: 100%;
-  box-sizing: border-box;
-  gap: 10px;
+  
 }
 
-.sidebar {
+.panel-inner {
+  height: 100%;
+  box-sizing: border-box;
+  
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sidebar-inner {
   background-color: #f5f7fa;
   padding: 20px;
-  border-right: 1px solid #e6e9ef;
-  flex-shrink: 0;
-  width: 400px;
   overflow: auto;
-}
-
-.right-container {
-  flex: 1;
-  display: flex;
 }
 
 .content-area {
   padding: 0px;
+  margin-left: 20px;
   box-sizing: border-box;
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.skeleton-placeholder, .future-components-slot {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  font-size: 14px;
 }
 
 .apply-button {
   margin-top: 16px;
-}
-
-.item-remote-select-wrapper {
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-  gap: 2px; /* Расстояние между селектом и кнопками, а также между кнопками */
-}
-
-/* Селект: занимает всё свободное место */
-.item-remote-select {
-  flex: 1;
-  height: 100%;
-  min-width: 0; /* Позволяет селекту сжиматься при нехватке места */
-}
-
-/* Кнопки: убираем все внешние отступы, которые добавляет Element Plus */
-.item-remote-select-wrapper .el-button {
-  height: 100%;
-  margin: 0 !important; /* ГЛАВНОЕ: принудительно убираем margin у кнопок */
-  padding: 6px 8px; /* Комфортный внутренний отступ, чтобы иконка не прилипала к краю */
-  min-width: auto; /* Отключаем стандартную минимальную ширину кнопки */
-  box-sizing: border-box;
-}
-
-/* Убираем лишние отступы у контента form-item */
-.el-form-item__content {
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 100%;
-}
-
-/* Граф */
-.graph-wrapper {
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 200px);
-}
-
-.graph-header {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e6e9ef;
-  margin-bottom: 12px;
-}
-
-.graph-header h3 {
-  margin: 0;
-  font-size: 16px;
 }
 
 .report-table-wrapper {
@@ -244,7 +191,7 @@ const onCellDblClick = ({ column, value }: { column: string; value: string | nul
   width: 100%;
   display: flex;
   flex-direction: column;
-  /* Убираем height: 100% отсюда! Это ломает расчет высоты внутри flex-контейнеров */
+
 }
 
 </style>
