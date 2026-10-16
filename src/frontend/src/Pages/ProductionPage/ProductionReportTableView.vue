@@ -143,14 +143,26 @@ const MODE_PAGINATED = 'paginated' as const
 const MODE_FULL = 'full' as const
 type Mode = typeof MODE_PAGINATED | typeof MODE_FULL
 
-const mode = ref<Mode>(MODE_PAGINATED)
+const mode = computed({
+  get: () => reportStore.reportMode,
+  set: (v: Mode) => { reportStore.reportMode = v },
+})
+const currentPage = computed({
+  get: () => reportStore.currentPage,
+  set: (v: number) => { reportStore.currentPage = v },
+})
+const pageSize = computed({
+  get: () => reportStore.pageSize,
+  set: (v: number) => { reportStore.pageSize = v },
+})
+const total = computed({
+  get: () => reportStore.total,
+  set: (v: number) => { reportStore.total = v },
+})
+
 const isPaginatedMode = computed(() => mode.value === MODE_PAGINATED)
 const isFullMode = computed(() => mode.value === MODE_FULL)
 
-// Пагинация
-const currentPage = ref(1)
-const pageSize = ref(100)
-const total = ref(0)
 const isLoading = ref(false)
 
 const emit = defineEmits<{
@@ -159,14 +171,6 @@ const emit = defineEmits<{
 
 const emitCellDblClick = (column: string, value: string | null | undefined) => {
   emit('cell-dblclick', { column, value })
-}
-
-const toggleMode = () => {
-  mode.value = isFullMode.value ? MODE_PAGINATED : MODE_FULL
-  // При переключении всегда делаем refresh, чтобы подтянуть нужные данные
-  currentPage.value = 1
-  pageSize.value = 100
-  refresh()
 }
 
 const refresh = async () => {
@@ -209,10 +213,8 @@ watch(
     reportStore.selectedPeriod,
   ],
   () => {
-    // При изменении фильтров сбрасываем на первую страницу и режим пагинации
-    mode.value = MODE_PAGINATED
-    currentPage.value = 1
-    pageSize.value = 100
+    reportStore.resetPagination()
+    //refresh()
   },
   { deep: true }
 )
@@ -227,14 +229,22 @@ const formatWeight = (value: number | null | undefined): string => {
   }).format(value)
 }
 
+const toggleMode = () => {
+  reportStore.setMode(isFullMode.value ? MODE_PAGINATED : MODE_FULL)
+  reportStore.saveToStorage() // чтобы режим и сброшенная пагинация легли в localStorage
+  refresh()
+}
+
 const onCurrentChange = (page: number) => {
   currentPage.value = page
+  reportStore.saveToStorage()
   refresh()
 }
 
 const onSizeChange = (size: number) => {
   pageSize.value = size
   currentPage.value = 1
+  reportStore.saveToStorage()
   refresh()
 }
 
