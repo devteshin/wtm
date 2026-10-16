@@ -281,35 +281,6 @@ const closeCoeffTables = () => {
   margin-top: 16px;
 }
 
-.item-remote-select-wrapper {
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-  gap: 2px; /* Расстояние между селектом и кнопками, а также между кнопками */
-}
-
-/* Селект: занимает всё свободное место */
-.item-remote-select {
-  flex: 1;
-  height: 100%;
-  min-width: 0; /* Позволяет селекту сжиматься при нехватке места */
-}
-
-/* Кнопки: убираем все внешние отступы, которые добавляет Element Plus */
-.item-remote-select-wrapper .el-button {
-  height: 100%;
-  margin: 0 !important; /* ГЛАВНОЕ: принудительно убираем margin у кнопок */
-  padding: 6px 8px; /* Комфортный внутренний отступ, чтобы иконка не прилипала к краю */
-  min-width: auto; /* Отключаем стандартную минимальную ширину кнопки */
-  box-sizing: border-box;
-}
-
-/* Убираем лишние отступы у контента form-item */
-.el-form-item__content {
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 100%;
-}
 
 /* Граф */
 .graph-wrapper {
