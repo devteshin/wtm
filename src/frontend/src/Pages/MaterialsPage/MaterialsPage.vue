@@ -160,7 +160,6 @@
 
         <el-container
           class="right-container"
-          :class="{ 'has-footer': hasFooter }"
           direction="vertical"
         >
           <el-main class="table-container">
@@ -218,100 +217,6 @@
             </template>
           </el-main>
 
-          <el-footer v-if="isSelectionControlEnabled" class="footer-container">
-              <el-container class="footer-layout">
-                <el-aside width="15%" class="footer-block footer-block-1">
-                  <div class="table-wrapper">
-                    <el-table
-                      :data="reportStore.selectionIndTableData"
-                      style="width: 100%; height: 100%;"
-                      stripe
-                      border
-                      show-overflow-tooltip
-                    >
-                      <el-table-column
-                        v-for="column in selectionIndColumns"
-                        :key="column.prop"
-                        :prop="column.prop"
-                        :label="column.label"
-                        :width="column.width"
-                        :align="column.align"
-                        header-align="center"
-                      >
-                        <template #default="scope">
-                          {{ formatCell(scope.row[column.prop], column.formatType) }}
-                        </template>
-                      </el-table-column>                
-                    </el-table>
-                  </div>
-                </el-aside>
-                <el-main class="footer-block footer-block-2">
-                  <div class="table-wrapper">
-                    <el-table
-                      :data="reportStore.selectionTableData"
-                      style="width: 100%; height: 100%;"
-                      stripe
-                      border
-                      show-overflow-tooltip
-                      @cell-dblclick="(row, column, cell, event) => onCellDblClick(row, column, cell, event)"
-                    >
-                      <el-table-column
-                        v-for="column in selectionDataColumns"
-                        :key="column.prop"
-                        :prop="column.prop"
-                        :label="column.label"
-                        :width="column.width"
-                        :fixed="column.fixed"
-                        :align="column.align"
-                      >
-                        <template #default="scope">
-                          {{ formatCell(scope.row[column.prop], column.formatType) }}
-                        </template>
-                      </el-table-column>                
-                      <el-table-column
-                        label=""
-                        width="50"
-                        fixed="right"
-                      >
-                        <template #default="scope">
-                          <el-button
-                            link
-                            type="danger"
-                            size="small"
-                            @click="handleDeleteSelectionTableRow(scope.row)"
-                          >
-                            <Delete style="width: 14px; height: 14px;" />
-                          </el-button>
-                        </template>
-                      </el-table-column>
-                    </el-table>
-                  </div>
-                </el-main>
-                <el-aside width="30%" class="footer-block footer-block-3">
-                  <el-form label-position="top" class="filter-form">
-                    <el-form-item>
-                      <div class="switch-container">
-                        <el-switch 
-                          v-model="isSelectionDetailedMode"
-                          active-color="#13ce66"
-                          inactive-color="#ff4949"
-                          @change="handleSwitchSelectionDetailedMode"
-                        />
-                        <span class="switch-description">
-                          {{ isSelectionDetailedMode ? 'развернуть подбор' : 'группировать подбор' }}
-                        </span>
-                      </div>
-                    </el-form-item>
-                    <el-form-item v-if="isSelectionDetailedMode && (isOperationDocMode || isOperationListMode)" style="margin-top: 16px;">
-                      <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                        <el-button @click="handleDrawerClose">Отмена</el-button>
-                        <el-button type="primary" @click="handleApplySelection">Применить выбор</el-button>
-                      </div>
-                    </el-form-item>                 
-                  </el-form>
-                </el-aside>
-              </el-container>
-          </el-footer>
         </el-container>
 
       </div>
@@ -344,15 +249,6 @@ interface Column {
   formatType?: string;
 };
 
-interface MaterialOption {
-  id: number;
-  name: string;
-};
-
-interface SelectionIndicator {
-  ind: string;
-  percent: number;
-};
 
 const getFormatter = (type?: string) => {
   // Если тип не задан или невалиден — возвращаем «как есть»
@@ -380,7 +276,6 @@ const store = useApplicationStore()
 const reportStore = useMaterialsReportStore()
 
 const isAutoSelectionUpdate = ref(false);
-const hasFooter = computed(() => isSelectionControlEnabled.value);
 const isOperationDocMode =ref(false);
 const isOperationListMode =ref(false);
 
@@ -481,56 +376,6 @@ const updateSelectionData = (selection: any[]) => {
 
 };  
 
-
-const handleDeleteSelectionTableRow = async (row: any) => {
-  if (reportStore.selectionData.length === 0) {  
-    return;
-  }
-
-  try {
-    if (row.material === '') {
-      await ElMessageBox.confirm(
-        "Подбор будет очищен",
-        {
-          message: "Удалить все материалы из подбора?",
-          cancelButtonText: "Нет",
-          confirmButtonText: "Да",
-          type: "warning"
-        }
-      );
-      reportStore.setSelectionData([]);
-    } else {
-      if (reportStore.isSelectionDetailedMode) {
-        reportStore.selectionData = reportStore.selectionData.filter(
-          (item) => !(item.key_material === row.key_material && item.stock_id === row.stock_id)
-        );
-      } else {
-        reportStore.selectionData = reportStore.selectionData.filter(
-          (item) => !(item.material === row.material && item.stock_name === row.stock_name)
-        );
-      };
-    }
-
-    restoreSelection();
-
-    try {
-      await makeSelectionReport();
-    } catch (error) {
-      console.error('Ошибка при формировании подбора:', error);
-    }
-
-    try {
-      await makeSelectionIndReport();
-    } catch (error) {
-      console.error('Ошибка при формировании показателей подбора:', error);
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Неожиданная ошибка:', error);
-    }
-  }
-};
-
 function onRowClick(row, column, event) {
   if (!isSelectionEnabled.value){
     return;
@@ -566,17 +411,7 @@ function onRowClick(row, column, event) {
 const handleSelectionChange = async (selection: any[]) => {
     if (!isAutoSelectionUpdate.value) {
       updateSelectionData(selection);
-      try {
-          await makeSelectionReport();
-        } catch (error) {
-          console.error('Ошибка при формировании подбора:', error);
-        }
 
-      try {
-          await makeSelectionIndReport();
-        } catch (error) {
-          console.error('Ошибка при формировании показателей подбора:', error);
-        }
   };
 };
 
@@ -596,7 +431,6 @@ watch(
     tableCondition: tableCondition.value,
     basicColumns: reportStore.basicColumns,
     detailedColumns: reportStore.detailedColumns,
-    selectionColumns: reportStore.selectionColumns
   }),
   (newValues) => {
     reportStore.setFilters(newValues);
@@ -628,26 +462,6 @@ const detailedColumns = ref([
   { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' },
   { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right', formatType: 'weight' }
 ]);
-
-const selectionColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80', align: 'left' },
-  { prop: 'material', label: 'Материал', width: '300', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' }
-]);
-
-const detailedSelectionColumns = ref([
-  { prop: 'stock_name', label: 'Склад', width: '80', align: 'left' },
-  { prop: 'material', label: 'Материал', width: '300', align: 'left' },
-  { prop: 'tare_id', label: 'Номер', width: '80', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' }
-]);
-
-const selectionIndColumns = [
-  { prop: 'ind', label: 'Показатель', width: '100', align: 'center' },
-  { prop: 'percent', label: '%', width: '80', align: 'right', formatType: 'percent' },
-];
 
 
 const isSkeletonLoading = ref(true); // Для скелетона при инициализации
@@ -696,7 +510,7 @@ onMounted(async () => {
     
     reportStore.loadFromStorage();
 
-    // для того чтобы применить возможное изменение свойств basicColumns, detailedColumns, selectionColumns, detailedSelectionColumns
+    // для того чтобы применить возможное изменение свойств basicColumns, detailedColumns, 
     // при воостановлении из localstorage переписываем их
     // необходимо когда добавляем/удаляем или изменяем свойcтва
     const existingPercentBasic = reportStore.basicColumns.filter(
@@ -708,16 +522,6 @@ onMounted(async () => {
 
     reportStore.basicColumns = [...basicColumns.value, ...existingPercentBasic];
     reportStore.detailedColumns = [...detailedColumns.value, ...existingPercentDetailed];
-
-    const existingPercentSel = reportStore.selectionColumns.filter(
-      col => col.prop.includes('_percent')
-    );
-    const existingPercentSelDetailed = reportStore.detailedSelectionColumns.filter(
-      col => col.prop.includes('_percent')
-    );
-
-    reportStore.selectionColumns = [...selectionColumns.value, ...existingPercentSel];
-    reportStore.detailedSelectionColumns = [...detailedSelectionColumns.value, ...existingPercentSelDetailed];
 
     // Проверяем флаги и запускаем отчёт
     if (reportStore.isOperationDocAutoGenerateReport) {
@@ -759,11 +563,6 @@ onUnmounted(() => {
 
 
 const getRowKey = (row: any): string => {
-  //const stockName = row.stock_name || 'unknown';
-  //const material = row.material || 'unknown';
-  //const tareId = row.tare_id || 'unknown';
-
-  //return `${stockName}_${material}_${tareId}`;
   const key_material = row.key_material || 'unknown';
   const stock_id = row.stock_id || 'unknown';
   return `${key_material}_${stock_id}`;
@@ -875,10 +674,6 @@ const dataColumns = computed(() =>
   isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns
 );  
 
-const selectionDataColumns = computed(() =>
-  isSelectionDetailedMode.value ? reportStore.detailedSelectionColumns  : reportStore.selectionColumns
-);  
-
 
 // Watcher 1 — реакция на изменение данных таблицы
 watch(
@@ -913,11 +708,6 @@ function configuringReportTables() {
   } else {
     reportStore.basicColumns = reportStore.basicColumns.filter(col => !col.prop.includes('_percent'));
   };
-  if (isSelectionDetailedMode.value) {
-    reportStore.detailedSelectionColumns = reportStore.detailedSelectionColumns.filter(col => !col.prop.includes('_percent'));
-  } else {
-    reportStore.selectionColumns = reportStore.selectionColumns.filter(col => !col.prop.includes('_percent'));
-  };
 
   const percent_items: Column[] = [];
   for (const item of tableCondition.value) {
@@ -939,127 +729,9 @@ function configuringReportTables() {
   } else {
     reportStore.basicColumns.push(...percent_items);
   }
-  if (isSelectionDetailedMode.value) {
-    reportStore.detailedSelectionColumns.push(...percent_items);
-  } else {
-    reportStore.selectionColumns.push(...percent_items);
-  }
 
 };
 
-const makeSelectionIndReport = async () => {
-  reportStore.setSelectionIndTableData([]);
-
-  if (reportStore.selectionData.length == 0) {
-    return;
-  };
-
-  if (reportStore.tableCondition.length == 0) {
-    return;
-  };
-
-  const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
-  const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
-  const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
-
-  if (indicators_list.length == 0) {
-    reportStore.setSelectionIndTableData([]);
-    return;
-  }
-
-  try {
-    await store.fetchSelectionData({
-      stock_list: stock_list,
-      indicators: indicators_list,
-      key_material_list: key_material_list,
-      query_type: 'selection_indicators',
-      element_order: ''
-    });
-
-    if (store.selection_ind_data && Array.isArray(store.selection_ind_data)) {
-      const transformed_selection_ind_data: SelectionIndicator[] = Object.entries(store.selection_ind_data[0])
-        .map(([key, value]) => ({
-          ind: key,
-          percent: value as number
-        }));
-      reportStore.setSelectionIndTableData([ ...transformed_selection_ind_data ]);
-    };
-  } catch (error) {
-    console.error('Ошибка при формировании отчёта:', error);
-  } finally {
-  }
-};
-
-
-const makeSelectionReport = async () => {
-  reportStore.setSelectionTableData([]);
-
-  if (reportStore.selectionData.length == 0) {
-    return;
-  };
-  let total_rest_net_weight = 0;
-  let total_rest_tare_amount = 0;
-
-  const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
-  const key_material_list = [...new Set(reportStore.selectionData.map(item => item.key_material))].join('|');
-  const stock_list = [...new Set(reportStore.selectionData.map(item => item.stock_id))].join('|');
-
-  try {
-
-    // даже если это сводный режим формирования подбора, то все равно формируем запрос в режиме детализации для верификации данных
-    // в selectionData (selectionData - это результат интерактивного подбора, его нужно верифицировать остатками).
-    // Нужно чтобы детальный запрос выполнялся даже в сводном режиме именно для верификации. Только таким образом можно 
-    // очистить selectionData от данных, по которым уже нет остатков. Иначе они застрянут в selectionData.Так как таблица подбора
-    // формируется только по данным которые есть в остатках.
-    await store.fetchSelectionData({
-      stock_list: stock_list,
-      indicators: indicators_list,
-      key_material_list: key_material_list,
-      query_type: 'detailed',
-      element_order: elementOrder()
-    });
-    if (store.selection_data && Array.isArray(store.selection_data)) {
-      reportStore.setSelectionData([ ...store.selection_data ]);
-    } else {
-      reportStore.setSelectionData([]);
-      return; // нет данных для подбора все очистили, можно выходить
-    };
-
-    if (!isSelectionDetailedMode.value) {
-      // если соводный режим формирования подбора - выполняем запрос для получения сводных данных
-      await store.fetchSelectionData({
-        stock_list: stock_list,
-        indicators: indicators_list,
-        key_material_list: key_material_list,
-        query_type: 'selection',
-        element_order: elementOrder()
-      });
-    }
-
-
-    if (store.selection_data && Array.isArray(store.selection_data)) {
-      reportStore.selectionTableData = store.selection_data;
-      if (reportStore.selectionTableData.length > 1) {
-        total_rest_net_weight = reportStore.selectionTableData.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        total_rest_tare_amount = reportStore.selectionTableData.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        reportStore.setSelectionTableData([
-          ...reportStore.selectionTableData,
-          {
-            stock_name: 'Итого',
-            material: '',
-            rest_tare_amount: total_rest_tare_amount,
-            rest_net_weight: total_rest_net_weight,
-          }
-        ]);
-      };
-    };
-
-
-  } catch (error) {
-    console.error('Ошибка при формировании отчёта:', error);
-  } finally {
-  }
-};
 
 const makeMaterialReport = async () => {
   isSkeletonLoading.value = true; // Включаем скелетон при формировании отчёта
@@ -1149,39 +821,11 @@ const handleMakeReport = async () => {
     return;
   }
 
-  try {
-    await makeSelectionReport();
-  } catch (error) {
-    console.error('Ошибка при формировании подбора:', error);
-  }
 
-  try {
-    await makeSelectionIndReport();
-  } catch (error) {
-    console.error('Ошибка при формировании показателей подбора:', error);
-  }
-
-  //reportStore.saveToStorage();
 };
 
 const handleSwitchDetailedMode = () => {
   reportStore.tableData = [];
-  
-};
-
-const handleSwitchSelectionDetailedMode = async() => {
-  try {
-    configuringReportTables();
-  } catch (error) {
-    console.error('Ошибка при настройке колонок:', error);
-    return;
-  }
-
-  try {
-    await makeSelectionReport();
-  } catch (error) {
-    console.error('Ошибка при формировании подбора:', error);
-  }
   
 };
 
@@ -1242,20 +886,6 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
-const handleApplySelection = () => {
-  const result: frontend.IRawMaterial[] = reportStore.selectionData.map(row => ({
-    material: row.material,
-    material_id: row.material_id,
-    tare_id: row.tare_id,
-    net_weight: row.rest_net_weight,
-  }));
-
-  emit('selection-confirmed', result);
-};
-
-const handleDrawerClose = () => {
-  emit('close');
-};
 
 </script>
 
@@ -1286,15 +916,12 @@ const handleDrawerClose = () => {
 
 /* Таблица занимает 70% высоты, если футер виден, иначе 100% */
 .table-container {
-  flex: 0 0 70%;
+  flex: 0 0 100%;
   padding: 0 20px 20px;
   box-sizing: border-box;
   position: relative;
 }
 
-.right-container:not(.has-footer) .table-container {
-  flex: 0 0 100%;
-}
 
 .table-wrapper {
   position: absolute;
@@ -1306,61 +933,6 @@ const handleDrawerClose = () => {
   border-radius: 4px;
 }
 
-.footer-container {
-  flex: 0 0 30%;
-  padding: 0px;
-  margin-top: 10px;
-  background-color: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-  flex-shrink: 0;
-  height: 100%;
-}
-
-.footer-layout {
-  height: 100%;
-  flex: 1;
-  border-spacing: 0;
-}
-
-.footer-block {
-  height: 100%;
-  box-sizing: border-box;
-  padding: 0px;
-  border-right: 1px solid #e9ecef;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  position: relative;
-}
-
-.footer-block-1 { background-color: #f0f7ff; }
-.footer-block-2 { background-color: #fafafa; }
-
-.footer-block-3 {
-  background-color: #fff9f3;
-  border-right: none;
-  padding: 16px;
-}
-
-@media (max-width: 768px) {
-  .right-container .table-container {
-    flex: 0 0 60%;
-  }
-  .right-container:not(.has-footer) .table-container {
-    flex: 0 0 100%;
-  }
-  .footer-layout {
-    flex-direction: column;
-  }
-  .footer-block {
-    border-right: none;
-    border-bottom: 1px solid #e9ecef;
-  }
-  .footer-block:last-child {
-    border-bottom: none;
-  }
-}
 
 .switch-container {
   display: flex;
