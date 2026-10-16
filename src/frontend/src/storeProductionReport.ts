@@ -4,7 +4,6 @@ import { ref } from 'vue'
 
 export type ReportMode = 'paginated' | 'full'
 
-
 export const useProductionReportStore = defineStore('productionReport', () => {
   const selectedStore = ref<number[]>([])
   const selectedMaterial = ref<number[]>([])

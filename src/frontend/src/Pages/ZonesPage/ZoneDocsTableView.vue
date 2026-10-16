@@ -108,14 +108,28 @@ const MODE_PAGINATED = 'paginated' as const
 const MODE_FULL = 'full' as const
 type Mode = typeof MODE_PAGINATED | typeof MODE_FULL
 
-const mode = ref<Mode>(MODE_PAGINATED)
+// Пагинация
+const mode = computed({
+  get: () => zoneDocsStore.reportMode,
+  set: (v: Mode) => { zoneDocsStore.reportMode = v },
+})
+const currentPage = computed({
+  get: () => zoneDocsStore.currentPage,
+  set: (v: number) => { zoneDocsStore.currentPage = v },
+})
+const pageSize = computed({
+  get: () => zoneDocsStore.pageSize,
+  set: (v: number) => { zoneDocsStore.pageSize = v },
+})
+const total = computed({
+  get: () => zoneDocsStore.total,
+  set: (v: number) => { zoneDocsStore.total = v },
+})
+
 const isPaginatedMode = computed(() => mode.value === MODE_PAGINATED)
 const isFullMode = computed(() => mode.value === MODE_FULL)
 
-// Пагинация
-const currentPage = ref(1)
-const pageSize = ref(100)
-const total = ref(0)
+
 const isLoading = ref(false)
 
 const emit = defineEmits<{
@@ -124,14 +138,6 @@ const emit = defineEmits<{
 
 const emitCellDblClick = (column: string, value: string | null | undefined) => {
   emit('cell-dblclick', { column, value })
-}
-
-const toggleMode = () => {
-  mode.value = isFullMode.value ? MODE_PAGINATED : MODE_FULL
-  // При переключении всегда делаем refresh, чтобы подтянуть нужные данные
-  currentPage.value = 1
-  pageSize.value = 100
-  refresh()
 }
 
 const refresh = async () => {
@@ -168,26 +174,33 @@ watch(
     zoneDocsStore.selectedPeriod,
   ],
   () => {
-    // При изменении фильтров сбрасываем на первую страницу и режим пагинации
-    mode.value = MODE_PAGINATED
-    currentPage.value = 1
-    pageSize.value = 100
+    zoneDocsStore.resetPagination()
   },
   { deep: true }
 )
 
 defineExpose({ refresh })
 
+
+const toggleMode = () => {
+  zoneDocsStore.setMode(isFullMode.value ? MODE_PAGINATED : MODE_FULL)
+  zoneDocsStore.saveToStorage() // чтобы режим и сброшенная пагинация легли в localStorage
+  refresh()
+}
+
 const onCurrentChange = (page: number) => {
   currentPage.value = page
+  zoneDocsStore.saveToStorage()
   refresh()
 }
 
 const onSizeChange = (size: number) => {
   pageSize.value = size
   currentPage.value = 1
+  zoneDocsStore.saveToStorage()
   refresh()
 }
+
 
 
 </script>
