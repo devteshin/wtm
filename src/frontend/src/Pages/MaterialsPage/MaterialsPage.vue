@@ -384,11 +384,6 @@ const hasFooter = computed(() => isSelectionControlEnabled.value);
 const isOperationDocMode =ref(false);
 const isOperationListMode =ref(false);
 
-// --- Состояния для селекта Материал ---
-const isRemoteSearchMaterial = ref(true)
-const materialOptions = ref<{ id: number; name: string }[]>([])
-const materialOptionsLoading = ref(false)
-
 
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
@@ -438,9 +433,6 @@ const tableCondition = computed({
   get: () => reportStore.tableCondition,
   set: (value) => reportStore.setFilters({ tableCondition: value })
 });
-
-//const materialOptions = ref<MaterialOption[]>([]);
-const isOptionsLoaded = ref(false);
 
 let lastClickedIndex = -1;
 
@@ -700,15 +692,9 @@ onMounted(async () => {
   startLoading();
 
   store.loading = true;
-  materialOptionsLoading.value = true;
   try {
-    await store.fetchMaterialsMeta();
     
     reportStore.loadFromStorage();
-
-    if (selectedMaterial.value.length) {
-      materialOptions.value = store.materials_meta?.material_list.filter((item: any)=> selectedMaterial.value.includes(item.id)) || [];
-    }
 
     // для того чтобы применить возможное изменение свойств basicColumns, detailedColumns, selectionColumns, detailedSelectionColumns
     // при воостановлении из localstorage переписываем их
@@ -753,39 +739,13 @@ onMounted(async () => {
     }
 
 
-
-
   } finally {
     store.loading = false;
-    materialOptionsLoading.value = false;
   }
 
 });
 
-const loadMaterialOptions = async (material_substring: string = '', limit: number = 100) => {
-  materialOptionsLoading.value = true
-  try {
-    const result = await store.searchMaterials(material_substring, limit)
-    materialOptions.value = result
-  } catch (e) {
-    console.error(e)
-  } finally {
-    materialOptionsLoading.value = false
-  }
-}
 
-const handleMaterialSearch = async (material_substring: string) => {
-  if (material_substring.length < 2) {
-    materialOptions.value = []
-    return
-  }
-  await loadMaterialOptions(material_substring, 100)
-}
-
-const handleLoadAllMaterialOptions = async () => {
-  isRemoteSearchMaterial.value = false
-  await loadMaterialOptions('', 500)
-}
 
 onUnmounted(() => {
   // Очистка ресурсов
