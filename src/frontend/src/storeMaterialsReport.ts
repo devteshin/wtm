@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
-import { ref, Ref } from 'vue';
+import { ref } from 'vue';
 
-interface TableConditionItem {
+export interface TableConditionItem {
   element: string;
   min: string;
   max: string;

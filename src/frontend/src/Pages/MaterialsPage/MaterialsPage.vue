@@ -60,46 +60,7 @@
           <template #actions>
 
             <el-form-item label="Показатели">
-              <el-table :data="tableCondition" style="width: 100%" max-height="250">
-                <el-table-column prop="element" label="">
-                  <template #default="scope">
-                    <el-select v-model="scope.row.element" style="width: 90px">
-                      <el-option
-                        v-for="item in store.materials_meta?.material_group_list
-                            .filter(item => (item.type == 0 || item.type == 1) && !tableCondition.map(item => item.element).includes(item.code))"
-                        :key="item.code"
-                        :label="item.code"
-                        :value="item.code"
-                      />
-                    </el-select>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="min" label="min">
-                  <template #default="scope">
-                    <el-input type="number" v-model.number="scope.row.min" placeholder=""></el-input>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="max" label="max">
-                  <template #default="scope">
-                    <el-input type="number" v-model.number="scope.row.max" placeholder=""></el-input>
-                  </template>
-                </el-table-column>
-                <el-table-column fixed="right" label="" width="40">
-                  <template #default="scope">
-                    <el-button
-                      link
-                      type="danger"
-                      size="small"
-                      @click.prevent="deleteRow(scope.$index)"
-                    >
-                      <Delete style="width: 16px; height: 16px;" />
-                    </el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-              <el-button class="mt-4" style="width: 100%" @click="onAddItem">
-                Добавить
-              </el-button>
+              <IndicatorsTable v-model="tableCondition" />
             </el-form-item>
 
             <el-form-item>
@@ -224,14 +185,13 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, Ref } from "vue";
+import { onMounted, Ref } from "vue";
 import { ref, computed } from "vue";
 import useApplicationStore from "@/store";
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import ReportFilters from '@/components/ReportFilters.vue'
-import { Delete, FolderOpened } from '@element-plus/icons-vue';
+import IndicatorsTable from './IndicatorsTable.vue'
 import { watch } from 'vue';
-import { ElMessageBox } from "element-plus";
 import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
 
@@ -600,20 +560,6 @@ const handleSwitchDetailedMode = () => {
   store.materials_data = [];
   
 };
-
-
-const deleteRow = (index: number) => {
-  tableCondition.value.splice(index, 1)
-};
-
-const onAddItem = () => {
-  tableCondition.value.push({
-    element: '',
-    min: '',
-    max: ''
-  })
-};
-
 
  const onCellDblClick = (row: any, column: any, cell: HTMLElement, event: MouseEvent) => {
   const columnProp = column.property; // именно property, а не prop
