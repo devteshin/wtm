@@ -28,7 +28,7 @@ export default defineStore("app_store", () => {
     /** список материалов id, name */
     const materials_list = ref<frontend.IMaterial | null>(null);
     /** остатки материалов для отчета по остаткам */
-    const materials_data = ref<frontend.IMaterialsData | null>(null);
+    const materials_data = ref<Array<frontend.IMaterialsData>>([]);
     /** данные метрики inventory aging */
     const metrics_inventory_aging = ref<Array<frontend.IMetricsInventoryAging>> ([]);
     /** список документов размещения */

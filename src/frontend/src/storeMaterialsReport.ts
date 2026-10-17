@@ -23,14 +23,8 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     { element: '', min: '', max: '' }
   ]);
 
-  const tableData = ref<any[]>([]); // таблица материалов
-  const selectionTableData = ref<any[]>([]); // таблица подбора 
-  const selectionIndTableData = ref<any[]>([]); // таблица показателей подбора 
   const basicColumns = ref<any[]>([]);
   const detailedColumns = ref<any[]>([]);
-  const selectionColumns = ref<any[]>([]);
-  const detailedSelectionColumns = ref<any[]>([]);
-  //const selectedTableData = ref<any[]>([]); // выбранные строки текущей таблицы материалов
   const selectionData = ref<any[]>([]); // хранит выбранные строки в формате таблицы материалов (tableData) 
   
   // Действия
@@ -89,10 +83,6 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     isSelectionEnabled.value = false;
     isSelectionControlEnabled.value = false;
     tableCondition.value = [{ element: '', min: '', max: '' }];
-    tableData.value = [];
-    selectionTableData.value = [];
-    selectionIndTableData.value = [];
-    //selectedTableData.value = [];
     selectionData.value = [];
   };
 
@@ -113,25 +103,11 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
           isSelectionControlEnabled: data.isSelectionControlEnabled || false,
           tableCondition: data.tableCondition || [{ element: '', min: '', max: '' }]
         });
-        if (data.tableData) {
-          tableData.value = data.tableData;
-        }
-        if (data.selectionTableData) {
-          selectionTableData.value = data.selectionTableData;
-        }
-        if (data.selectionIndTableData) {
-          selectionIndTableData.value = data.selectionIndTableData;
-        }
-        //if (data.selectedTableData) {
-        //  selectedTableData.value = data.selectedTableData;
-        //}
         if(data.selectionData) {
           selectionData.value = data.selectionData;
         }
         basicColumns.value = data.basicColumns || [];
         detailedColumns.value = data.detailedColumns || [];
-        selectionColumns.value = data.selectionColumns || [];
-        detailedSelectionColumns.value = data.detailedSelectionColumns || [];
       }
     } catch (error) {
       console.error('Ошибка загрузки из LocalStorage:', error);
@@ -139,50 +115,28 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
   };
 
   const saveToStorage = () => {
-    const stateToSave = {
-      selectedStore: selectedStore.value,
-      selectedMaterialGroup: selectedMaterialGroup.value,
-      selectedMaterial: selectedMaterial.value,
-      isDetailedMode: isDetailedMode.value,
-      isSelectionDetailedMode: isSelectionDetailedMode.value,
-      isOnlyNonZeroMode: isOnlyNonZeroMode.value,
-      isElementOrderMode: isElementOrderMode.value,
-      isSelectionEnabled: isSelectionEnabled.value,
-      isSelectionControlEnabled: isSelectionControlEnabled.value,
-      tableCondition: tableCondition.value,
-      tableData: tableData.value,
-      selectionTableData: selectionTableData.value,
-      selectionIndTableData: selectionIndTableData.value,
-      basicColumns: basicColumns.value,
-      detailedColumns: detailedColumns.value,
-      selectionColumns: selectionColumns.value,
-      detailedSelectionColumns: detailedSelectionColumns.value,
-      //selectedTableData: selectedTableData.value,
-      selectionData: selectionData.value,
-      timestamp: Date.now()
-    };
-    localStorage.setItem('materialsReportState', JSON.stringify(stateToSave));
+    try {
+      const stateToSave = {
+        selectedStore: selectedStore.value,
+        selectedMaterialGroup: selectedMaterialGroup.value,
+        selectedMaterial: selectedMaterial.value,
+        isDetailedMode: isDetailedMode.value,
+        isSelectionDetailedMode: isSelectionDetailedMode.value,
+        isOnlyNonZeroMode: isOnlyNonZeroMode.value,
+        isElementOrderMode: isElementOrderMode.value,
+        isSelectionEnabled: isSelectionEnabled.value,
+        isSelectionControlEnabled: isSelectionControlEnabled.value,
+        tableCondition: tableCondition.value,
+        basicColumns: basicColumns.value,
+        detailedColumns: detailedColumns.value,
+        selectionData: selectionData.value,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('materialsReportState', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Не удалось сохранить состояние отчёта:', error);
+    }      
   };
-
-  const setTableData = (data: any[]) => {
-    tableData.value = data;
-    saveToStorage(); // Автосохранение при обновлении данных
-  };
-
-  const setSelectionTableData = (data: any[]) => {
-    selectionTableData.value = data;
-    saveToStorage(); // Автосохранение при обновлении данных
-  };
-
-  const setSelectionIndTableData = (data: any[]) => {
-    selectionIndTableData.value = data;
-    saveToStorage(); // Автосохранение при обновлении данных
-  };
-
-  //const setSelectedTableData = (data: any[]) => {
-  //  selectedTableData.value = data;
-  //  saveToStorage(); // Автосохранение при обновлении выбранных данных
-  //};
 
   const setSelectionData = (data: any[]) => {
     selectionData.value = data;
@@ -203,24 +157,14 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     isOperationDocAutoGenerateReport,
     isOperationListAutoGenerateReport,
     tableCondition,
-    tableData,
-    selectionTableData,
-    selectionIndTableData,
-    //selectedTableData,
     selectionData,
     basicColumns,
     detailedColumns,
-    selectionColumns,
-    detailedSelectionColumns,
     // Экспортируем действия
     setFilters,
     resetFilters,
     loadFromStorage,
     saveToStorage,
-    setTableData,
-    setSelectionTableData,
-    setSelectionIndTableData,
-    //setSelectedTableData,
     setSelectionData
   };
 });

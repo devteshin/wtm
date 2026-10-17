@@ -169,24 +169,24 @@
             <!-- Таблица с данными -->
             <template v-else>
               <div class="table-wrapper">
-                <div v-if="!reportStore.tableData?.length" class="no-data-message">
+                <div v-if="!store.materials_data?.length" class="no-data-message">
                   Нет данных для отображения
                 </div>
                 <el-table
                   v-else
                   ref="tableRef"
-                  :data="reportStore.tableData"
+                  :data="store.materials_data"
                   reserve-selection
+                  :show-summary="store.materials_data.length > 1"
+                  :summary-method="getSummary"
                   :row-key="getRowKey"
                   style="width: 100%; height: 100%;"
                   stripe
                   border
                   show-overflow-tooltip
-                  virtual-scroll
-                  :row-class-name="getRowClassName"
                   @cell-dblclick="(row, column, cell, event) => onCellDblClick(row, column, cell, event)"
-                  @selection-change="handleSelectionChange"
-                  @row-click="onRowClick"
+                  @selection-change=""
+                  @row-click=""
                 >
                   <!-- Колонка выбора (если включена) -->
                   <el-table-column
@@ -195,7 +195,6 @@
                     :type="column.type"
                     :width="column.width"
                     :align="column.align"
-                    :selectable="column.selectable"
                   />
 
                   <!-- Остальные колонки -->
@@ -240,6 +239,31 @@ const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
 
 const sidebarSize = ref(400) // стартовая ширина панели фильтров, px  
 
+const SUMMARY_PROPS = ['rest_tare_amount', 'rest_net_weight', 'rest_gross_weight'];
+
+const getSummary = ({ columns }: { columns: any[] }): string[] => {
+  return columns.map((column, index) => {
+    const prop = column.property;
+
+    if (index === 0) {
+      return 'Итого';
+    }
+    if (!prop || !SUMMARY_PROPS.includes(prop)) {
+      return '';
+    }
+
+    const values = store.materials_data.map(item => Number(item[prop]));
+    if (values.some(v => Number.isNaN(v))) {
+      return '';
+    }
+
+    const total = values.reduce((acc, v) => acc + v, 0);
+    const formatType = dataColumns.value.find(col => col.prop === prop)?.formatType;
+
+    return formatCell(total, formatType); // тот же formatCell, что и для строк данных
+  });
+};
+
 interface Column {
   prop: string;
   label: string;
@@ -275,10 +299,8 @@ const formatCell = (value: any, type?: string) => {
 const store = useApplicationStore()
 const reportStore = useMaterialsReportStore()
 
-const isAutoSelectionUpdate = ref(false);
 const isOperationDocMode =ref(false);
 const isOperationListMode =ref(false);
-
 
 const selectedStore = computed({
   get: () => reportStore.selectedStore,
@@ -298,10 +320,6 @@ const isDetailedMode = computed({
   set: (value) => reportStore.setFilters({ isDetailedMode: value })
 });
 
-const isSelectionDetailedMode = computed({
-  get: () => reportStore.isSelectionDetailedMode,
-  set: (value) => reportStore.setFilters({ isSelectionDetailedMode: value })
-});
 
 const isOnlyNonZeroMode = computed({
   get: () => reportStore.isOnlyNonZeroMode,
@@ -329,92 +347,6 @@ const tableCondition = computed({
   set: (value) => reportStore.setFilters({ tableCondition: value })
 });
 
-let lastClickedIndex = -1;
-
-const updateSelectionData = (selection: any[]) => {
-  const selectionToAdd: typeof reportStore.tableData[number][] = [];
-  const selectionToRemove: typeof reportStore.tableData[number][] = [];
-  let rowInSelection = false;
-  let rowInSelected = false;
-
-  const selectedKeys = new Set(
-    selection.map(row => getRowKey(row))
-  );
-  const selectionKeys = new Set(
-    reportStore.selectionData.map(row => getRowKey(row))
-  );
-
-  reportStore.tableData.forEach((row) => {
-    rowInSelection = selectionKeys.has(getRowKey(row));
-    rowInSelected = selectedKeys.has(getRowKey(row));
-    if (rowInSelected && !rowInSelection) {
-        selectionToAdd.push(row);
-      }
-      else if (!rowInSelected && rowInSelection) {
-        selectionToRemove.push(row);
-      }
-    });
-
-  // Добавление новых выбранных строк
-  if (selectionToAdd.length > 0) {
-    const currentSelection = reportStore.selectionData;
-    reportStore.setSelectionData([
-      ...currentSelection,
-      ...selectionToAdd
-    ]);
-  }
-
-  // Удаление строк, которые больше не выбраны
-  if (selectionToRemove.length > 0) {
-    const currentSelection = reportStore.selectionData;
-    const keysToRemove = new Set(selectionToRemove.map(row => getRowKey(row)));
-    const updatedSelectionData = currentSelection.filter(
-      row => !keysToRemove.has(getRowKey(row))
-    );
-    reportStore.setSelectionData(updatedSelectionData);
-  }
-
-};  
-
-function onRowClick(row, column, event) {
-  if (!isSelectionEnabled.value){
-    return;
-  }
-  const rows = reportStore.tableData
-  const currentIndex = rows.indexOf(row)
-
-  if (currentIndex === -1) return
-
-  if (event.shiftKey && lastClickedIndex !== -1) {
-
-    event.preventDefault()
-    window.getSelection()?.removeAllRanges()
-
-    const start = Math.min(lastClickedIndex, currentIndex)
-    const end = Math.max(lastClickedIndex, currentIndex)
-
-    isAutoSelectionUpdate.value = true
-    for (let i = start; i <= end; i++) {
-      const r = rows[i]
-      if (isRowSelectable(r)) {
-        tableRef.value.toggleRowSelection(r, true)
-      }
-    }
-    isAutoSelectionUpdate.value = false
-    const selection = tableRef.value.getSelectionRows()
-    handleSelectionChange(selection);
-  }
-
-  lastClickedIndex = currentIndex
-}
-
-const handleSelectionChange = async (selection: any[]) => {
-    if (!isAutoSelectionUpdate.value) {
-      updateSelectionData(selection);
-
-  };
-};
-
 
  // Отслеживаем изменения всех фильтров и сохраняем в стор
 watch(
@@ -423,7 +355,6 @@ watch(
     selectedMaterialGroup: selectedMaterialGroup.value,
     selectedMaterial: selectedMaterial.value,
     isDetailedMode: isDetailedMode.value,
-    isSelectionDetailedMode: isSelectionDetailedMode.value,
     isOnlyNonZeroMode: isOnlyNonZeroMode.value,
     isElementOrderMode: isElementOrderMode.value,
     isSelectionEnabled: isSelectionEnabled.value,
@@ -464,47 +395,10 @@ const detailedColumns = ref([
 ]);
 
 
-const isSkeletonLoading = ref(true); // Для скелетона при инициализации
-let loadingTimeout: NodeJS.Timeout | null = null;
-let stopDataWatcher: (() => void) | null = null;
+const isSkeletonLoading = ref(false); // включается только при формировании отчёта
 
-const startLoading = () => {
-  if (loadingTimeout) {
-    clearTimeout(loadingTimeout);
-  }
-  if (stopDataWatcher) {
-    stopDataWatcher();
-  }
-
-  isSkeletonLoading.value = true; // Включаем скелетон
-
-  loadingTimeout = setTimeout(() => {
-    console.warn('Таймаут загрузки: скрываем скелетон принудительно');
-    isSkeletonLoading.value = false;
-  }, 5000);
-
-  stopDataWatcher = watch(
-    () => reportStore.tableData,
-    (data) => {
-      if (data && data.length > 0) {
-        setTimeout(() => {
-          isSkeletonLoading.value = false;
-          if (loadingTimeout) clearTimeout(loadingTimeout);
-          if (stopDataWatcher) stopDataWatcher();
-        }, 200);
-      } else if (data && data.length === 0) {
-        isSkeletonLoading.value = false;
-        if (loadingTimeout) clearTimeout(loadingTimeout);
-        if (stopDataWatcher) stopDataWatcher();
-      }
-    },
-    { immediate: true }
-  );
-};
 
 onMounted(async () => {
-  startLoading();
-
   store.loading = true;
   try {
     
@@ -550,78 +444,12 @@ onMounted(async () => {
 });
 
 
-
-onUnmounted(() => {
-  // Очистка ресурсов
-  if (loadingTimeout) {
-    clearTimeout(loadingTimeout);
-  }
-  if (stopDataWatcher) {
-    stopDataWatcher();
-  }
-});
-
-
 const getRowKey = (row: any): string => {
   const key_material = row.key_material || 'unknown';
   const stock_id = row.stock_id || 'unknown';
   return `${key_material}_${stock_id}`;
 
   
-};
-
-const isRowSelectable = (row: any): boolean => {
-  return row.stock_name !== 'Итого';
-};
-
-const tableRef = ref<any>(null);
-
-const restoreSelection = () => {
-    // Проверка доступности выбора
-  if (!isSelectionEnabled.value) {
-    return;
-  }
-
-  // Полная проверка готовности
-  if (!tableRef.value) {
-    console.warn('Table not mounted yet, skipping restoreSelection');
-    return;
-  }
-  if (!reportStore.tableData || reportStore.tableData.length === 0) {
-    console.warn('No table data available, skipping restoreSelection');
-    return;
-  }
-
-  isAutoSelectionUpdate.value = true; // Блокируем обновление
-
-  tableRef.value.clearSelection();
-
-  const selectionKeys = new Set(
-    reportStore.selectionData.map(row => getRowKey(row))
-    );
-
-  reportStore.tableData.forEach((row) => {
-    if (row.stock_name !== 'Итого' && selectionKeys.has(getRowKey(row))) {
-      tableRef.value.toggleRowSelection(row, true);
-    }
-  });
-
-  nextTick(() => {
-    isAutoSelectionUpdate.value = false; // Снимаем блокировку после завершения
-  });
-
-};
-
-
-const isTotalRow = (row: any): boolean => {
-  return row.stock_name === 'Итого';
-};
-
-const getRowClassName = ({ row }: { row: any }): string => {
-  if (isTotalRow(row)) {
-    return 'total-row';
-  }
-  return '';
 };
 
 
@@ -665,7 +493,6 @@ const selectionColumn = computed(() =>
         type: 'selection',
         width: '55',
         align: 'center',
-        selectable: isRowSelectable
       }]
     : []
 );
@@ -673,32 +500,6 @@ const selectionColumn = computed(() =>
 const dataColumns = computed(() =>
   isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns
 );  
-
-
-// Watcher 1 — реакция на изменение данных таблицы
-watch(
-  () => reportStore.tableData,
-  (newData) => {
-    if (newData && newData.length > 0 && tableRef.value) {
-      nextTick(() => {
-        restoreSelection();
-      });
-    }
-  },
-  { deep: true }
-);
-
-// Watcher 2 — реакция на появление инстанса таблицы (после скрытия скелетона)
-watch(
-  () => tableRef.value,
-  (tableInstance) => {
-    if (tableInstance && reportStore.tableData?.length > 0) {
-      nextTick(() => {
-        restoreSelection();
-      });
-    }
-  }
-);
 
 
 function configuringReportTables() {
@@ -737,11 +538,6 @@ const makeMaterialReport = async () => {
   isSkeletonLoading.value = true; // Включаем скелетон при формировании отчёта
 
   store.loading = true;
-  reportStore.setTableData([]);
-  let total_rest_gross_weight = 0;
-  let total_rest_net_weight = 0;
-  let total_rest_tare_amount = 0;
-
   
 
   const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
@@ -773,31 +569,7 @@ const makeMaterialReport = async () => {
       only_non_zero_mode: isOnlyNonZeroMode.value,
       element_order: elementOrder()
     });
-
     
-    if (store.materials_data && Array.isArray(store.materials_data)) {
-      reportStore.tableData = store.materials_data;
-      if (reportStore.tableData.length > 1) {
-        total_rest_gross_weight = reportStore.tableData.map(item => item['rest_gross_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        total_rest_net_weight = reportStore.tableData.map(item => item['rest_net_weight']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        total_rest_tare_amount = reportStore.tableData.map(item => item['rest_tare_amount']).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        reportStore.setTableData([
-          ...reportStore.tableData,
-          {
-            stock_name: 'Итого',
-            material: '',
-            tare_type: '',
-            tare_id: '',
-            tare_mark: '',
-            material_mark: '',
-            material_group: '',
-            rest_tare_amount: total_rest_tare_amount,
-            rest_net_weight: total_rest_net_weight,
-            rest_gross_weight: total_rest_gross_weight
-          }
-        ]);
-      };
-    };
   } catch (error) {
     console.error('Ошибка при формировании отчёта:', error);
   } finally {
@@ -825,7 +597,7 @@ const handleMakeReport = async () => {
 };
 
 const handleSwitchDetailedMode = () => {
-  reportStore.tableData = [];
+  store.materials_data = [];
   
 };
 
@@ -881,11 +653,6 @@ const onAddItem = () => {
 
 };
  
-const emit = defineEmits<{
-  (e: 'selection-confirmed', items: frontend.IRawMaterial[]): void;
-  (e: 'close'): void;
-}>();
-
 
 </script>
 
@@ -948,16 +715,6 @@ const emit = defineEmits<{
 
 :deep(.el-table) {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-:deep(.total-row) {
-  background-color: #f0f9ff !important;
-  font-weight: bold !important;
-  color: #1d4ed8 !important;
-}
-
-:deep(.total-row td) {
-  background-color: #e0f2fe !important;
 }
 
 :deep(.el-table__body tr:hover) {
