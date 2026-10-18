@@ -25,7 +25,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
 
   const basicColumns = ref<any[]>([]);
   const detailedColumns = ref<any[]>([]);
-  const selectionData = ref<any[]>([]); // хранит выбранные строки в формате таблицы материалов (tableData) 
+  const selectionData = ref<string[]>([]); 
   
   // Действия
   const setFilters = (filters: Partial<{
@@ -138,9 +138,9 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     }      
   };
 
-  const setSelectionData = (data: any[]) => {
-    selectionData.value = data;
-    saveToStorage(); // Автосохранение при обновлении выбранных данных
+  const setSelectionData = (keys: string[]) => {
+    selectionData.value = keys;
+    saveToStorage();
   };
 
   return {

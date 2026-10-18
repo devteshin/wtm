@@ -1,16 +1,10 @@
 <template>
   <div class="materials-table">
-    <el-skeleton v-if="isSkeletonLoading" animated />
-
-    <template v-else>
       <div class="table-wrapper">
-        <div v-if="!store.materials_data?.length" class="no-data-message">
-          Нет данных для отображения
-        </div>
         <el-table
-          v-else
+          ref="tableRef"
+          v-show="!isSkeletonLoading && store.materials_data?.length"
           :data="store.materials_data"
-          reserve-selection
           :show-summary="store.materials_data.length > 1"
           :summary-method="getSummary"
           :row-key="getRowKey"
@@ -27,6 +21,7 @@
             :type="column.type"
             :width="column.width"
             :align="column.align"
+            reserve-selection
           />
 
           <el-table-column
@@ -43,13 +38,16 @@
             </template>
           </el-table-column>
         </el-table>
+        <el-skeleton v-if="isSkeletonLoading" animated />
+        <div v-if="!store.materials_data?.length" class="no-data-message">
+          Нет данных для отображения
+        </div>
       </div>
-    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick, onMounted } from 'vue';
 import useApplicationStore from '@/store';
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
@@ -60,8 +58,9 @@ const emit = defineEmits<{
 
 const store = useApplicationStore();
 const reportStore = useMaterialsReportStore();
-
+const tableRef = ref();
 const isSkeletonLoading = ref(false);
+const isRestoring = ref(false);
 
 interface Column {
   prop: string;
@@ -71,6 +70,9 @@ interface Column {
   align?: string;
   formatType?: string;
 }
+
+const isSelectionActive = () =>
+  reportStore.isSelectionEnabled && reportStore.isDetailedMode;
 
 // --- Форматирование ---
 const getFormatter = (type?: string) => {
@@ -95,7 +97,7 @@ const getSummary = ({ columns }: { columns: any[] }): string[] => {
   return columns.map((column, index) => {
     const prop = column.property;
 
-    if (index === 0) return 'Итого';
+    if (index === 0) return '';
     if (!prop || !SUMMARY_PROPS.includes(prop)) return '';
 
     const values = store.materials_data.map((item: any) => Number(item[prop]));
@@ -118,12 +120,31 @@ const selectionColumn = computed(() =>
     : []
 );
 
-const getRowKey = (row: any): string =>
-  `${row.key_material || 'unknown'}_${row.stock_id || 'unknown'}`;
 
-// --- Выбор строк ---
+const getRowKey = (row: any): string => row.key_material || 'unknown';
+
+const restoreSelection = async () => {
+  if (!isSelectionActive() || !reportStore.selectionData.length) return;
+
+  isRestoring.value = true;
+  try {
+    const savedKeys = new Set(reportStore.selectionData);
+    const rowsToSelect = store.materials_data.filter(
+      (row: any) => savedKeys.has(getRowKey(row))
+    );
+
+    await nextTick();
+    rowsToSelect.forEach((row: any) => tableRef.value?.toggleRowSelection(row, true));
+    await nextTick(); // дождаться selection-change от toggle, прежде чем снять щит
+  } finally {
+    isRestoring.value = false;
+  }
+};
+
 const onSelectionChange = (rows: any[]) => {
-  reportStore.setSelectionData(rows);
+  if (isRestoring.value) return; // восстановление само инициирует selection-change — не затираем хранилище
+  if (!reportStore.isSelectionEnabled) return;
+  reportStore.setSelectionData(rows.map(getRowKey));
 };
 
 // --- Формирование отчёта ---
@@ -200,6 +221,7 @@ const makeMaterialReport = async () => {
     store.loading = false;
     isSkeletonLoading.value = false;
   }
+  await restoreSelection();
 };
 
 const refresh = async () => {
@@ -211,6 +233,10 @@ const refresh = async () => {
   }
   await makeMaterialReport();
 };
+
+onMounted(() => {
+  restoreSelection();
+});
 
 defineExpose({ refresh });
 </script>
