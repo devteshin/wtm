@@ -128,7 +128,7 @@ const restoreSelection = async () => {
 
   isRestoring.value = true;
   try {
-    const savedKeys = new Set(reportStore.selectionData);
+    const savedKeys = new Set(reportStore.selectionData.map(item => item.key));
     const rowsToSelect = store.materials_data.filter(
       (row: any) => savedKeys.has(getRowKey(row))
     );
@@ -142,10 +142,24 @@ const restoreSelection = async () => {
 };
 
 const onSelectionChange = (rows: any[]) => {
-  if (isRestoring.value) return; // восстановление само инициирует selection-change — не затираем хранилище
+  if (isRestoring.value) return;
   if (!reportStore.isSelectionEnabled) return;
-  reportStore.setSelectionData(rows.map(getRowKey));
+  reportStore.setSelectionData(
+    rows.map(r => ({ key: getRowKey(r), materialId: r.material_id }))
+  );
 };
+
+const unselectByMaterialId = async (materialId: number) => {
+  const rows = store.materials_data.filter((r: any) => r.material_id === materialId);
+  rows.forEach((r: any) => tableRef.value?.toggleRowSelection(r, false));
+  await nextTick();
+  // строки этого материала, которых сейчас нет в данных (материал отфильтрован),
+  // selection-change не увидит — подчистим хранилище вручную
+  reportStore.setSelectionData(
+    reportStore.selectionData.filter(item => item.materialId !== materialId)
+  );
+};
+
 
 // --- Формирование отчёта ---
 const elementOrder = (): string => {
@@ -238,7 +252,7 @@ onMounted(() => {
   restoreSelection();
 });
 
-defineExpose({ refresh });
+defineExpose({ refresh, unselectByMaterialId  });
 </script>
 
 <style scoped>

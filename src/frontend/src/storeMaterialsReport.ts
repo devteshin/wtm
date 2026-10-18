@@ -7,6 +7,11 @@ export interface TableConditionItem {
   max: string;
 };
 
+export interface SelectedItem {
+  key: string;        // key_material — уникальный ключ строки таблицы
+  materialId: number; // для удаления по материалу
+}
+
 export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const selectedStore = ref<number[]>([]);
   const selectedMaterialGroup = ref<string[]>([]);
@@ -25,7 +30,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
 
   const basicColumns = ref<any[]>([]);
   const detailedColumns = ref<any[]>([]);
-  const selectionData = ref<string[]>([]); 
+  const selectionData = ref<SelectedItem[]>([]); 
   
   // Действия
   const setFilters = (filters: Partial<{
@@ -138,11 +143,11 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     }      
   };
 
-  const setSelectionData = (keys: string[]) => {
-    selectionData.value = keys;
+  const setSelectionData = (data: SelectedItem[]) => {
+    selectionData.value = data;
     saveToStorage();
   };
-
+  
   return {
     // Экспортируем реактивные переменные (только настройки)
     selectedStore,
