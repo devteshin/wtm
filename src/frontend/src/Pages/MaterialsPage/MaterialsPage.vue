@@ -124,57 +124,7 @@
           direction="vertical"
         >
           <el-main class="table-container">
-            <!-- Скелетон при инициализации и формировании отчёта -->
-            <el-skeleton v-if="isSkeletonLoading" animated />
-
-            <!-- Таблица с данными -->
-            <template v-else>
-              <div class="table-wrapper">
-                <div v-if="!store.materials_data?.length" class="no-data-message">
-                  Нет данных для отображения
-                </div>
-                <el-table
-                  v-else
-                  ref="tableRef"
-                  :data="store.materials_data"
-                  reserve-selection
-                  :show-summary="store.materials_data.length > 1"
-                  :summary-method="getSummary"
-                  :row-key="getRowKey"
-                  style="width: 100%; height: 100%;"
-                  stripe
-                  border
-                  show-overflow-tooltip
-                  @cell-dblclick="(row, column, cell, event) => onCellDblClick(row, column, cell, event)"
-                  @selection-change=""
-                  @row-click=""
-                >
-                  <!-- Колонка выбора (если включена) -->
-                  <el-table-column
-                    v-for="column in selectionColumn"
-                    :key="column.type"
-                    :type="column.type"
-                    :width="column.width"
-                    :align="column.align"
-                  />
-
-                  <!-- Остальные колонки -->
-                  <el-table-column
-                    v-for="column in dataColumns"
-                    :key="column.prop"
-                    :prop="column.prop"
-                    :label="column.label"
-                    :width="column.width"
-                    :fixed="column.fixed"
-                    :align="column.align"
-                  >
-                    <template #default="scope">
-                      {{ formatCell(scope.row[column.prop], column.formatType) }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </div>
-            </template>
+            <MaterialsTable ref="tableRef" @cell-dblclick="onCellDblClick" />
           </el-main>
 
         </el-container>
@@ -191,11 +141,13 @@ import useApplicationStore from "@/store";
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import ReportFilters from '@/components/ReportFilters.vue'
 import IndicatorsTable from './IndicatorsTable.vue'
+import MaterialsTable from './MaterialsTable.vue'
 import { watch } from 'vue';
 import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
 
 const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
+const tableRef = ref<InstanceType<typeof MaterialsTable> | null>(null);
 
 const sidebarSize = ref(400) // стартовая ширина панели фильтров, px  
 
@@ -355,9 +307,6 @@ const detailedColumns = ref([
 ]);
 
 
-const isSkeletonLoading = ref(false); // включается только при формировании отчёта
-
-
 onMounted(async () => {
   store.loading = true;
   try {
@@ -383,7 +332,7 @@ onMounted(async () => {
       reportStore.isOperationDocAutoGenerateReport = false;
 
       if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
-        await handleMakeReport();
+        await tableRef.value?.refresh();
       }
     }
 
@@ -392,7 +341,7 @@ onMounted(async () => {
       reportStore.isOperationListAutoGenerateReport = false;
 
       if (reportStore.selectedStore.length && reportStore.selectedMaterial.length) {
-        await handleMakeReport();
+        await tableRef.value?.refresh();
       }
     }
 
@@ -402,15 +351,6 @@ onMounted(async () => {
   }
 
 });
-
-
-const getRowKey = (row: any): string => {
-  const key_material = row.key_material || 'unknown';
-  const stock_id = row.stock_id || 'unknown';
-  return `${key_material}_${stock_id}`;
-
-  
-};
 
 
 const isDetailedModeDisabled = computed(() => {
@@ -440,120 +380,14 @@ const isElementOrderModeDisabled = computed(() => {
   return true;
 });
 
-const elementOrder = ():string => {
-  if (reportStore.tableCondition.length > 0 && isElementOrderMode.value ) {
-    return reportStore.tableCondition[0].element;
-  };
-  return '';
-};  
-
-const selectionColumn = computed(() =>
-  isSelectionEnabled.value
-    ? [{
-        type: 'selection',
-        width: '55',
-        align: 'center',
-      }]
-    : []
-);
 
 const dataColumns = computed(() =>
   isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns
 );  
 
 
-function configuringReportTables() {
-  // Удаляем старые колонки с процентами перед добавлением новых
-  if (isDetailedMode.value) {
-    reportStore.detailedColumns = reportStore.detailedColumns.filter(col => !col.prop.includes('_percent'));
-  } else {
-    reportStore.basicColumns = reportStore.basicColumns.filter(col => !col.prop.includes('_percent'));
-  };
-
-  const percent_items: Column[] = [];
-  for (const item of tableCondition.value) {
-    const item_element = item.element
-    if (item_element !== '') {
-      percent_items.push(
-          { prop: item_element + '_percent', 
-            label: item_element + ', ' + store.materials_meta?.material_group_list.find(item => item.code === item_element)?.umi ,
-            width: '100',
-            align: 'right',
-            formatType: 'percent'
-          }
-        );
-    }
-  }
-
-  if (isDetailedMode.value) {
-    reportStore.detailedColumns.push(...percent_items);
-  } else {
-    reportStore.basicColumns.push(...percent_items);
-  }
-
-};
-
-
-const makeMaterialReport = async () => {
-  isSkeletonLoading.value = true; // Включаем скелетон при формировании отчёта
-
-  store.loading = true;
-  
-
-  const indicators_list = tableCondition.value.map(item => item.element).filter(element => element !== '').join('|');
-  const indicator_conditions_list = tableCondition.value.map((item) => {
-    if (item.element != '') {
-      const item_element = item.element 
-      let item_min = item.min;
-      if (item_min ==  '') {
-        item_min = store.materials_meta?.material_group_list.find(item => item.code === item_element)?.min_value.toString() ?? '0' 
-      };
-      let item_max = item.max;
-      if (item.max ==  '') {
-        item_max = store.materials_meta?.material_group_list.find(item => item.code === item_element)?.max_value.toString() ?? '100' 
-      };
-      return item_min + '|' + item_max;  
-    };
-    return;
-  }).join('|');
-
-
-  try {
-    await store.fetchMaterialsData({
-      materials: selectedMaterial.value.toString(),
-      stocks: reportStore.selectedStore.toString(),
-      material_groups: selectedMaterialGroup.value.map(item => "'" + item + "'").toString(),
-      indicators: indicators_list,
-      indicator_conditions: indicator_conditions_list,
-      detailed_mode: isDetailedMode.value ? "detailed" : "summary",
-      only_non_zero_mode: isOnlyNonZeroMode.value,
-      element_order: elementOrder()
-    });
-    
-  } catch (error) {
-    console.error('Ошибка при формировании отчёта:', error);
-  } finally {
-    store.loading = false;
-    isSkeletonLoading.value = false; // Выключаем скелетон после завершения
-  }
-};
-
-const handleMakeReport = async () => {
-  try {
-    configuringReportTables();
-  } catch (error) {
-    console.error('Ошибка при настройке колонок:', error);
-    return;
-  }
-
-  try {
-    await makeMaterialReport();
-  } catch (error) {
-    console.error('Ошибка при формировании таблицы материалов:', error);
-    return;
-  }
-
-
+const handleMakeReport = () => {
+  tableRef.value?.refresh();
 };
 
 const handleSwitchDetailedMode = () => {
