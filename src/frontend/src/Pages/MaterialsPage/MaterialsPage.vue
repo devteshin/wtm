@@ -144,69 +144,11 @@ import IndicatorsTable from './IndicatorsTable.vue'
 import MaterialsTable from './MaterialsTable.vue'
 import { watch } from 'vue';
 import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
-import { formatTwoDecimal, formatHighPrecision, formatInteger } from '@/utils/numberFormat';
 
 const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
 const tableRef = ref<InstanceType<typeof MaterialsTable> | null>(null);
 
 const sidebarSize = ref(400) // стартовая ширина панели фильтров, px  
-
-const SUMMARY_PROPS = ['rest_tare_amount', 'rest_net_weight', 'rest_gross_weight'];
-
-const getSummary = ({ columns }: { columns: any[] }): string[] => {
-  return columns.map((column, index) => {
-    const prop = column.property;
-
-    if (index === 0) {
-      return 'Итого';
-    }
-    if (!prop || !SUMMARY_PROPS.includes(prop)) {
-      return '';
-    }
-
-    const values = store.materials_data.map(item => Number(item[prop]));
-    if (values.some(v => Number.isNaN(v))) {
-      return '';
-    }
-
-    const total = values.reduce((acc, v) => acc + v, 0);
-    const formatType = dataColumns.value.find(col => col.prop === prop)?.formatType;
-
-    return formatCell(total, formatType); // тот же formatCell, что и для строк данных
-  });
-};
-
-interface Column {
-  prop: string;
-  label: string;
-  width: string;
-  fixed?: string;
-  align?: string;
-  formatType?: string;
-};
-
-
-const getFormatter = (type?: string) => {
-  // Если тип не задан или невалиден — возвращаем «как есть»
-  if (!type) {
-    return (val: any) => (val == null ? '' : String(val));
-  }
-
-  switch (type) {
-    case 'weight': return formatTwoDecimal;
-    case 'percent': return formatTwoDecimal;
-    case 'high': return formatHighPrecision;
-    case 'integer': return formatInteger;
-    default:
-      // Неизвестный тип → тоже «как есть», чтобы не ломать отображение
-      return (val: any) => (val == null ? '-' : String(val));
-  }
-};
-
-const formatCell = (value: any, type?: string) => {
-  const formatter = getFormatter(type);
-  return formatter(value);
-};
 
 const store = useApplicationStore()
 const reportStore = useMaterialsReportStore()
@@ -379,11 +321,6 @@ const isElementOrderModeDisabled = computed(() => {
   };
   return true;
 });
-
-
-const dataColumns = computed(() =>
-  isDetailedMode.value ? reportStore.detailedColumns  : reportStore.basicColumns
-);  
 
 
 const handleMakeReport = () => {
