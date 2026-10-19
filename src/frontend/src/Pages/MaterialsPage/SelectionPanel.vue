@@ -7,6 +7,7 @@
           style="width: 100%; height: 100%;"
           stripe
           border
+          empty-text=""
         >
           <el-table-column
             v-for="column in selectionIndColumns"
@@ -34,7 +35,7 @@
           border
           :show-summary="store.selection_data.length > 1"
           :summary-method="getSummary"
-
+          empty-text=""
         >
           <el-table-column
             v-for="column in reportStore.selectionColumns"
@@ -197,30 +198,20 @@ const loadSelectionData = async () => {
     .join('|');
 
   try {
-    await Promise.all([
-      store.fetchSelectionData({
+
+    await store.fetchSelectionPair({
         stock_list: reportStore.selectedStore.toString(),
         indicators: indicators_list,
         key_material_list: keyList.join('|'),
-        query_type: 'selection',
         element_order: elementOrder(),
-      }),
-      store.fetchSelectionData({
-        stock_list: reportStore.selectedStore.toString(),
-        indicators: indicators_list,
-        key_material_list: keyList.join('|'),
-        query_type: 'selection_indicators',
-        element_order: '',
-      }),
-    ]);
+      });
+
 
   } catch (error) {
     console.error('Ошибка при загрузке данных подбора:', error);
   }
 };
 
-// Отслеживаем состав выбора. setSelectionData всегда присваивает новый массив,
-// так что shallow watch достаточен.
 watch(
   () => reportStore.selectionData,
   () => {
@@ -235,6 +226,19 @@ watch(
 const handleDeleteSelectionTableRow = (row: any) => {
   emit('remove-material', row.material_id);
 };
+
+const refresh = async () => {
+  // гасим отложенный fetch, чтобы не было двойного вызова:
+  // явный refresh идёт сразу, а не через 200 мс после него
+  if (fetchTimer) {
+    clearTimeout(fetchTimer);
+    fetchTimer = null;
+  }
+  await loadSelectionData();
+};
+
+defineExpose({ refresh });
+
 </script>
 
 <style scoped>

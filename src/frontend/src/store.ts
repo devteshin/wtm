@@ -92,8 +92,10 @@ export default defineStore("app_store", () => {
         }
     };
 
+
     /** запрос к API для получения данных по остаткам материалов подбора */
-    const fetchSelectionData = (params?: frontend.ISelectionQueryParams) => {
+
+     const fetchSelectionData = (params?: frontend.ISelectionQueryParams) => {
         let targetRef: Ref<any>;
 
         if (params?.query_type === "selection_indicators") {
@@ -103,9 +105,49 @@ export default defineStore("app_store", () => {
         } else {
             targetRef = selection_data;
         }
-
         return api.fetchSelectionData(params).then(body => targetRef.value = body).finally(() => loading.value = false);
     };
+
+    let selectionPairSeq = 0;
+
+    /** Загрузка пары «сводка + показатели» подбора: пишутся всегда вместе */
+    const fetchSelectionPair = async (base: {
+        stock_list: string;
+        indicators: string;
+        key_material_list: string;
+        element_order: string;
+    }) => {
+        // seq увеличиваем до любой ветки — в том числе чтобы пустой выбор
+        // протухал пару, которая ещё летит по сети
+        const seq = ++selectionPairSeq;
+
+        if (!base.key_material_list) {
+            selection_data.value = [];
+            selection_ind_data.value = [];
+            return;
+        }
+
+        try {
+            const [sel, ind] = await Promise.all([
+                api.fetchSelectionData({ ...base, query_type: 'selection' }),
+                api.fetchSelectionData({ ...base, query_type: 'selection_indicators' }),
+            ]);
+
+            // устарел: пока летели, выбор снова менялся
+            if (seq !== selectionPairSeq) return;
+
+            selection_data.value = sel;
+            selection_ind_data.value = ind;
+        } catch (error) {
+            //_pair не пишем вообще: обе таблицы остаются в предыдущем состоянии
+            if (seq === selectionPairSeq) {
+                console.error('Ошибка при загрузке данных подбора:', error);
+            }
+        }
+    };
+
+
+
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsMeta = () => {
         return api.fetchMaterialsMeta().then(body => materials_meta.value = body).finally(() => loading.value = false);
@@ -324,6 +366,7 @@ export default defineStore("app_store", () => {
         fetchProductionReportData,
         fetchProductionGraphData,
         fetchSelectionData,
+        fetchSelectionPair,
         fetchOperations,
         fetchOperationsMeta,
         fetchOperationData,

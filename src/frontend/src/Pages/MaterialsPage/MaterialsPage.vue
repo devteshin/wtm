@@ -126,6 +126,7 @@
           <el-main class="table-container">
             <MaterialsTable ref="tableRef" @cell-dblclick="onCellDblClick" class="materials-table"/>
             <SelectionPanel
+              ref="selectionPanelRef"
               v-if="reportStore.isSelectionControlEnabled"
               class="selection-footer"
               @remove-material="onRemoveMaterial"
@@ -153,6 +154,7 @@ import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 
 const filtersRef = ref<InstanceType<typeof ReportFilters> | null>(null)
 const tableRef = ref<InstanceType<typeof MaterialsTable> | null>(null);
+const selectionPanelRef = ref<InstanceType<typeof SelectionPanel> | null>(null);
 
 const sidebarSize = ref(400) // стартовая ширина панели фильтров, px  
 
@@ -340,8 +342,9 @@ const isElementOrderModeDisabled = computed(() => {
 });
 
 
-const handleMakeReport = () => {
-  tableRef.value?.refresh();
+const handleMakeReport = async () => {
+  await tableRef.value?.refresh();
+  await selectionPanelRef.value?.refresh();
 };
 
 const handleSwitchDetailedMode = () => {
