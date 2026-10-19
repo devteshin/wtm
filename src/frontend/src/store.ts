@@ -44,9 +44,9 @@ export default defineStore("app_store", () => {
     /** данные графа по производству (материал - от материала к продуктам) */
     const production_graph_data_material = ref<frontend.IProductionGraphDataForward | null> (null);
     /** подбор материалов */
-    const selection_data = ref<frontend.ISelectionData | null>(null);
+    const selection_data = ref<Array<frontend.ISelectionData>>([]);
     /** подбор материалов - значения показателей подбора */
-    const selection_ind_data = ref<frontend.ISelectionIndData | null>(null);
+    const selection_ind_data = ref<Array<frontend.ISelectionIndData>>([]);
     /** подбор материалов для списания в документе приема из производства */
     const raw_materials_data = ref<frontend.IRawMaterial[]>([]);
     /** список складов */

@@ -124,7 +124,12 @@
           direction="vertical"
         >
           <el-main class="table-container">
-            <MaterialsTable ref="tableRef" @cell-dblclick="onCellDblClick" />
+            <MaterialsTable ref="tableRef" @cell-dblclick="onCellDblClick" class="materials-table"/>
+            <SelectionPanel
+              v-if="reportStore.isSelectionControlEnabled"
+              class="selection-footer"
+              @remove-material="onRemoveMaterial"
+            />
           </el-main>
 
         </el-container>
@@ -142,6 +147,7 @@ import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import ReportFilters from '@/components/ReportFilters.vue'
 import IndicatorsTable from './IndicatorsTable.vue'
 import MaterialsTable from './MaterialsTable.vue'
+import SelectionPanel from './SelectionPanel.vue'
 import { watch } from 'vue';
 import { addUniqueIdsByValue } from '@/utils/tableCellDoubleClick'
 
@@ -369,7 +375,10 @@ const handleSwitchDetailedMode = () => {
   }
 
 };
- 
+
+const onRemoveMaterial = async (materialId: number) => {
+  await tableRef.value?.unselectByMaterialId(materialId);
+};
 
 </script>
 
@@ -398,25 +407,27 @@ const handleSwitchDetailedMode = () => {
   width: 100%;
 }
 
-/* Таблица занимает 70% высоты, если футер виден, иначе 100% */
 .table-container {
   flex: 0 0 100%;
   padding: 0 20px 20px;
   box-sizing: border-box;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden; /* перебить дефолтный overflow: auto у el-main,
+                       чтобы скролл крутился внутри таблиц, а не в main */
 }
 
-
-.table-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: auto;
-  border-radius: 4px;
+.materials-table {          /* это корневой класс MaterialsTable */
+  flex: 1 1 70%;
+  min-height: 0;
 }
 
+.selection-footer {
+  flex: 0 0 30%;
+  min-height: 0;
+}
 
 .switch-container {
   display: flex;

@@ -206,7 +206,6 @@ const makeMaterialReport = async () => {
   isSkeletonLoading.value = true;
   store.loading = true;
 
-  // фильтруем пустые строки один раз — чтобы indicators и conditions не разъезжались
   const conditionRows = reportStore.tableCondition.filter(item => item.element !== '');
   const indicators_list = conditionRows.map(item => item.element).join('|');
   const indicator_conditions_list = conditionRows.map(item => {
@@ -258,7 +257,6 @@ defineExpose({ refresh, unselectByMaterialId  });
 <style scoped>
 .materials-table {
   width: 100%;
-  height: 100%;
 }
 
 .table-wrapper {
