@@ -30,6 +30,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
 
   const basicColumns = ref<any[]>([]);
   const detailedColumns = ref<any[]>([]);
+  const selectionColumns = ref<any[]>([]);
   const selectionData = ref<SelectedItem[]>([]); 
   
   // Действия
@@ -113,6 +114,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         }
         basicColumns.value = data.basicColumns || [];
         detailedColumns.value = data.detailedColumns || [];
+        selectionColumns.value = data.selectionColumns || [];
       }
     } catch (error) {
       console.error('Ошибка загрузки из LocalStorage:', error);
@@ -134,6 +136,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
         tableCondition: tableCondition.value,
         basicColumns: basicColumns.value,
         detailedColumns: detailedColumns.value,
+        selectionColumns: selectionColumns.value,
         selectionData: selectionData.value,
         timestamp: Date.now()
       };
@@ -165,6 +168,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     selectionData,
     basicColumns,
     detailedColumns,
+    selectionColumns,
     // Экспортируем действия
     setFilters,
     resetFilters,

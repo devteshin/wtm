@@ -254,6 +254,13 @@ const detailedColumns = ref([
   { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right', formatType: 'weight' }
 ]);
 
+const selectionColumns = ref([
+  { prop: 'stock_name', label: 'Склад', minWidth: '80', align: 'left' },
+  { prop: 'material', label: 'Материал', minWidth: '300', align: 'left' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', minWidth: '100', align: 'right', formatType: 'integer' },
+  { prop: 'rest_net_weight', label: 'Нетто', minWidth: '100', align: 'right', formatType: 'weight' },
+]);
+
 
 onMounted(async () => {
   store.loading = true;
@@ -270,9 +277,13 @@ onMounted(async () => {
     const existingPercentDetailed = reportStore.detailedColumns.filter(
       col => col.prop.includes('_percent')
     );
+    const existingPercentSelection = reportStore.selectionColumns.filter(
+      col => col.prop.includes('_percent')
+    );
 
     reportStore.basicColumns = [...basicColumns.value, ...existingPercentBasic];
     reportStore.detailedColumns = [...detailedColumns.value, ...existingPercentDetailed];
+    reportStore.selectionColumns = [...selectionColumns.value, ...existingPercentSelection];
 
     // Проверяем флаги и запускаем отчёт
     if (reportStore.isOperationDocAutoGenerateReport) {
@@ -427,6 +438,7 @@ const onRemoveMaterial = async (materialId: number) => {
 .selection-footer {
   flex: 0 0 30%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .switch-container {

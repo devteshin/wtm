@@ -32,9 +32,12 @@
           style="width: 100%; height: 100%;"
           stripe
           border
+          :show-summary="store.selection_data.length > 1"
+          :summary-method="getSummary"
+
         >
           <el-table-column
-            v-for="column in selectionColumns"
+            v-for="column in reportStore.selectionColumns"
             :key="column.prop"
             :prop="column.prop"
             :label="column.label"
@@ -76,6 +79,16 @@ interface SelectionIndicator {
   percent: number;
 }
 
+interface Column {
+  prop: string;
+  label: string;
+  minWidth: string;
+  fixed?: string;
+  align?: string;
+  formatType?: string;
+}
+
+
 const selectionIndRows = computed<SelectionIndicator[]>(() => {
   const first = store.selection_ind_data?.[0];
   if (!first) return [];
@@ -93,13 +106,6 @@ const emit = defineEmits<{
 const store = useApplicationStore();
 const reportStore = useMaterialsReportStore();
 
-const selectionColumns = ref([
-  { prop: 'stock_name', label: 'Склад', minWidth: '80', align: 'left' },
-  { prop: 'material', label: 'Материал', minWidth: '300', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', minWidth: '100', align: 'right', formatType: 'integer' },
-  { prop: 'rest_net_weight', label: 'Нетто', minWidth: '100', align: 'right', formatType: 'weight' },
-]);
-
 const selectionIndColumns = [
   { prop: 'ind', label: 'Показатель', minWidth: '100', align: 'center' },
   { prop: 'percent', label: '%', minWidth: '80', align: 'right', formatType: 'percent' },
@@ -115,7 +121,49 @@ const getFormatter = (type?: string) => {
   }
 };
 
+const SUMMARY_PROPS = ['rest_net_weight', 'rest_tare_amount'];
+
+const getSummary = ({ columns }: { columns: any[] }): string[] => {
+  return columns.map((column, index) => {
+    const prop = column.property;
+
+    if (index === 0) return '';
+    if (!prop || !SUMMARY_PROPS.includes(prop)) return '';
+
+    const values = store.selection_data.map((item: any) => Number(item[prop]));
+    if (values.some((v: number) => Number.isNaN(v))) return '';
+
+    const total = values.reduce((acc: number, v: number) => acc + v, 0);
+    const formatType = reportStore.selectionColumns.find(col => col.prop === prop)?.formatType;
+    return formatCell(total, formatType);
+  });
+};
+
+
 const formatCell = (value: any, type?: string) => getFormatter(type)(value);
+
+function configuringReportTables() {
+  reportStore.selectionColumns = reportStore.selectionColumns.filter(
+    col => !col.prop.includes('_percent'))
+
+  const percent_items: Column[] = [];
+  for (const item of reportStore.tableCondition) {
+    if (item.element !== '') {
+      const meta = store.materials_meta?.material_group_list
+        .find(group => group.code === item.element);
+      percent_items.push({
+        prop: item.element + '_percent',
+        label: item.element + ', ' + (meta?.umi ?? ''),
+        minWidth: '100',
+        align: 'right',
+        formatType: 'percent',
+      });
+    }
+  }
+
+  reportStore.selectionColumns.push(...percent_items);
+}
+
 
 const elementOrder = (): string => {
   if (reportStore.tableCondition.length > 0 && reportStore.isElementOrderMode) {
@@ -127,6 +175,14 @@ const elementOrder = (): string => {
 let fetchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const loadSelectionData = async () => {
+
+  try {
+    configuringReportTables();
+  } catch (error) {
+    console.error('Ошибка при настройке колонок:', error);
+    return;
+  }
+
   const keyList = reportStore.selectionData.map(item => item.key);
 
   if (!keyList.length) {

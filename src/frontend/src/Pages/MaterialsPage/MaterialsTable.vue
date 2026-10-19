@@ -8,7 +8,7 @@
           :show-summary="store.materials_data.length > 1"
           :summary-method="getSummary"
           :row-key="getRowKey"
-          style="width: 100%; height: 100%;"
+          style="width: 100%; height: 100%"
           stripe
           border
           show-overflow-tooltip
@@ -257,10 +257,13 @@ defineExpose({ refresh, unselectByMaterialId  });
 <style scoped>
 .materials-table {
   width: 100%;
+  position: relative;   /* опора для абсолютного wrapper */
+  overflow: hidden;     /* жёсткая граница слота: содержимое физически не может вылезти на панель */
 }
 
 .table-wrapper {
-  height: 100%;
+  position: absolute;
+  inset: 0;
   overflow: auto;
   border-radius: 4px;
 }
