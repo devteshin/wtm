@@ -25,7 +25,7 @@
           />
 
           <el-table-column
-            v-for="column in dataColumns"
+            v-for="column in visibleColumns"
             :key="column.prop"
             :prop="column.prop"
             :label="column.label"
@@ -33,6 +33,12 @@
             :fixed="column.fixed"
             :align="column.align"
           >
+
+            <template #header="scope">
+                <span class="col-header" @dblclick.stop="onHeaderDblClick(scope.column)">
+                  {{ column.label }}
+                </span>
+            </template>          
             <template #default="scope">
               {{ formatCell(scope.row[column.prop], column.formatType) }}
             </template>
@@ -113,6 +119,36 @@ const getSummary = ({ columns }: { columns: any[] }): string[] => {
 const dataColumns = computed<Column[]>(() =>
   reportStore.isDetailedMode ? reportStore.detailedColumns : reportStore.basicColumns
 );
+
+const hiddenProps = ref<string[]>([]);
+
+// скрыть можно что угодно, кроме зафиксированных — Склад и Материал обязательны
+const hideableColumns = computed(() =>
+  dataColumns.value.filter(col => !col.fixed)
+);
+
+const visibleColumns = computed<Column[]>(() =>
+  dataColumns.value.filter(col => !hiddenProps.value.includes(col.prop))
+);
+
+const toggleColumn = (prop: string) => {
+  hiddenProps.value = hiddenProps.value.includes(prop)
+    ? hiddenProps.value.filter(p => p !== prop)
+    : [...hiddenProps.value, prop];
+};
+
+const onHeaderDblClick = (column: any) => {
+  const prop = column.property;
+  if (!prop) return;
+
+  // обязательные колонки (fixed) не трогаем — как и раньше
+  if (hideableColumns.value.every(col => col.prop !== prop)) return;
+
+  // не даём скрыть всё до единой колонки
+  if (visibleColumns.value.filter(col => col.prop !== prop).length === 0) return;
+
+  toggleColumn(prop);
+};
 
 const selectionColumn = computed(() =>
   reportStore.isSelectionEnabled
@@ -238,6 +274,7 @@ const makeMaterialReport = async () => {
 };
 
 const refresh = async () => {
+  hiddenProps.value = [];
   try {
     configuringReportTables();
   } catch (error) {
@@ -281,4 +318,11 @@ defineExpose({ refresh, unselectByMaterialId  });
 :deep(.el-table__body tr:hover) {
   cursor: pointer;
 }
+
+:deep(.col-header) {
+  display: inline-block;
+  width: 100%;
+  user-select: none;   /* дабл-клик не выделяет текст шапки */
+}
+
 </style>
