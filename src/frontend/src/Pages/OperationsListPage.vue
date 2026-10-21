@@ -208,19 +208,13 @@ function setContextMaterialsSelection(task_items: frontend.ITaskItemsKeyMaterial
 
   if (task_items.length > 0)  {
     reportStore.selectedMaterial = [...new Set(task_items.map(item => item.material_id)) ]
-    reportStore.setSelectionData(
-      task_items.map(item => ({
-      key_material: item.key_material,
-      stock_id: props.stockID
-    }))
-    );
+    reportStore.selectionData = [...task_items.map(item => ({key: item.key_material, materialId: item.material_id}))]
     reportStore.isSelectionEnabled = true;
     reportStore.isDetailedMode = true;
 
   } else {
-    reportStore.setTableData([]);
-    reportStore.setSelectionTableData([]);
-    reportStore.setSelectionData([]);
+    store.materials_data =[];
+    reportStore.selectionData = [];
     reportStore.selectedMaterial = [];
     reportStore.isSelectionEnabled = false;
     reportStore.isDetailedMode = false;
