@@ -1,6 +1,6 @@
 <template>
   <el-container class="footer-layout">
-    <el-aside width="20%">
+    <el-aside v-if="selectionIndRows.length" width="20%">
       <div class="table-wrapper">
         <el-table
           :data="selectionIndRows"
@@ -65,6 +65,23 @@
         </el-table>
       </div>
     </el-main>
+
+    <el-aside v-if="reportStore.isExternalSelectionMode" width="20%" class="actions-aside">
+      <div class="actions-wrapper">
+        <el-button
+          type="primary"
+          :loading="isApplying"
+          :disabled="!store.selection_data.length"
+          @click="handleApplySelection"
+        >
+          Применить выбор
+        </el-button>
+        <el-button @click="handleCancel">
+          Отмена
+        </el-button>
+      </div>
+    </el-aside>
+
   </el-container>
 </template>
 
@@ -89,6 +106,7 @@ interface Column {
   formatType?: string;
 }
 
+const isApplying = ref(false);
 
 const selectionIndRows = computed<SelectionIndicator[]>(() => {
   const first = store.selection_ind_data?.[0];
@@ -102,6 +120,8 @@ const selectionIndRows = computed<SelectionIndicator[]>(() => {
 
 const emit = defineEmits<{
   'remove-material': [materialId: number];
+  'confirm-selection': [items: frontend.IRawMaterial[]];
+  'cancel': [];
 }>();
 
 const store = useApplicationStore();
@@ -206,7 +226,6 @@ const loadSelectionData = async () => {
         element_order: elementOrder(),
       });
 
-
   } catch (error) {
     console.error('Ошибка при загрузке данных подбора:', error);
   }
@@ -237,6 +256,31 @@ const refresh = async () => {
   await loadSelectionData();
 };
 
+const handleApplySelection = async () => {
+  const keyList = reportStore.selectionData.map(item => item.key);
+  if (!keyList.length) return;
+
+  isApplying.value = true;
+  try {
+    await store.fetchSelectionData({
+      stock_list: reportStore.selectedStore.toString(),
+      indicators: '',
+      key_material_list: keyList.join('|'),
+      query_type: 'raw_materials',
+      element_order: '',
+    });
+
+    // снимок: наверх уходит копия, а не живая ссылка на стор
+    emit('confirm-selection', [...(store.raw_materials_data ?? [])]);
+  } catch (error) {
+    console.error('Ошибка при получении данных выбранных материалов:', error);
+  } finally {
+    isApplying.value = false;
+  }
+};
+
+const handleCancel = () => emit('cancel');
+
 defineExpose({ refresh });
 
 </script>
@@ -254,4 +298,22 @@ defineExpose({ refresh });
 .footer-layout :deep(.el-main) {
   padding: 0;
 }
+
+.actions-aside {
+  padding: 8px;
+}
+
+.actions-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.actions-wrapper .el-button {
+  width: 100%;
+  margin-left: 0; /* el-button тянется к соседу, в колонке не нужно */
+}
+
 </style>

@@ -117,8 +117,6 @@ export default defineStore("app_store", () => {
         key_material_list: string;
         element_order: string;
     }) => {
-        // seq увеличиваем до любой ветки — в том числе чтобы пустой выбор
-        // протухал пару, которая ещё летит по сети
         const seq = ++selectionPairSeq;
 
         if (!base.key_material_list) {
@@ -127,11 +125,20 @@ export default defineStore("app_store", () => {
             return;
         }
 
+        let sel: any;
+        let ind: any[] = [];
+
         try {
-            const [sel, ind] = await Promise.all([
-                api.fetchSelectionData({ ...base, query_type: 'selection' }),
-                api.fetchSelectionData({ ...base, query_type: 'selection_indicators' }),
-            ]);
+            if (base.indicators) {
+                // показатели заданы — обычная пара
+                [sel, ind] = await Promise.all([
+                    api.fetchSelectionData({ ...base, query_type: 'selection' }),
+                    api.fetchSelectionData({ ...base, query_type: 'selection_indicators' }),
+                ]);
+            } else {
+                // показателей нет — fetch не дёргаем, в стор кладём пустоту
+                sel = await api.fetchSelectionData({ ...base, query_type: 'selection' });
+            }
 
             // устарел: пока летели, выбор снова менялся
             if (seq !== selectionPairSeq) return;
@@ -139,14 +146,12 @@ export default defineStore("app_store", () => {
             selection_data.value = sel;
             selection_ind_data.value = ind;
         } catch (error) {
-            //_pair не пишем вообще: обе таблицы остаются в предыдущем состоянии
+            // пару не пишем вообще: обе таблицы остаются в предыдущем состоянии
             if (seq === selectionPairSeq) {
                 console.error('Ошибка при загрузке данных подбора:', error);
             }
         }
     };
-
-
 
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsMeta = () => {

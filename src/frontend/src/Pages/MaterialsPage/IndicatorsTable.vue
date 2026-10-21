@@ -1,6 +1,6 @@
 <template>
   <div class="indicators-table">
-    <el-table :data="modelValue" style="width: 100%" max-height="250">
+    <el-table v-if="modelValue.length" :data="modelValue" style="width: 100%" max-height="250">
       <el-table-column prop="element" label="">
         <template #default="scope">
           <el-select v-model="scope.row.element" style="width: 90px">

@@ -24,6 +24,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
   const isSelectionControlEnabled = ref(false);
   const isOperationDocAutoGenerateReport = ref(false);
   const isOperationListAutoGenerateReport = ref(false);
+  const isExternalSelectionMode = ref(false);
   const tableCondition = ref<TableConditionItem[]>([
     { element: '', min: '', max: '' }
   ]);
@@ -164,6 +165,7 @@ export const useMaterialsReportStore = defineStore('materialsReport', () => {
     isSelectionControlEnabled,
     isOperationDocAutoGenerateReport,
     isOperationListAutoGenerateReport,
+    isExternalSelectionMode,
     tableCondition,
     selectionData,
     basicColumns,

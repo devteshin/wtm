@@ -130,6 +130,8 @@
               v-if="reportStore.isSelectionControlEnabled"
               class="selection-footer"
               @remove-material="onRemoveMaterial"
+              @confirm-selection="onConfirmSelection"
+              @cancel="onCancelSelection"              
             />
           </el-main>
 
@@ -210,6 +212,17 @@ const tableCondition = computed({
 });
 
 
+const emit = defineEmits<{
+  'selection-confirmed': [items: frontend.IRawMaterial[]];
+  'close': [];
+}>();
+
+const onConfirmSelection = (items: frontend.IRawMaterial[]) => {
+  emit('selection-confirmed', items);
+};
+
+const onCancelSelection = () => emit('close');
+
  // Отслеживаем изменения всех фильтров и сохраняем в стор
 watch(
   () => ({
@@ -288,6 +301,10 @@ onMounted(async () => {
     reportStore.selectionColumns = [...selectionColumns.value, ...existingPercentSelection];
 
     // Проверяем флаги и запускаем отчёт
+    reportStore.isExternalSelectionMode =
+      reportStore.isOperationDocAutoGenerateReport ||
+      reportStore.isOperationListAutoGenerateReport;
+
     if (reportStore.isOperationDocAutoGenerateReport) {
       isOperationDocMode.value = true;
       reportStore.isOperationDocAutoGenerateReport = false;

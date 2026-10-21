@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
 import { Delete, Plus } from '@element-plus/icons-vue';
 import RawMaterialGrid from './RawMaterialGrid.vue';
-import MaterialPage from '../MaterialsPage/MaterialsPage.vue';
+import MaterialsPage from '../MaterialsPage/MaterialsPage.vue';
 import DebugDrawerContent from '../DebugDrawerContent.vue';
 
 
@@ -299,7 +299,7 @@ function setContextMaterialsSelection() {
     reportStore.isDetailedMode = true;
     reportStore.isSelectionEnabled = true;
   } else {
-    reportStore.setTableData([]);
+    store.materials_data = [];
     reportStore.isDetailedMode = false;
     reportStore.isSelectionEnabled = false;
   };  
@@ -524,6 +524,7 @@ const onSelectionConfirmed = (items: frontend.IRawMaterial[]) => {
   ElMessage.success(`Добавлено ${newItems.length} позиций`);
   drawerVisible.value = false;
 };
+ 
 
 
 const drawerSize = computed<number>(() => {
@@ -727,7 +728,7 @@ const onDrawerClose = () => {
                                         link
                                         type="danger"
                                         size="small"
-                                        @click="handleDeleteRow(scope.row)"
+                                        @click="handleDeleteRow(scope.row as frontend.IRawMaterial)"
                                     >
                                         <Delete style="width: 14px; height: 14px;" />
                                     </el-button>
@@ -773,7 +774,7 @@ const onDrawerClose = () => {
       :size="drawerSize"
       @close="onDrawerClose"
     >
-       <MaterialPage
+       <MaterialsPage
         :stockID="props.stockID"
         @selection-confirmed="onSelectionConfirmed"
         @close="onDrawerClose"
