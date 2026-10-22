@@ -8,8 +8,8 @@ export interface TableConditionItem {
 };
 
 export interface SelectedItem {
-  key: string;        // key_material — уникальный ключ строки таблицы
-  materialId: number; // для удаления по материалу
+  key_material: string;        // key_material — уникальный ключ строки таблицы
+  material_id: number; // для удаления по материалу
 }
 
 export const useMaterialsReportStore = defineStore('materialsReport', () => {

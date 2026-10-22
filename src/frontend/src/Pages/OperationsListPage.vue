@@ -208,7 +208,7 @@ function setContextMaterialsSelection(task_items: frontend.ITaskItemsKeyMaterial
 
   if (task_items.length > 0)  {
     reportStore.selectedMaterial = [...new Set(task_items.map(item => item.material_id)) ]
-    reportStore.selectionData = [...task_items.map(item => ({key: item.key_material, materialId: item.material_id}))]
+    reportStore.selectionData = [...task_items]
     reportStore.isSelectionEnabled = true;
     reportStore.isDetailedMode = true;
 

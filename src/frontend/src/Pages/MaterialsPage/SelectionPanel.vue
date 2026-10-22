@@ -204,7 +204,7 @@ const loadSelectionData = async () => {
     return;
   }
 
-  const keyList = reportStore.selectionData.map(item => item.key);
+  const keyList = reportStore.selectionData.map(item => item.key_material);
 
   if (!keyList.length) {
     store.selection_data = [];
@@ -257,7 +257,7 @@ const refresh = async () => {
 };
 
 const handleApplySelection = async () => {
-  const keyList = reportStore.selectionData.map(item => item.key);
+  const keyList = reportStore.selectionData.map(item => item.key_material);
   if (!keyList.length) return;
 
   isApplying.value = true;

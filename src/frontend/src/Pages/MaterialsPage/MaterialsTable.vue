@@ -14,6 +14,7 @@
           show-overflow-tooltip
           @cell-dblclick="(row, column, cell, event) => emit('cell-dblclick', row, column, cell, event)"
           @selection-change="onSelectionChange"
+          @row-click="onRowClick"
         >
           <el-table-column
             v-for="column in selectionColumn"
@@ -164,7 +165,7 @@ const restoreSelection = async () => {
 
   isRestoring.value = true;
   try {
-    const savedKeys = new Set(reportStore.selectionData.map(item => item.key));
+    const savedKeys = new Set(reportStore.selectionData.map(item => item.key_material));
     const rowsToSelect = store.materials_data.filter(
       (row: any) => savedKeys.has(getRowKey(row))
     );
@@ -181,7 +182,7 @@ const onSelectionChange = (rows: any[]) => {
   if (isRestoring.value) return;
   if (!reportStore.isSelectionEnabled) return;
   reportStore.setSelectionData(
-    rows.map(r => ({ key: getRowKey(r), materialId: r.material_id }))
+    rows.map(r => ({ key_material: getRowKey(r), material_id: r.material_id }))
   );
 };
 
@@ -192,8 +193,34 @@ const unselectByMaterialId = async (materialId: number) => {
   // строки этого материала, которых сейчас нет в данных (материал отфильтрован),
   // selection-change не увидит — подчистим хранилище вручную
   reportStore.setSelectionData(
-    reportStore.selectionData.filter(item => item.materialId !== materialId)
+    reportStore.selectionData.filter(item => item.material_id !== materialId)
   );
+};
+
+let lastClickedIndex = -1;
+
+const onRowClick = (row: any, column: any, event: MouseEvent) => {
+  if (!isSelectionActive()) return;
+
+  // клик по чекбоксу уже тумблирует выбор сам — не вмешиваемся
+  if (column?.type === 'selection') return;
+
+  const rows = store.materials_data;
+  const currentIndex = rows.indexOf(row);
+  if (currentIndex === -1) return;
+
+  window.getSelection()?.removeAllRanges();
+
+  // shift-клик — достраиваем диапазон от якоря
+  if (event.shiftKey && lastClickedIndex !== -1) {
+    const start = Math.min(lastClickedIndex, currentIndex);
+    const end = Math.max(lastClickedIndex, currentIndex);
+    for (let i = start; i <= end; i++) {
+      tableRef.value?.toggleRowSelection(rows[i], true);
+    }
+  }
+
+  lastClickedIndex = currentIndex;
 };
 
 
