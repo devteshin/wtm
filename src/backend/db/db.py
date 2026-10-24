@@ -273,6 +273,54 @@ async def select_materials_meta(conn: Connection):
         "zone_list": zone_list
     }
 
+async def select_measurements_meta(conn: Connection, meas_id: int = 0):
+    q_measurement = "SELECT id, name FROM measurement ORDER BY name"
+    q_indicators = """
+    SELECT i.id, i.code, i.measurement_unit, i.min_value, i.max_value, i.value_precision FROM measurement_ind_set AS mis
+    LEFT JOIN measurement_indicator AS i ON i.id = mis.measurement_ind_id
+    WHERE %(meas_id)s = 0 OR mis.measurement_id = %(meas_id)s
+    """
+    q_operation = """
+    SELECT o.id, o.name FROM operations AS o
+    LEFT JOIN technical_process AS tp ON tp.id = o.tp_id
+    INNER JOIN measurement AS m ON m.tp_id = tp.id AND (%(meas_id)s = 0 OR m.id = %(meas_id)s)
+    WHERE o.done = 0
+    ORDER BY name
+    """
+
+    async with conn.cursor() as cur:
+        await cur.execute(q_measurement)
+        measurement_list = await cur.fetchall()
+        await cur.execute(q_operation, {"meas_id": meas_id})
+        operation_list = await cur.fetchall()
+        await cur.execute(q_indicators, {"meas_id": meas_id})
+        indicators_list = await cur.fetchall()
+
+    return {
+        "measurement_list": measurement_list,
+        "operation_list": operation_list,
+        "indicators_list": indicators_list
+    }
+
+async def select_measurements_data(conn: Connection, meas_id: int = 0, operation_id: int = 0, meas_date_start: str = '', meas_date_end: str = ''):
+    q_measurement_data = """
+    SELECT measured_at, m.name, o.name, JSON_OBJECTAGG(mi.id, md.value) AS vals   FROM measurement_data AS md
+    LEFT JOIN measurement AS m ON m.id = md.measurement_id
+    LEFT JOIN operations AS o ON o.id = md.operation_id
+    LEFT JOIN measurement_indicator AS mi ON mi.id = md.indicator_id
+    WHERE 
+    ((%(meas_date_start)s = '' OR m.measured_at >= %(meas_date_start)s 00:00:00) 
+    AND 
+    (%(meas_date_end)s = '' OR m.measured_at <  %(meas_date_end)s 00:00:00))
+    AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
+    AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
+    GROUP BY measured_at, m.name, o.name
+    """
+    async with conn.cursor() as cur:
+        await cur.execute(q_measurement_data)
+        measurement_data = await cur.fetchall()
+
+    return measurement_data
 
 async def select_materials_list(conn: Connection):
     q_material = "SELECT id, material as name FROM material WHERE kind = 0 ORDER BY material"

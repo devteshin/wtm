@@ -4,7 +4,8 @@ from db import (check_user, select_task, select_tasks, change_password, select_m
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
                 check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations,
-                select_production_report_data, select_production_graph_data, select_metrics_inventory_aging, select_journal_zone_docs
+                select_production_report_data, select_production_graph_data, select_metrics_inventory_aging, select_journal_zone_docs,
+                select_measurements_meta, select_measurements_data
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -135,6 +136,13 @@ async def get_materials_meta(request: Request):
         materials_meta = await select_materials_meta(conn)
     return await jsonify(materials_meta, request)
 
+async def get_measurements_meta(request: Request):
+    meas_id = request.query.get("meas_id")
+    measurements_meta = []
+    async with request.app["db"].acquire() as conn:
+        measurements_meta = await select_measurements_meta(conn, meas_id=meas_id)
+    return await jsonify(measurements_meta, request)
+
 async def search_materials_handler(request: Request):
     material_substring = request.query.get("material_substring")
     limit_str = request.query.get("limit")
@@ -165,6 +173,25 @@ async def search_operations_handler(request: Request):
 
     return await jsonify(operations_list, request)
 
+
+async def get_measurements_data(request: Request):
+    
+    meas_id = request.query.get("meas_id")
+    operation_id = request.query.get("operation_id")
+    meas_date_start = request.query.get("meas_date_start")
+    meas_date_end = request.query.get("meas_date_end")
+
+    measurements_data = []
+    async with request.app["db"].acquire() as conn:
+        measurements_data = await select_materials_data(
+            conn,
+            meas_id=meas_id,
+            operation_id=operation_id,
+            meas_date_start=meas_date_start,
+            meas_date_end=meas_date_end
+        )
+
+    return await jsonify(measurements_data, request)
 
 async def get_materials_data(request: Request):
     

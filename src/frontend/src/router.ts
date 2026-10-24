@@ -97,6 +97,10 @@ const routes: Array<RouteRecordRaw> = [
         path: "/zone_page",
         component: () => import("@/Pages/ZonesPage/ZoneDocsPage.vue")
     },
+    {
+        path: "/meas_page",
+        component: () => import("@/Pages/MeasurementPage/MeasurementPage.vue")
+    },
 
 
 ];

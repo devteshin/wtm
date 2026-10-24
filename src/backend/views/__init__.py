@@ -8,7 +8,7 @@ from .handlers import (
     tasks_progress, update_job_status_handler, get_max_tare_id, check_operation_name_handler, update_operation_handler, delete_operation_handler,
     update_jobs_status_handler, create_material_handler, create_arrival_handler, update_arrival_handler, delete_arrival_handler, 
     check_material_item_handler, get_materials_meta, get_materials_data, get_selection_data, update_task_handler, search_materials_handler, search_operations_handler,
-    get_production_report_data, get_production_graph_data, get_metrics_inventory_aging, get_journal_zone_docs)
+    get_production_report_data, get_production_graph_data, get_metrics_inventory_aging, get_journal_zone_docs, get_measurements_meta, get_measurements_data)
 
 
 def index_spa(path: str, filename: str):
@@ -56,6 +56,8 @@ def setup_handlers(app: Application):
         ("GET", "/api/stock/{stockID}/task/{taskID}/material/{materialID}", get_task, "get_task"),
         ("GET", "/api/materials", get_materials_meta, "get_materials_meta"),
         ("GET", "/api/materials_data", get_materials_data, "get_materials_data"),
+        ("GET", "/api/measurements", get_measurements_meta, "get_measurements_meta"),
+        ("GET", "/api/measurements_data", get_measurements_data, "get_measurements_data"),
         ("GET", "/api/search_materials", search_materials_handler, "search_materials_handler"),
         ("GET", "/api/search_operations", search_operations_handler, "search_operations_handler"),
         ("GET", "/api/metrics_inventory_aging", get_metrics_inventory_aging, "get_metrics_inventory_aging"),
