@@ -316,9 +316,15 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
     GROUP BY measured_at, m.name, o.name
     """
+
+    print(q_measurement_data)
+
     async with conn.cursor() as cur:
         await cur.execute(q_measurement_data)
         measurement_data = await cur.fetchall()
+
+    print(measurement_data)
+
 
     return measurement_data
 

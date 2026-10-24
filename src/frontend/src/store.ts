@@ -416,6 +416,8 @@ export default defineStore("app_store", () => {
         operation,
         materials_meta,
         materials_data,
+        measurements_meta,
+        measurements_data,
         metrics_inventory_aging,
         zone_docs,
         production_report_data,
