@@ -319,6 +319,7 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
 
     async with conn.cursor() as cur:
         await cur.execute(q_measurement_data, {"meas_id": meas_id, "operation_id": operation_id, "meas_date_start": meas_date_start, "meas_date_end": meas_date_end})
+        print(cur._executed)
         measurement_data = await cur.fetchall()
 
     return measurement_data

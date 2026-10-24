@@ -51,6 +51,7 @@ const selectedDate = ref<Date>(new Date());
 
 const loadDay = async () => {
   const d = selectedDate.value;
+  
   const dateFrom = `${fmtDate(d)}`;
   const dateTo   = `${fmtDate(d)}`;
 
@@ -63,8 +64,8 @@ const loadDay = async () => {
        store.fetchMeasurementsData({
         meas_id: 0,
         operation_id: 0,
-        meas_date_start: dateFrom,
-        meas_date_end: dateTo,
+        meas_date_start: '2026-10-22',
+        meas_date_end: '2026-10-22',
       }),
  
 
