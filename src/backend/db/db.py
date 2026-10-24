@@ -304,27 +304,22 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
 
 async def select_measurements_data(conn: Connection, meas_id: int = 0, operation_id: int = 0, meas_date_start: str = '', meas_date_end: str = ''):
     q_measurement_data = """
-    SELECT measured_at, m.name AS measurement, o.name AS operation, JSON_OBJECTAGG(mi.id, md.value) AS vals   FROM measurement_data AS md
+    SELECT measured_at, m.name AS measurement, o.name AS operation, JSON_OBJECTAGG(mi.id, md.value) AS vals FROM measurement_data AS md
     LEFT JOIN measurement AS m ON m.id = md.measurement_id
     LEFT JOIN operations AS o ON o.id = md.operation_id
     LEFT JOIN measurement_indicator AS mi ON mi.id = md.indicator_id
     WHERE 
-    ((%(meas_date_start)s = '' OR measured_at >= %(meas_date_start)s) 
+    ((%(meas_date_start)s = '' OR DATE(measured_at) >= %(meas_date_start)s) 
     AND 
-    (%(meas_date_end)s = '' OR measured_at <  %(meas_date_end)s))
+    (%(meas_date_end)s = '' OR DATE(measured_at) <  %(meas_date_end)s))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
     GROUP BY measured_at, m.name, o.name
     """
 
-    print(q_measurement_data)
-
     async with conn.cursor() as cur:
         await cur.execute(q_measurement_data, {"meas_id": meas_id, "operation_id": operation_id, "meas_date_start": meas_date_start, "meas_date_end": meas_date_end})
         measurement_data = await cur.fetchall()
-
-    print(measurement_data)
-
 
     return measurement_data
 

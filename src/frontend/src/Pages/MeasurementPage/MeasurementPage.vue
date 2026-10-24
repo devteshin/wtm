@@ -51,11 +51,9 @@ const selectedDate = ref<Date>(new Date());
 
 const loadDay = async () => {
   const d = selectedDate.value;
-  //const dateFrom = `${fmtDate(d)} 00:00:00`;
-  //const dateTo   = `${fmtDate(d)} 23:59:59`;
+  const dateFrom = `${fmtDate(d)}`;
+  const dateTo   = `${fmtDate(d)}`;
 
-  const dateFrom = '';
-  const dateTo = '';
 
   try {
     store.loading = true;
