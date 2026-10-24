@@ -183,7 +183,7 @@ async def get_measurements_data(request: Request):
 
     measurements_data = []
     async with request.app["db"].acquire() as conn:
-        measurements_data = await select_materials_data(
+        measurements_data = await select_measurements_data(
             conn,
             meas_id=meas_id,
             operation_id=operation_id,

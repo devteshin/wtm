@@ -309,9 +309,9 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     LEFT JOIN operations AS o ON o.id = md.operation_id
     LEFT JOIN measurement_indicator AS mi ON mi.id = md.indicator_id
     WHERE 
-    ((%(meas_date_start)s = '' OR m.measured_at >= %(meas_date_start)s 00:00:00) 
+    ((%(meas_date_start)s = '' OR m.measured_at >= %(meas_date_start)s) 
     AND 
-    (%(meas_date_end)s = '' OR m.measured_at <  %(meas_date_end)s 00:00:00))
+    (%(meas_date_end)s = '' OR m.measured_at <  %(meas_date_end)s))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
     GROUP BY measured_at, m.name, o.name
