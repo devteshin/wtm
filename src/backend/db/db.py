@@ -311,7 +311,7 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     WHERE 
     ((%(meas_date_start)s = '' OR DATE(measured_at) >= %(meas_date_start)s) 
     AND 
-    (%(meas_date_end)s = '' OR DATE(measured_at) <  %(meas_date_end)s))
+    (%(meas_date_end)s = '' OR DATE(measured_at) <  %(meas_date_end)s  + INTERVAL 1 DAY))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
     GROUP BY measured_at, m.name, o.name
