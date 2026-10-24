@@ -61,12 +61,15 @@ const loadDay = async () => {
     store.loading = true;
     await Promise.all([
       store.fetchMeasurementsMeta({ meas_id: 0 }),
-      store.fetchMeasurementsData({
+
+/*       store.fetchMeasurementsData({
         meas_id: 0,
         operation_id: 0,
         meas_date_start: dateFrom,
         meas_date_end: dateTo,
       }),
+ */
+
     ]);
   } catch (error) {
     console.error('Ошибка при загрузке измерений:', error);

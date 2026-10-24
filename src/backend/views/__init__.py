@@ -56,7 +56,7 @@ def setup_handlers(app: Application):
         ("GET", "/api/stock/{stockID}/task/{taskID}/material/{materialID}", get_task, "get_task"),
         ("GET", "/api/materials", get_materials_meta, "get_materials_meta"),
         ("GET", "/api/materials_data", get_materials_data, "get_materials_data"),
-        ("GET", "/api/measurements", get_measurements_meta, "get_measurements_meta"),
+        ("GET", "/api/measurements_meta", get_measurements_meta, "get_measurements_meta"),
         ("GET", "/api/measurements_data", get_measurements_data, "get_measurements_data"),
         ("GET", "/api/search_materials", search_materials_handler, "search_materials_handler"),
         ("GET", "/api/search_operations", search_operations_handler, "search_operations_handler"),
