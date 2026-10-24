@@ -137,6 +137,7 @@ async def get_materials_meta(request: Request):
     return await jsonify(materials_meta, request)
 
 async def get_measurements_meta(request: Request):
+    print('get_measurement')
     meas_id = request.query.get("meas_id")
     measurements_meta = []
     async with request.app["db"].acquire() as conn:

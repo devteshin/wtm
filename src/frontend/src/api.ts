@@ -119,6 +119,7 @@ class ClientAPI {
             queryParams.toString() ? `?${queryParams.toString()}` : ''
         }`;        
 
+        console.log('url', url);
         const response = await fetch(url, { headers: this.requestHeaders() });
         if (response.status === 403) {
             window.localStorage.removeItem("token");
