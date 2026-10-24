@@ -105,6 +105,52 @@ class ClientAPI {
         return body;
     }
 
+    async fetchMeasurementsMeta(params: frontend.IMeasurementsMetaQueryParams = {}) {
+        this.checkToken();
+
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+            }
+        });
+
+        const url = `${BASE_URL}/measurements_meta${
+            queryParams.toString() ? `?${queryParams.toString()}` : ''
+        }`;        
+
+        const response = await fetch(url, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
+    async fetchMeasurementsData(params: frontend.IMeasurementsQueryParams = {}) {
+        this.checkToken();
+
+        const queryParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+            }
+        });
+
+        const url = `${BASE_URL}/measurements_data${
+            queryParams.toString() ? `?${queryParams.toString()}` : ''
+        }`;        
+
+        const response = await fetch(url, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        const body = await response.json();
+        return body;
+    }
+
     async fetchMetricsInventoryAging(params: frontend.IMetricsInventoryAgingQueryParams = {}) {
         this.checkToken();
 

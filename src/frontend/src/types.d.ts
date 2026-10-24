@@ -11,6 +11,26 @@ declare namespace frontend {
         zone_list: Array<IZoneList>
     }
 
+    export type IMeasurementsMeta = {
+        measurement_list: Array<IMeasurement> 
+        operation_list: Array<IOpertion>
+        indicator_list: Array<IIndicator>
+    }
+
+    export type IMeasurement = {
+        id: number
+        name: string
+    }
+    
+    export type IIndicator = {
+        id: number
+        code: string
+        measurement_unit: string
+        min_value: number
+        max_value: number
+        value_precision: number
+    }
+    
     export type IZoneList = {
         id: number
         name: string
@@ -70,6 +90,13 @@ declare namespace frontend {
         rest_net_weight: number
         rest_gross_weight: number
         [key: string]: number;
+    }    
+
+    export type IMeasurementsData = {
+        measured_at: string
+        measurement: string
+        operation: string
+        vals?: Record<string, number>
     }    
 
     export type IMetricsInventoryAging = {
@@ -238,6 +265,17 @@ declare namespace frontend {
         detailed_mode?: string;
         only_non_zero_mode?: boolean;
         element_order?: string;
+    }
+
+    export type IMeasurementsQueryParams = {
+        meas_id?: number;
+        operation_id?: number;
+        meas_date_start?: string;
+        meas_date_end?: string;
+    }
+
+    export type IMeasurementsMetaQueryParams = {
+        meas_id?: number;
     }
 
     export type IMetricsInventoryAgingQueryParams = {

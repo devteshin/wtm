@@ -304,7 +304,7 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
 
 async def select_measurements_data(conn: Connection, meas_id: int = 0, operation_id: int = 0, meas_date_start: str = '', meas_date_end: str = ''):
     q_measurement_data = """
-    SELECT measured_at, m.name, o.name, JSON_OBJECTAGG(mi.id, md.value) AS vals   FROM measurement_data AS md
+    SELECT measured_at, m.name AS measurement, o.name AS operation, JSON_OBJECTAGG(mi.id, md.value) AS vals   FROM measurement_data AS md
     LEFT JOIN measurement AS m ON m.id = md.measurement_id
     LEFT JOIN operations AS o ON o.id = md.operation_id
     LEFT JOIN measurement_indicator AS mi ON mi.id = md.indicator_id

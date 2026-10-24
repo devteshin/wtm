@@ -37,36 +37,47 @@
       </el-table-column>
     </el-table>
 
-    <!-- Диалог ввода -->
-    <el-dialog v-model="dialogVisible" :title="isEdit ? 'Изменение' : 'Новое измерение'" width="480px">
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="130px">
-        <el-form-item label="Техпроцесс" prop="tech_process_id">
-          <el-select v-model="form.tech_process_id" filterable>
-            <el-option v-for="tp in techProcesses" :key="tp.id"
-                       :label="tp.name" :value="tp.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="Операция">
-          <el-select v-model="form.operation_id" filterable clearable>
-            <el-option v-for="op in operations" :key="op.id"
-                       :label="op.name" :value="op.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="Время забора" prop="measured_at">
-          <el-date-picker v-model="form.measured_at" type="datetime"
-                          format="DD.MM.YYYY HH:mm" />
-        </el-form-item>
-        <el-form-item label="Углерод, %">
-          <el-input-number v-model="form.C" :min="0" :max="100" :precision="2" :controls="false" />
-        </el-form-item>
-        <el-form-item label="Сера, %">
-          <el-input-number v-model="form.S" :min="0" :max="100" :precision="2" :controls="false" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">Отмена</el-button>
-        <el-button type="primary" :loading="saving" @click="save">Сохранить</el-button>
-      </template>
-    </el-dialog>
   </el-card>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import useApplicationStore from '@/store';
+import { ElMessage } from 'element-plus';
+
+const store = useApplicationStore();
+
+const selectedDate = ref<Date>(new Date());
+
+const loadDay = async () => {
+  const d = selectedDate.value;
+  //const dateFrom = `${fmtDate(d)} 00:00:00`;
+  //const dateTo   = `${fmtDate(d)} 23:59:59`;
+
+  const dateFrom = '';
+  const dateTo = '';
+
+  try {
+    store.loading = true;
+    await Promise.all([
+      store.fetchMeasurementsMeta({ meas_id: 0 }),
+      store.fetchMeasurementsData({
+        meas_id: 0,
+        operation_id: 0,
+        meas_date_start: dateFrom,
+        meas_date_end: dateTo,
+      }),
+    ]);
+  } catch (error) {
+    console.error('Ошибка при загрузке измерений:', error);
+    ElMessage.error('Не удалось загрузить измерения');
+  } finally {
+    store.loading = false;
+  }
+};
+
+const fmtDate = (d: Date) =>
+  d.toLocaleDateString('sv-SE'); // даст 'YYYY-MM-DD' — удобно для SQL-диапазонов
+
+onMounted(loadDay);
+</script>

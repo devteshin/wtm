@@ -23,10 +23,14 @@ export default defineStore("app_store", () => {
     const operation = ref<Array<frontend.IOperationDoc>>([]);
     /** документ приема из производства */
     const arrival = ref<frontend.IArrival | null>(null);
+    /** метаданные для ввода результатов измерений */
+    const measurements_meta = ref<frontend.IMeasurementsMeta | null>(null);
     /** данные материалов для отчета по остаткам */
     const materials_meta = ref<frontend.IMaterialsMeta | null>(null);
     /** список материалов id, name */
     const materials_list = ref<frontend.IMaterial | null>(null);
+    /** данные измерения показателей */
+    const measurements_data = ref<Array<frontend.IMeasurementsData>>([]);
     /** остатки материалов для отчета по остаткам */
     const materials_data = ref<Array<frontend.IMaterialsData>>([]);
     /** данные метрики inventory aging */
@@ -65,6 +69,11 @@ export default defineStore("app_store", () => {
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsData = (params?: frontend.IMaterialsQueryParams) => {
         return api.fetchMaterialsData(params).then(body => materials_data.value = body).finally(() => loading.value = false);
+    };
+
+    /** запрос к API для получения данных измерения показателей */
+    const fetchMeasurementsData = (params?: frontend.IMeasurementsQueryParams) => {
+        return api.fetchMeasurementsData(params).then(body => measurements_data.value = body).finally(() => loading.value = false);
     };
 
     /** запрос к API для получения метрик срок хранения материалов */
@@ -151,6 +160,11 @@ export default defineStore("app_store", () => {
                 console.error('Ошибка при загрузке данных подбора:', error);
             }
         }
+    };
+
+    /** запрос к API для получения данных для ввода показателей измерения*/
+    const fetchMeasurementsMeta = (params?: frontend.IMeasurementsMetaQueryParams) => {
+        return api.fetchMeasurementsMeta(params).then(body => measurements_meta.value = body).finally(() => loading.value = false);
     };
 
     /** запрос к API для получения данных для отчета по остаткам материалов */
@@ -366,6 +380,8 @@ export default defineStore("app_store", () => {
         fetchStocks,
         fetchMaterialsMeta,
         fetchMaterialsData,
+        fetchMeasurementsMeta,
+        fetchMeasurementsData,
         fetchMetricsInventoryAging,
         fetchZoneDocs,
         fetchProductionReportData,
