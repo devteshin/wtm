@@ -100,7 +100,9 @@ declare namespace frontend {
 
     export type IMeasurementsData = {
         measured_at: string
+        measurement_id: number
         measurement: string
+        operation_id: number
         operation: string
         vals?: Record<string, number>
     }    
