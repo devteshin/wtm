@@ -321,11 +321,11 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     SELECT m.name AS measurement, m.id AS measurement_id
     , o.name AS operation, o.id AS operation_id
     , measured_at 
-    , JSON_OBJECTAGG(mi.id, md.value) AS vals
+    , JSON_OBJECTAGG(mv.indicator_id, mv.value) AS vals
     FROM measurement_data AS md
     LEFT JOIN measurement AS m ON m.id = md.measurement_id
     LEFT JOIN operations AS o ON o.id = md.operation_id
-    LEFT JOIN measurement_indicator AS mi ON mi.id = md.indicator_id
+    LEFT JOIN measurement_data_value AS mv ON mv.measurement_data_id=md.id
     WHERE 
     ((%(meas_date_start)s = '' OR DATE(measured_at) >= %(meas_date_start)s) 
     AND 
