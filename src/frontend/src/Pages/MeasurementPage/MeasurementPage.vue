@@ -1,89 +1,359 @@
 <template>
   <el-card>
-    <!-- Панель: дата + действия -->
+    <!-- Тулбар -->
     <div class="toolbar">
+      <el-select
+        v-model="selectedMeasurementId"
+        placeholder="Измерение"
+        filterable
+        style="width: 320px"
+      >
+        <el-option
+          v-for="m in measurementsList"
+          :key="m.id"
+          :label="m.name"
+          :value="m.id"
+        />
+      </el-select>
+
       <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
       <el-date-picker
         v-model="selectedDate"
         type="date"
         :clearable="false"
         format="DD.MM.YYYY"
-        @change="loadDay"
+        value-format="YYYY-MM-DD"
       />
       <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
-      <el-button type="primary" @click="openCreate">Добавить измерение</el-button>
+
+      <el-button
+        type="primary"
+        :disabled="!selectedMeasurementId"
+        @click="loadData"
+      >Заполнить</el-button>
+
+      <el-button
+        :disabled="!selectedMeasurementId"
+        @click="addRow"
+      >Добавить строку</el-button>
     </div>
 
-    <!-- Таблица дня -->
-    <el-table :data="rows" v-loading="loading" border>
-      <el-table-column prop="measured_at" label="Время забора" width="120">
-        <template #default="{ row }">{{ fmtTime(row.measured_at) }}</template>
-      </el-table-column>
-      <el-table-column prop="tech_process_name" label="Техпроцесс" />
-      <el-table-column label="Операция" width="180">
-        <template #default="{ row }">{{ row.operation_name || '—' }}</template>
-      </el-table-column>
-      <el-table-column label="C, %" width="100" align="right">
-        <template #default="{ row }">{{ row.C ?? '—' }}</template>
-      </el-table-column>
-      <el-table-column label="S, %" width="100" align="right">
-        <template #default="{ row }">{{ row.S ?? '—' }}</template>
-      </el-table-column>
-      <el-table-column label="" width="140" align="right">
+    <!-- Таблица: показывается только после выбора измерения -->
+    <el-table
+      v-if="selectedMeasurementId"
+      :data="rows"
+      v-loading="loading"
+      border
+      row-key="rowKey"
+    >
+      <el-table-column label="Время измерения" width="200">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openEdit(row)">Изменить</el-button>
-          <el-button link type="danger" @click="remove(row)">Удалить</el-button>
+          <el-date-picker
+            v-model="row.measuredAt"
+            type="datetime"
+            :clearable="false"
+            format="DD.MM.YYYY HH:mm"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            :disabled-date="disableOtherDays"
+            style="width: 100%"
+            @change="onKeyChanged(row as EditableRow)"
+          />
+        </template>
+      </el-table-column>
+
+      <el-table-column label="Операция" min-width="200">
+        <template #default="{ row }">
+          <el-select
+            v-model="row.operationId"
+            placeholder="—"
+            filterable
+            style="width: 100%"
+            @change="onKeyChanged(row as EditableRow)"
+          >
+            <el-option
+              v-for="op in operationsList"
+              :key="op.id"
+              :label="op.name"
+              :value="op.id"
+            />
+          </el-select>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-for="ind in indicatorSet"
+        :key="ind.id"
+        :label="ind.code"
+        width="120"
+        align="right"
+      >
+        <template #default="{ row }">
+          <el-input-number
+            v-model="row.values[String(ind.id)]"
+            :controls="false"
+            :precision="2"
+            :min="0"
+            :max="100"
+            style="width: 100%; text-align: right"
+            @change="onValueChanged(row as EditableRow, ind.id)"
+          />
+        </template>
+      </el-table-column>
+
+      <el-table-column label="" width="90" align="right">
+        <template #default="{ row }">
+          <el-button link type="danger" @click="removeRow(row as EditableRow)">Удалить</el-button>
         </template>
       </el-table-column>
     </el-table>
 
+    <el-empty v-if="selectedMeasurementId && !loading && rows.length === 0"
+              description="Измерений за этот день нет" />
   </el-card>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
 import useApplicationStore from '@/store';
-import { ElMessage } from 'element-plus';
 
 const store = useApplicationStore();
 
-const selectedDate = ref<Date>(new Date());
+// ---------- справочники из meta ----------
+const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
+const operationsList   = computed(() => store.measurements_meta?.operation_list ?? []);
+const indicatorSet     = computed(() => store.measurements_meta?.indicator_set_list ?? []);
 
-const loadDay = async () => {
-  const d = selectedDate.value;
-  
-  const dateFrom = `${fmtDate(d)}`;
-  const dateTo   = `${fmtDate(d)}`;
+// ---------- состояние ----------
+const selectedMeasurementId = ref<number | null>(null);
+const selectedDate = ref<string>(new Date().toISOString().slice(0, 10));
+const loading = ref(false);
 
-
-  try {
-    store.loading = true;
-    await Promise.all([
-      store.fetchMeasurementsMeta({ meas_id: 0 }),
-
-       store.fetchMeasurementsData({
-        meas_id: 0,
-        operation_id: 0,
-        meas_date_start: dateFrom,
-        meas_date_end: dateTo,
-      }),
- 
-
-    ]);
-  } catch (error) {
-    console.error('Ошибка при загрузке измерений:', error);
-    ElMessage.error('Не удалось загрузить измерения');
-  } finally {
-    store.loading = false;
-  }
-
-  console.log(store.measurements_meta);
-  console.log(store.measurements_data);
-
+type EditableRow = {
+  rowKey: string;
+  sampleId: number | null;      // id пробы (measurement_data), null — ещё не сохранена
+  measuredAt: string | null;
+  operationId: number | null;
+  values: Record<string, number | null>;   // indicator_id → значение
+  savedDataIds: Record<string, number>;    // indicator_id → id значения в БД (после POST)
+  isNew: boolean;
 };
 
-const fmtDate = (d: Date) =>
-  d.toLocaleDateString('sv-SE'); // даст 'YYYY-MM-DD' — удобно для SQL-диапазонов
+const rows = ref<EditableRow[]>([]);
 
-onMounted(loadDay);
+// ---------- загрузка ----------
+const loadData = async (): Promise<void> => {
+  if (!selectedMeasurementId.value) return;
+  try {
+    loading.value = true;
+    await Promise.all([
+      store.fetchMeasurementsMeta({ meas_id: selectedMeasurementId.value }),
+      store.fetchMeasurementsData({
+        meas_id: selectedMeasurementId.value,
+        operation_id: 0,
+        meas_date_start: selectedDate.value,
+        meas_date_end: selectedDate.value,
+      }),
+    ]);
+    mapFromStore();
+  } catch (e) {
+    console.error('Ошибка загрузки измерений:', e);
+    ElMessage.error('Не удалось загрузить данные');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const mapFromStore = (): void => {
+  rows.value = (store.measurements_data ?? []).map((r: frontend.IMeasurementsData, i: number) => ({
+    rowKey: `saved-${i}`,
+    sampleId: (r as any).sample_id ?? null,
+    measuredAt: r.measured_at,
+    operationId: (r as any).operation_id ?? null,
+    values: Object.fromEntries(
+      indicatorSet.value.map(ind => [String(ind.id), r.vals?.[String(ind.id)] ?? null])
+    ),
+    savedDataIds: {}, // заполнится после первого PUT или из ответа API с детализацией
+    isNew: false,
+  }));
+};
+
+// новые строки, сохранённые в этой сессии, приходят из createSample с детализацией
+const rememberSavedIds = (row: EditableRow, values: { indicator_id: number; id: number }[]) => {
+  for (const v of values) row.savedDataIds[String(v.indicator_id)] = v.id;
+};
+
+// ---------- добавление строки ----------
+const addRow = (): void => {
+  if (!selectedMeasurementId.value) return;
+  rows.value.push({
+    rowKey: `new-${Date.now()}-${rows.value.length}`,
+    sampleId: null,
+    measuredAt: null,
+    operationId: null,
+    values: Object.fromEntries(indicatorSet.value.map(ind => [String(ind.id), null])),
+    savedDataIds: {},
+    isNew: true,
+  });
+};
+
+// ---------- готовность строки ----------
+const filledValues = (row: EditableRow) =>
+  indicatorSet.value
+    .map(ind => ({ id: ind.id, value: row.values[String(ind.id)] }))
+    .filter(v => v.value !== null && v.value !== undefined);
+
+const isRowReady = (row: EditableRow): boolean =>
+  row.sampleId !== null ||
+  (!!row.measuredAt && row.operationId !== null && filledValues(row).length > 0);
+
+// ---------- события редактирования ----------
+const onKeyChanged = async (row: EditableRow): Promise<void> => {
+  // время/операция у сохранённой пробы — обновляем пробу целиком
+  if (row.sampleId !== null && row.measuredAt && row.operationId !== null) {
+    try {
+      await updateSample(row.sampleId, {
+        measured_at: row.measuredAt,
+        operation_id: row.operationId,
+      });
+    } catch (e) {
+      console.error('Ошибка обновления пробы:', e);
+      ElMessage.error('Не удалось сохранить время/операцию');
+    }
+  }
+};
+
+const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<void> => {
+  // 1. Новая строка: как только готова — сохраняем пробу с имеющимися значениями
+  if (row.sampleId === null) {
+    if (isRowReady(row)) {
+      try {
+        const res = await createSample({
+          measurement_id: selectedMeasurementId.value!,
+          measured_at: row.measuredAt!,
+          operation_id: row.operationId!,
+          values: filledValues(row),
+        });
+        row.sampleId = res.id;
+        rememberSavedIds(row, res.values ?? []);
+        row.isNew = false;
+      } catch (e: any) {
+        console.error('Ошибка сохранения пробы:', e);
+        ElMessage.error(e?.message ?? 'Не удалось сохранить пробу');
+      }
+    }
+    return;
+  }
+
+  // 2. Сохранённая строка: правка/добавление значения — UPSERT по показателю
+  try {
+    const res = await upsertValue(row.sampleId, {
+      indicator_id: indicatorId,
+      value: row.values[String(indicatorId)],
+    });
+    row.savedDataIds[String(indicatorId)] = res.id;
+  } catch (e) {
+    console.error('Ошибка сохранения значения:', e);
+    ElMessage.error('Не удалось сохранить значение');
+  }
+};
+
+const removeRow = async (row: EditableRow): Promise<void> => {
+  try {
+    await ElMessageBox.confirm('Удалить измерение целиком?', 'Подтверждение', {
+      type: 'warning',
+      confirmButtonText: 'Удалить',
+      cancelButtonText: 'Отмена',
+    });
+  } catch {
+    return; // пользователь отменил
+  }
+
+  if (row.sampleId !== null) {
+    try {
+      await deleteSample(row.sampleId);
+    } catch (e) {
+      console.error('Ошибка удаления:', e);
+      ElMessage.error('Не удалось удалить пробу');
+      return;
+    }
+  }
+  rows.value = rows.value.filter(r => r.rowKey !== row.rowKey);
+};
+
+// ---------- навигация по дням ----------
+const shiftDay = (days: number): void => {
+  const [y, m, d] = selectedDate.value.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + days);
+  selectedDate.value = dt.toISOString().slice(0, 10);
+  void loadData();
+};
+
+const disableOtherDays = (d: Date): boolean => {
+  return d.toISOString().slice(0, 10) !== selectedDate.value;
+};
+
+// ---------- старт: только справочник измерений ----------
+onMounted(async () => {
+  try {
+    loading.value = true;
+    await store.fetchMeasurementsMeta({ meas_id: 0 });
+  } catch (e) {
+    console.error('Ошибка загрузки справочника:', e);
+    ElMessage.error('Не удалось загрузить список измерений');
+  } finally {
+    loading.value = false;
+  }
+});
+
+// ---------- ЗАГЛУШКИ API (заменим на вызовы стора) ----------
+type SamplePayload = {
+  measurement_id: number;
+  measured_at: string;
+  operation_id: number;
+  values: { id: number; value: number | null }[];
+};
+
+const createSample = async (payload: SamplePayload) => {
+  // TODO: POST /api/measurement_data → { id, values: [{indicator_id, id}] }
+  console.log('createSample', payload);
+  return { id: Date.now(), values: [] as { indicator_id: number; id: number }[] };
+};
+
+const updateSample = async (id: number, patch: { measured_at?: string; operation_id?: number }) => {
+  // TODO: PUT /api/measurement_data/{id}
+  console.log('updateSample', id, patch);
+};
+
+const upsertValue = async (sampleId: number, v: { indicator_id: number; value: number | null }) => {
+  // TODO: PUT /api/measurement_data/{sampleId}/value → { id }
+  console.log('upsertValue', sampleId, v);
+  return { id: Date.now() };
+};
+
+const deleteSample = async (id: number) => {
+  // TODO: DELETE /api/measurement_data/{id}
+  console.log('deleteSample', id);
+};
 </script>
+
+<style scoped>
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+:deep(.el-input-number .el-input__inner) {
+  text-align: right;
+}
+
+:deep(.el-date-editor.el-input),
+:deep(.el-select) {
+  width: 100%;
+}
+</style>
