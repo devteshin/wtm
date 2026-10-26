@@ -287,19 +287,33 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
     WHERE o.done = 0
     ORDER BY name
     """
+    q_indicator_set = """
+    SELECT i.id, i.code FROM measurement_ind_set AS mis
+    LEFT JOIN measurement_indicator AS i ON i.id = mis.measurement_ind_id
+    WHERE measurement_id = %(meas_id)s
+    ORDER BY i.code
+    """
+
+    operation_list = []
+    indicators_list = []
+    indicator_set_list = []
 
     async with conn.cursor() as cur:
         await cur.execute(q_measurement)
         measurement_list = await cur.fetchall()
-        await cur.execute(q_operation, {"meas_id": meas_id})
-        operation_list = await cur.fetchall()
-        await cur.execute(q_indicators, {"meas_id": meas_id})
-        indicators_list = await cur.fetchall()
+        if meas_id:
+            await cur.execute(q_operation, {"meas_id": meas_id})
+            operation_list = await cur.fetchall()
+            await cur.execute(q_indicators, {"meas_id": meas_id})
+            indicators_list = await cur.fetchall()
+            await cur.execute(q_indicator_set, {"meas_id": meas_id})
+            indicator_set_list = await cur.fetchall()
 
     return {
         "measurement_list": measurement_list,
         "operation_list": operation_list,
-        "indicators_list": indicators_list
+        "indicators_list": indicators_list,
+        "indicator_set_list": indicator_set_list
     }
 
 async def select_measurements_data(conn: Connection, meas_id: int = 0, operation_id: int = 0, meas_date_start: str = '', meas_date_end: str = ''):

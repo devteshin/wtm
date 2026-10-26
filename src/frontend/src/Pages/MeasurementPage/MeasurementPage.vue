@@ -64,8 +64,8 @@ const loadDay = async () => {
        store.fetchMeasurementsData({
         meas_id: 0,
         operation_id: 0,
-        meas_date_start: '2026-10-22',
-        meas_date_end: '2026-10-22',
+        meas_date_start: dateFrom,
+        meas_date_end: dateTo,
       }),
  
 
@@ -76,6 +76,10 @@ const loadDay = async () => {
   } finally {
     store.loading = false;
   }
+
+  console.log(store.measurements_meta);
+  console.log(store.measurements_data);
+
 };
 
 const fmtDate = (d: Date) =>
