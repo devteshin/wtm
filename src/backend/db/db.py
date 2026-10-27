@@ -290,7 +290,7 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
     ORDER BY name
     """
     q_indicator_set = """
-    SELECT i.id, i.code, i.measurement_unit, i.min_value, i.max_value, i.value_precision
+    SELECT i.id, i.code, i.measurement_unit, i.min_value, i.max_value, i.value_precision, mis.order_num
     FROM measurement_ind_set AS mis
     LEFT JOIN measurement_indicator AS i ON i.id = mis.measurement_ind_id
     WHERE measurement_id = %(meas_id)s AND i.is_active = 1

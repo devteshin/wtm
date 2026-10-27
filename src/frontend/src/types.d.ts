@@ -30,6 +30,7 @@ declare namespace frontend {
         min_value: number
         max_value: number
         value_precision: number
+        order_num: number
     }
 
     export type IIndicator = {

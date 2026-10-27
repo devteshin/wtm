@@ -4,9 +4,9 @@
     <div class="toolbar">
       <el-select
         v-model="selectedMeasurementId"
+        class="toolbar-measurement"
         placeholder="Измерение"
         filterable
-        style="width: 320px"
       >
         <el-option
           v-for="m in measurementsList"
@@ -19,6 +19,7 @@
       <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
       <el-date-picker
         v-model="selectedDate"
+        class="toolbar-date"
         type="date"
         :clearable="false"
         format="DD.MM.YYYY"
@@ -26,16 +27,8 @@
       />
       <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
 
-      <el-button
-        type="primary"
-        :disabled="!selectedMeasurementId"
-        @click="loadData"
-      >Заполнить</el-button>
-
-      <el-button
-        :disabled="!selectedMeasurementId"
-        @click="addRow"
-      >Добавить строку</el-button>
+      <el-button type="primary" :disabled="!selectedMeasurementId" @click="loadData">Заполнить</el-button>
+      <el-button :disabled="!selectedMeasurementId" @click="addRow">Добавить строку</el-button>
     </div>
 
     <!-- Таблица: показывается только после выбора измерения -->
@@ -123,14 +116,18 @@ const store = useApplicationStore();
 // ---------- справочники из meta ----------
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
 const operationsList   = computed(() => store.measurements_meta?.operation_list ?? []);
-const indicatorSet     = computed(() => store.measurements_meta?.indicator_set_list ?? []);
+const indicatorSet = computed(() =>
+  (store.measurements_meta?.indicator_set_list ?? [])
+    .slice()
+    .sort((a, b) => a.order_num - b.order_num)   // по возрастанию order_num
+);
 
 const columnLabel = (ind: frontend.IIndicatorSet): string =>
   `${ind.code}, ${ind.measurement_unit}`;
 
 // ---------- состояние ----------
 const selectedMeasurementId = ref<number | null>(null);
-const selectedDate = ref<string>(new Date().toISOString().slice(0, 10));
+
 const loading = ref(false);
 
 type EditableRow = {
@@ -286,17 +283,23 @@ const removeRow = async (row: EditableRow): Promise<void> => {
 };
 
 // ---------- навигация по дням ----------
+const fmtDateLocal = (d: Date): string => {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+
+const selectedDate = ref<string>(fmtDateLocal(new Date()));
+
 const shiftDay = (days: number): void => {
   const [y, m, d] = selectedDate.value.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setDate(dt.getDate() + days);
-  selectedDate.value = dt.toISOString().slice(0, 10);
+  selectedDate.value = fmtDateLocal(dt);
   void loadData();
 };
 
-const disableOtherDays = (d: Date): boolean => {
-  return d.toISOString().slice(0, 10) !== selectedDate.value;
-};
+const disableOtherDays = (d: Date): boolean =>
+  fmtDateLocal(d) !== selectedDate.value;
 
 // ---------- старт: только справочник измерений ----------
 onMounted(async () => {
@@ -348,15 +351,20 @@ const deleteSample = async (id: number) => {
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;        /* главная правка: не переносить */
 }
 
-:deep(.el-input-number .el-input__inner) {
-  text-align: right;
+.toolbar-measurement {
+  width: 320px;
+  flex-shrink: 0;           /* select не сжимается */
 }
 
-:deep(.el-date-editor.el-input),
-:deep(.el-select) {
-  width: 100%;
+.toolbar-date {
+  width: 140px;             /* формат DD.MM.YYYY — 140 хватает */
+  flex-shrink: 0;
+}
+
+:deep(.el-date-editor.el-input) {
+  width: 140px;             /* date-picker задаёт ширину внутри себя, deep добивает */
 }
 </style>
