@@ -26,6 +26,10 @@ declare namespace frontend {
     export type IIndicatorSet = {
         id: number
         code: string
+        measurement_unit: string
+        min_value: number
+        max_value: number
+        value_precision: number
     }
 
     export type IIndicator = {

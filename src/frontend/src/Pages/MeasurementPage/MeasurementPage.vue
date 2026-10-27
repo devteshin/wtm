@@ -83,7 +83,7 @@
       <el-table-column
         v-for="ind in indicatorSet"
         :key="ind.id"
-        :label="ind.code"
+        :label="columnLabel(ind)"
         width="120"
         align="right"
       >
@@ -91,9 +91,9 @@
           <el-input-number
             v-model="row.values[String(ind.id)]"
             :controls="false"
-            :precision="2"
-            :min="0"
-            :max="100"
+            :precision="ind.value_precision ?? 2"
+            :min="ind.min_value ?? 0"
+            :max="ind.max_value ?? 100"
             style="width: 100%; text-align: right"
             @change="onValueChanged(row as EditableRow, ind.id)"
           />
@@ -124,6 +124,9 @@ const store = useApplicationStore();
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
 const operationsList   = computed(() => store.measurements_meta?.operation_list ?? []);
 const indicatorSet     = computed(() => store.measurements_meta?.indicator_set_list ?? []);
+
+const columnLabel = (ind: frontend.IIndicatorSet): string =>
+  `${ind.code}, ${ind.measurement_unit}`;
 
 // ---------- состояние ----------
 const selectedMeasurementId = ref<number | null>(null);
