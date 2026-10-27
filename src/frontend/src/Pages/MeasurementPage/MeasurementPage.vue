@@ -1,5 +1,5 @@
 <template>
-  <el-card>
+  <el-card class="card">
     <!-- Тулбар -->
     <div class="toolbar">
       <el-select
@@ -32,76 +32,77 @@
     </div>
 
     <!-- Таблица: показывается только после выбора измерения -->
-    <el-table
-      v-if="selectedMeasurementId"
-      :data="rows"
-      v-loading="loading"
-      border
-      row-key="rowKey"
-    >
-      <el-table-column label="Время измерения" width="200">
-        <template #default="{ row }">
-          <el-date-picker
-            v-model="row.measuredAt"
-            type="datetime"
-            :clearable="false"
-            format="DD.MM.YYYY HH:mm"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            :disabled-date="disableOtherDays"
-            style="width: 100%"
-            @change="onKeyChanged(row as EditableRow)"
-          />
-        </template>
-      </el-table-column>
-
-      <el-table-column label="Операция" min-width="200">
-        <template #default="{ row }">
-          <el-select
-            v-model="row.operationId"
-            placeholder="—"
-            filterable
-            style="width: 100%"
-            @change="onKeyChanged(row as EditableRow)"
-          >
-            <el-option
-              v-for="op in operationsList"
-              :key="op.id"
-              :label="op.name"
-              :value="op.id"
-            />
-          </el-select>
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        v-for="ind in indicatorSet"
-        :key="ind.id"
-        :label="columnLabel(ind)"
-        width="120"
-        align="right"
+    <div class="table-container" v-if="selectedMeasurementId">
+      <el-table
+        :data="rows"
+        v-loading="loading"
+        border
+        row-key="rowKey"
+        height="100%"
       >
-        <template #default="{ row }">
-          <el-input-number
-            v-model="row.values[String(ind.id)]"
-            :controls="false"
-            :precision="ind.value_precision ?? 2"
-            :min="ind.min_value ?? 0"
-            :max="ind.max_value ?? 100"
-            style="width: 100%; text-align: right"
-            @change="onValueChanged(row as EditableRow, ind.id)"
-          />
-        </template>
-      </el-table-column>
-
-      <el-table-column label="" width="90" align="right">
-        <template #default="{ row }">
-          <el-button link type="danger" @click="removeRow(row as EditableRow)">Удалить</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <el-empty v-if="selectedMeasurementId && !loading && rows.length === 0"
-              description="Измерений за этот день нет" />
+        <el-table-column label="Время измерения" width="200">
+          <template #default="{ row }">
+            <el-date-picker
+              v-model="row.measuredAt"
+              type="datetime"
+              :clearable="false"
+              format="DD.MM.YYYY HH:mm"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              :disabled-date="disableOtherDays"
+              style="width: 100%"
+              @change="onKeyChanged(row as EditableRow)"
+            />
+          </template>
+        </el-table-column>
+  
+        <el-table-column label="Операция" min-width="200">
+          <template #default="{ row }">
+            <el-select
+              v-model="row.operationId"
+              placeholder="—"
+              filterable
+              style="width: 100%"
+              @change="onKeyChanged(row as EditableRow)"
+            >
+              <el-option
+                v-for="op in operationsList"
+                :key="op.id"
+                :label="op.name"
+                :value="op.id"
+              />
+            </el-select>
+          </template>
+        </el-table-column>
+  
+        <el-table-column
+          v-for="ind in indicatorSet"
+          :key="ind.id"
+          :label="columnLabel(ind)"
+          width="120"
+          align="right"
+        >
+          <template #default="{ row }">
+            <el-input-number
+              v-model="row.values[String(ind.id)]"
+              :controls="false"
+              :precision="ind.value_precision ?? 2"
+              :min="ind.min_value ?? 0"
+              :max="ind.max_value ?? 100"
+              style="width: 100%; text-align: right"
+              @change="onValueChanged(row as EditableRow, ind.id)"
+            />
+          </template>
+        </el-table-column>
+  
+        <el-table-column label="" width="90" align="right">
+          <template #default="{ row }">
+            <el-button link type="danger" @click="removeRow(row as EditableRow)">Удалить</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-empty v-if="selectedMeasurementId && !loading && rows.length === 0"
+                description="Измерений за этот день нет" />
+    </div>
   </el-card>
 </template>
 
@@ -346,25 +347,42 @@ const deleteSample = async (id: number) => {
 </script>
 
 <style scoped>
+/* карточка: полэкрана, вертикальный расклад */
+.card {
+  height: 50vh;
+  width: 50%;          
+  min-width: 640px;    
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.card :deep(.el-card__body) {
+  flex: 1;
+  min-height: 0;              /* без этого таблица не ограничится высотой карточки */
+  display: flex;
+  flex-direction: column;
+}
+
+/* тулбар */
 .toolbar {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  flex-wrap: nowrap;        /* главная правка: не переносить */
 }
 
-.toolbar-measurement {
-  width: 320px;
-  flex-shrink: 0;           /* select не сжимается */
+.toolbar-measurement { width: 320px; }
+.toolbar-date        { width: 140px; }
+
+/* таблица забирает всё место под тулбаром */
+.table-container {
+  flex: 1;
+  min-height: 0;
 }
 
-.toolbar-date {
-  width: 140px;             /* формат DD.MM.YYYY — 140 хватает */
-  flex-shrink: 0;
-}
-
-:deep(.el-date-editor.el-input) {
-  width: 140px;             /* date-picker задаёт ширину внутри себя, deep добивает */
+/* выравнивание внутри el-input-number — только через :deep, инлайном не достать */
+:deep(.el-input-number .el-input__inner) {
+  text-align: right;
 }
 </style>
