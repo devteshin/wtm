@@ -662,8 +662,8 @@ async def put_measurement_data_value(request: Request):
             # стёрли значение — удаляем запись (то самое решение «DELETE вместо null»)
             await delete_measurement_data_value(conn, sample_id, indicator_id)
             return await jsonify({}, request)
-        row_id = await upsert_measurement_data_value(conn, sample_id, indicator_id, value)
-    return await jsonify({"id": row_id}, request)
+        await upsert_measurement_data_value(conn, sample_id, indicator_id, value)
+    return await jsonify({}, request)
 
 
 # DELETE /api/measurement_data/{sample_id}
@@ -671,4 +671,11 @@ async def delete_measurement_data_handler(request: Request):
     sample_id = int(request.match_info["sample_id"])
     async with request.app["db"].acquire() as conn:
         await delete_measurement_data(conn, sample_id)
+    return await jsonify({}, request)
+
+async def delete_measurement_data_value_handler(request: Request):
+    sample_id = int(request.match_info["sample_id"])
+    indicator_id = int(request.match_info["indicator_id"])
+    async with request.app["db"].acquire() as conn:
+        await delete_measurement_data_value(conn, sample_id, indicator_id)
     return await jsonify({}, request)

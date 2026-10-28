@@ -345,19 +345,27 @@ export default defineStore("app_store", () => {
     }
         
 
-    //upsertValue
+    // upsertValue
     const upsertMeasurementValue = (
-    sampleId: number,
-    v: { indicator_id: number; value: number | null },
-    ): Promise<frontend.IValueUpsertResult> => {
+        sampleId: number,
+        v: { indicator_id: number; value: number },
+    ): Promise<void> => {
         return api.upsertMeasurementValue(sampleId, v);
-    }
+    };
     
 
     //deleteSample
     const deleteMeasurementData = (id: number): Promise<void> => {
         return api.deleteMeasurementData(id);
     }
+
+    // deleteValue
+    const deleteMeasurementValue = (
+        sampleId: number,
+        indicatorId: number,
+    ): Promise<void> => {
+        return api.deleteMeasurementValue(sampleId, indicatorId);
+    };
 
     
     /** ID таймера */
@@ -441,6 +449,7 @@ export default defineStore("app_store", () => {
         updateMeasurementData,
         upsertMeasurementValue,
         deleteMeasurementData,
+        deleteMeasurementValue,
         stocks,
         operations,
         operation,

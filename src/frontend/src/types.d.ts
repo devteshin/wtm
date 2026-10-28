@@ -128,16 +128,11 @@ declare namespace frontend {
 
     export type ISampleCreated = {
         id: number                                        // PK measurement_data
-        values?: { indicator_id: number; id: number }[]   // id созданных записей значений
     }
 
     export type ISamplePatch = {
         measured_at?: string
         operation_id?: number
-    }
-
-    export type IValueUpsertResult = {
-        id: number    // id записи значения (PK таблицы значений)
     }
 
     export type IMetricsInventoryAging = {

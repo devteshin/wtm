@@ -820,8 +820,8 @@ class ClientAPI {
 
     async upsertMeasurementValue(
         sampleId: number,
-        v: { indicator_id: number; value: number | null },
-    ): Promise<frontend.IValueUpsertResult> {
+        v: { indicator_id: number; value: number },
+    ): Promise<void> {
         this.checkToken();
         const response = await fetch(`${BASE_URL}/measurement_data/${sampleId}/value`, {
             method: "PUT",
@@ -832,12 +832,23 @@ class ClientAPI {
             window.localStorage.removeItem("token");
             location.href = "/login";
         }
-        return await response.json();
     }
 
     async deleteMeasurementData(id: number): Promise<void> {
         this.checkToken();
         const response = await fetch(`${BASE_URL}/measurement_data/${id}`, {
+            method: "DELETE",
+            headers: this.requestHeaders(),
+        });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+    }
+
+    async deleteMeasurementValue(sampleId: number, indicatorId: number): Promise<void> {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/measurement_data/${sampleId}/value/${indicatorId}`, {
             method: "DELETE",
             headers: this.requestHeaders(),
         });

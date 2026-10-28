@@ -10,7 +10,7 @@ from .handlers import (
     check_material_item_handler, get_materials_meta, get_materials_data, get_selection_data, update_task_handler, search_materials_handler, search_operations_handler,
     get_production_report_data, get_production_graph_data, get_metrics_inventory_aging, get_journal_zone_docs, get_measurements_meta, get_measurements_data,
     update_measurement_sample,
-    post_measurement_data, put_measurement_data, put_measurement_data_value, delete_measurement_data_handler)
+    post_measurement_data, put_measurement_data, put_measurement_data_value, delete_measurement_data_handler, delete_measurement_data_value_handler)
 
 
 def index_spa(path: str, filename: str):
@@ -63,7 +63,8 @@ def setup_handlers(app: Application):
         ("POST", "/api/measurement_data", post_measurement_data, "post_measurement_data"),
         ("PUT", "/api/measurement_data/{sample_id}", put_measurement_data, "put_measurement_data"),
         ("PUT", "/api/measurement_data/{sample_id}/value", put_measurement_data_value, "put_measurement_data_value"),
-        ("DELETE", "/api/measurement_data/{sample_id}", delete_measurement_data_handler, "delete_measurement_data_handler"),        
+        ("DELETE", "/api/measurement_data/{sample_id}", delete_measurement_data_handler, "delete_measurement_data_handler"),
+        ("DELETE", "/api/measurement_data/{sample_id}/value/{indicator_id}", delete_measurement_data_value_handler, "delete_measurement_data_value"),        
         ("GET", "/api/search_materials", search_materials_handler, "search_materials_handler"),
         ("GET", "/api/search_operations", search_operations_handler, "search_operations_handler"),
         ("GET", "/api/metrics_inventory_aging", get_metrics_inventory_aging, "get_metrics_inventory_aging"),

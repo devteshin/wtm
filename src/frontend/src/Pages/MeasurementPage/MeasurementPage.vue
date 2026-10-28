@@ -137,7 +137,6 @@ type EditableRow = {
   measuredAt: string | null;
   operationId: number | null;
   values: Record<string, number | null>;   // indicator_id → значение
-  savedDataIds: Record<string, number>;    // indicator_id → id значения в БД (после POST)
 };
 
 const rows = ref<EditableRow[]>([]);
@@ -174,14 +173,9 @@ const mapFromStore = (): void => {
     values: Object.fromEntries(
       indicatorSet.value.map(ind => [String(ind.id), r.vals?.[String(ind.id)] ?? null])
     ),
-    savedDataIds: {}, // заполнится после первого PUT или из ответа API с детализацией
   }));
 };
 
-// новые строки, сохранённые в этой сессии, приходят из createSample с детализацией
-const rememberSavedIds = (row: EditableRow, values: { indicator_id: number; id: number }[]) => {
-  for (const v of values) row.savedDataIds[String(v.indicator_id)] = v.id;
-};
 
 // ---------- добавление строки ----------
 let newRowSeq = 0;
@@ -194,16 +188,15 @@ const addRow = (): void => {
     measuredAt: null,
     operationId: null,
     values: Object.fromEntries(indicatorSet.value.map(ind => [String(ind.id), null])),
-    savedDataIds: {},
   });
 };
 
 // ---------- готовность строки ----------
-const filledValues = (row: EditableRow): SampleValuePayload[] =>
+const filledValues = (row: EditableRow): frontend.ISampleValuePayload[] =>
   indicatorSet.value
     .map(ind => ({ indicator_id: ind.id, value: row.values[String(ind.id)] }))
-    .filter((v): v is SampleValuePayload => v.value !== null && v.value !== undefined);
-    
+    .filter((v): v is frontend.ISampleValuePayload => v.value !== null && v.value !== undefined);
+
 const isRowReady = (row: EditableRow): boolean =>
   row.sampleId !== null ||
   (!!row.measuredAt && row.operationId !== null && filledValues(row).length > 0);
@@ -237,7 +230,6 @@ const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<vo
         });
         row.sampleId = res.id;
         row.rowKey = `db-${res.id}`;   // ключ перевыпускается, больше не «new-*»
-        rememberSavedIds(row, res.values ?? []);
       } catch (e: any) {
         console.error('Ошибка сохранения пробы:', e);
         ElMessage.error(e?.message ?? 'Не удалось сохранить пробу');
@@ -248,11 +240,15 @@ const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<vo
 
   // 2. Сохранённая строка: правка/добавление значения — UPSERT по показателю
   try {
-    const res = await upsertValue(row.sampleId, {
-      indicator_id: indicatorId,
-      value: row.values[String(indicatorId)],
-    });
-    row.savedDataIds[String(indicatorId)] = res.id;
+    const value = row.values[String(indicatorId)];
+    if (value === null || value === undefined) {
+      await deleteSampleValue(row.sampleId, indicatorId);   // стёрли поле — запись значения удаляем
+    } else {
+      await upsertValue(row.sampleId, {
+        indicator_id: indicatorId,
+        value,
+      });
+    }
   } catch (e) {
     console.error('Ошибка сохранения значения:', e);
     ElMessage.error('Не удалось сохранить значение');
@@ -315,57 +311,30 @@ onMounted(async () => {
 });
 
 // ---------- ЗАГЛУШКИ API (заменим на вызовы стора) ----------
-// значение показателя при создании пробы — только заполненные
-type SampleValuePayload = { indicator_id: number; value: number };
 
-// POST /api/measurement_data
-type SamplePayload = {
-  measurement_id: number;
-  measured_at: string;
-  operation_id: number;
-  values: SampleValuePayload[];
+const createSample = async (payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> => {
+  return store.createMeasurementData(payload);
 };
 
-type SampleCreated = {
-  id: number;                                            // PK measurement_data
-  values?: { indicator_id: number; id: number }[];       // id созданных записей значений
-};
-
-// PATCH-обновление пробы — только изменённые поля
-type SamplePatch = {
-  measured_at?: string;
-  operation_id?: number;
-};
-
-// PUT значения показателя — ответ: id записи значения в БД
-type ValueUpsertResult = { id: number };
-
-// ---------- заглушки ----------
-
-const createSample = async (payload: SamplePayload): Promise<SampleCreated> => {
-  // TODO: POST /api/measurement_data
-  console.log('createSample', payload);
-  return { id: Date.now(), values: [] as SampleCreated['values'] };
-};
-
-const updateSample = async (id: number, patch: SamplePatch): Promise<void> => {
-  // TODO: PUT /api/measurement_data/{id}
-  console.log('updateSample', id, patch);
+const updateSample = async (id: number, patch: frontend.ISamplePatch): Promise<void> => {
+  await store.updateMeasurementData(id, patch);
 };
 
 const upsertValue = async (
   sampleId: number,
-  v: { indicator_id: number; value: number | null },
-): Promise<ValueUpsertResult> => {
-  // TODO: PUT /api/measurement_data/{sampleId}/value → { id }
-  console.log('upsertValue', sampleId, v);
-  return { id: Date.now() };
+  v: { indicator_id: number; value: number },
+): Promise<void> => {
+  await store.upsertMeasurementValue(sampleId, v);
+};
+
+const deleteSampleValue = async (sampleId: number, indicatorId: number): Promise<void> => {
+  await store.deleteMeasurementValue(sampleId, indicatorId);
 };
 
 const deleteSample = async (id: number): Promise<void> => {
-  // TODO: DELETE /api/measurement_data/{id}
-  console.log('deleteSample', id);
+  await store.deleteMeasurementData(id);
 };
+
 
 </script>
 
