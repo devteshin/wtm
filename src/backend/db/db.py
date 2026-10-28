@@ -321,7 +321,7 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
 
 async def select_measurements_data(conn: Connection, meas_id: int = 0, operation_id: int = 0, meas_date_start: str = '', meas_date_end: str = ''):
     q_measurement_data = """
-    SELECT m.name AS measurement, m.id AS measurement_id
+    SELECT md.id, m.name AS measurement, m.id AS measurement_id
     , o.name AS operation, o.id AS operation_id
     , measured_at 
     , JSON_OBJECTAGG(mv.indicator_id, mv.value) AS vals
@@ -335,7 +335,7 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     (%(meas_date_end)s = '' OR DATE(measured_at) <  %(meas_date_end)s  + INTERVAL 1 DAY))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
-    GROUP BY m.name, m.id, o.name, o.id, measured_at 
+    GROUP BY md.id, m.name, m.id, o.name, o.id, measured_at 
     """
 
     async with conn.cursor() as cur:
@@ -343,8 +343,6 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
         measurement_data = await cur.fetchall()
         for row in measurement_data:
             row["vals"] = json.loads(row["vals"]) if row["vals"] else {}
-
-        print(measurement_data)
 
     return measurement_data
 
@@ -1481,3 +1479,75 @@ async def update_rest_gross_weight(conn: Connection, doc_id: int, material_id: i
              "tare_id": tare_id,
              "gross_weight": gross_weight
          })
+
+async def insert_measurement_data(conn, measurement_id: int, measured_at: str,
+                                  operation_id: int, values: list, entered_by: int):
+    # один запрос — одна транзакция: проба + её значения должны создаваться атомарно
+    async with conn.cursor() as cur:
+        await cur.execute(
+            """INSERT INTO measurement_data
+               (measurement_id, operation_id, measured_at, entered_by)
+               VALUES (%(measurement_id)s, %(operation_id)s, %(measured_at)s, %(entered_by)s)""",
+            {"measurement_id": measurement_id, "operation_id": operation_id,
+             "measured_at": measured_at, "entered_by": entered_by},
+        )
+        sample_id = cur.lastrowid
+
+        created = []
+        for v in values:
+            await cur.execute(
+                """INSERT INTO measurement_data_value
+                   (measurement_data_id, indicator_id, value)
+                   VALUES (%(sample_id)s, %(indicator_id)s, %(value)s)""",
+                {"sample_id": sample_id, "indicator_id": v["indicator_id"], "value": v["value"]},
+            )
+            created.append({"indicator_id": v["indicator_id"], "id": cur.lastrowid})
+
+    return {"id": sample_id, "values": created}
+
+
+async def update_measurement_data(conn, sample_id: int, patch: dict):
+    if not patch:
+        return
+    set_clause = ", ".join(f"{k} = %({k})s" for k in patch)
+    sql = f"UPDATE measurement_data SET {set_clause} WHERE id = %(id)s"
+    async with conn.cursor() as cur:
+        await cur.execute(sql, {**patch, "id": sample_id})
+
+
+async def upsert_measurement_data_value(conn, sample_id: int, indicator_id: int, value: float) -> int:
+    async with conn.cursor() as cur:
+        await cur.execute(
+            """INSERT INTO measurement_data_value (measurement_data_id, indicator_id, value)
+               VALUES (%(sample_id)s, %(indicator_id)s, %(value)s)
+               ON DUPLICATE KEY UPDATE value = %(value)s""",
+            {"sample_id": sample_id, "indicator_id": indicator_id, "value": value},
+        )
+        if cur.lastrowid:
+            return cur.lastrowid
+        # запись уже существовала (сработал UPDATE) — lastrowid ненадёжен, берём явно
+        await cur.execute(
+            """SELECT id FROM measurement_data_value
+               WHERE measurement_data_id = %(sample_id)s AND indicator_id = %(indicator_id)s""",
+            {"sample_id": sample_id, "indicator_id": indicator_id},
+        )
+        row = await cur.fetchone()
+        return row["id"]
+
+
+async def delete_measurement_data_value(conn, sample_id: int, indicator_id: int):
+    async with conn.cursor() as cur:
+        await cur.execute(
+            """DELETE FROM measurement_data_value
+               WHERE measurement_data_id = %(sample_id)s AND indicator_id = %(indicator_id)s""",
+            {"sample_id": sample_id, "indicator_id": indicator_id},
+        )
+
+
+async def delete_measurement_data(conn, sample_id: int):
+    async with conn.cursor() as cur:
+        await cur.execute(
+            "DELETE FROM measurement_data_value WHERE measurement_data_id = %(id)s",
+            {"id": sample_id},
+        )
+        await cur.execute("DELETE FROM measurement_data WHERE id = %(id)s", {"id": sample_id})

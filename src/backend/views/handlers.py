@@ -5,7 +5,8 @@ from db import (check_user, select_task, select_tasks, change_password, select_m
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
                 check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations,
                 select_production_report_data, select_production_graph_data, select_metrics_inventory_aging, select_journal_zone_docs,
-                select_measurements_meta, select_measurements_data
+                select_measurements_meta, select_measurements_data,
+                insert_measurement_data, update_measurement_data, delete_measurement_data_value, upsert_measurement_data_value, delete_measurement_data
                 )
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
@@ -387,7 +388,6 @@ async def get_task(request: Request):
             raise HTTPNotFound()
     return await jsonify(task, request)
 
-
 async def update_job_status_handler(request: Request):
     job = await request.json()
     doc_id = job.get("taskID", None)
@@ -621,3 +621,54 @@ async def rest_gross_weight(request: Request):
     #         raise HTTPBadRequest(
     #             body=str(exc))  # pylint: disable=raise-missing-from
     return HTTPCreated()
+
+# POST /api/measurement_data
+async def post_measurement_data(request: Request):
+    payload = await request.json()
+    async with request.app["db"].acquire() as conn:
+        result = await insert_measurement_data(
+            conn,
+            measurement_id=int(payload["measurement_id"]),
+            measured_at=payload["measured_at"],
+            operation_id=int(payload["operation_id"]),
+            values=payload.get("values") or [],
+            entered_by=request.user_id,
+        )
+    return await jsonify(result, request)
+
+
+# PUT /api/measurement_data/{sample_id}
+async def put_measurement_data(request: Request):
+    sample_id = int(request.match_info["sample_id"])
+    payload = await request.json()
+    patch = {}
+    if "measured_at" in payload:
+        patch["measured_at"] = payload["measured_at"]
+    if "operation_id" in payload:
+        patch["operation_id"] = payload["operation_id"]
+    async with request.app["db"].acquire() as conn:
+        await update_measurement_data(conn, sample_id, patch)
+    return await jsonify({}, request)
+
+
+# PUT /api/measurement_data/{sample_id}/value
+async def put_measurement_data_value(request: Request):
+    sample_id = int(request.match_info["sample_id"])
+    payload = await request.json()
+    indicator_id = int(payload["indicator_id"])
+    value = payload.get("value")
+    async with request.app["db"].acquire() as conn:
+        if value is None:
+            # стёрли значение — удаляем запись (то самое решение «DELETE вместо null»)
+            await delete_measurement_data_value(conn, sample_id, indicator_id)
+            return await jsonify({}, request)
+        row_id = await upsert_measurement_data_value(conn, sample_id, indicator_id, value)
+    return await jsonify({"id": row_id}, request)
+
+
+# DELETE /api/measurement_data/{sample_id}
+async def delete_measurement_data_handler(request: Request):
+    sample_id = int(request.match_info["sample_id"])
+    async with request.app["db"].acquire() as conn:
+        await delete_measurement_data(conn, sample_id)
+    return await jsonify({}, request)

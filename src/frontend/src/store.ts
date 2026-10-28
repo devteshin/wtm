@@ -334,6 +334,32 @@ export default defineStore("app_store", () => {
         return api.updateRestGrossWeight(taskID, job);
     };
 
+    //createSample
+    const createMeasurementData = (payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> => {
+        return api.createMeasurementData(payload);
+    }
+
+    //updateSample
+    const updateMeasurementData = (id: number, patch: frontend.ISamplePatch): Promise<void> => {
+        return api.updateMeasurementData(id, patch);
+    }
+        
+
+    //upsertValue
+    const upsertMeasurementValue = (
+    sampleId: number,
+    v: { indicator_id: number; value: number | null },
+    ): Promise<frontend.IValueUpsertResult> => {
+        return api.upsertMeasurementValue(sampleId, v);
+    }
+    
+
+    //deleteSample
+    const deleteMeasurementData = (id: number): Promise<void> => {
+        return api.deleteMeasurementData(id);
+    }
+
+    
     /** ID таймера */
     let timer: number | null = null;
     /** интервал в ms для setInterval */
@@ -411,6 +437,10 @@ export default defineStore("app_store", () => {
         updateOperation,
         deleteOperation,
         updateTask,
+        createMeasurementData,
+        updateMeasurementData,
+        upsertMeasurementValue,
+        deleteMeasurementData,
         stocks,
         operations,
         operation,

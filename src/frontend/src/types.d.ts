@@ -104,6 +104,7 @@ declare namespace frontend {
     }    
 
     export type IMeasurementsData = {
+        id: number
         measured_at: string
         measurement_id: number
         measurement: string
@@ -111,6 +112,33 @@ declare namespace frontend {
         operation: string
         vals?: Record<string, number>
     }    
+
+    // значения показателя при создании — только заполненные
+    export type ISampleValuePayload = {
+        indicator_id: number
+        value: number
+    }
+
+    export type ISamplePayload = {
+        measurement_id: number
+        measured_at: string
+        operation_id: number
+        values: ISampleValuePayload[]
+    }
+
+    export type ISampleCreated = {
+        id: number                                        // PK measurement_data
+        values?: { indicator_id: number; id: number }[]   // id созданных записей значений
+    }
+
+    export type ISamplePatch = {
+        measured_at?: string
+        operation_id?: number
+    }
+
+    export type IValueUpsertResult = {
+        id: number    // id записи значения (PK таблицы значений)
+    }
 
     export type IMetricsInventoryAging = {
         inventory_date: string

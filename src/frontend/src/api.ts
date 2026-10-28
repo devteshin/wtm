@@ -791,6 +791,62 @@ class ClientAPI {
         return;
     }
 
+    async createMeasurementData(payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/measurement_data`, {
+            method: "POST",
+            headers: this.requestHeaders(),
+            body: JSON.stringify(payload),
+        });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        return await response.json();
+    }
+
+    async updateMeasurementData(id: number, patch: frontend.ISamplePatch): Promise<void> {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/measurement_data/${id}`, {
+            method: "PUT",
+            headers: this.requestHeaders(),
+            body: JSON.stringify(patch),
+        });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+    }
+
+    async upsertMeasurementValue(
+        sampleId: number,
+        v: { indicator_id: number; value: number | null },
+    ): Promise<frontend.IValueUpsertResult> {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/measurement_data/${sampleId}/value`, {
+            method: "PUT",
+            headers: this.requestHeaders(),
+            body: JSON.stringify(v),
+        });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        return await response.json();
+    }
+
+    async deleteMeasurementData(id: number): Promise<void> {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/measurement_data/${id}`, {
+            method: "DELETE",
+            headers: this.requestHeaders(),
+        });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+    }
+
     async doLogin(payload: frontend.ILoginPayload) {
         /** авторизация */
         const response = await fetch(`${BASE_URL}/${LOGIN}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
