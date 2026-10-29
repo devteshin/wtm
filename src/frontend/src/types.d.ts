@@ -119,6 +119,13 @@ declare namespace frontend {
         last_measured_at: string | null
     }
 
+    export type IMeasurementChart = {
+        measured_at: string
+        code: string
+        measurement_unit: string
+        value: number
+    }
+
     // значения показателя при создании — только заполненные
     export type ISampleValuePayload = {
         indicator_id: number
@@ -314,6 +321,12 @@ declare namespace frontend {
         operation_id?: number;
         meas_date_start?: string;
         meas_date_end?: string;
+    }
+
+    export type IMeasurementsChartQueryParams = {
+        meas_id: number;
+        meas_date_start: string;
+        meas_date_end: string;
     }
 
     export type IMeasurementsMetaQueryParams = {

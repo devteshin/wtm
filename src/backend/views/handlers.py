@@ -5,7 +5,7 @@ from db import (check_user, select_task, select_tasks, change_password, select_m
                 update_job_status, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, get_material_id,
                 check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations,
                 select_production_report_data, select_production_graph_data, select_metrics_inventory_aging, select_journal_zone_docs,
-                select_measurements_meta, select_measurements_data, select_measurements_last,
+                select_measurements_meta, select_measurements_data, select_measurements_last, select_measurements_chart,
                 insert_measurement_data, update_measurement_data, delete_measurement_data_value, upsert_measurement_data_value, delete_measurement_data
                 )
 from utils import jsonify
@@ -194,6 +194,19 @@ async def get_measurements_last(request: Request):
     async with request.app["db"].acquire() as conn:
         rows = await select_measurements_last(conn)
     return await jsonify(rows, request)
+
+async def get_measurements_chart(request: Request):
+    meas_id = int(request.query.get("meas_id") or 0)
+    date_start = request.query.get("date_start") or ""
+    date_end = request.query.get("date_end") or ""
+
+    if not meas_id or not date_start or not date_end:
+        return await jsonify([], request)
+
+    async with request.app["db"].acquire() as conn:
+        data = await select_measurements_chart(conn, meas_id, date_start, date_end)
+
+    return await jsonify(data, request)
 
 
 async def get_materials_data(request: Request):

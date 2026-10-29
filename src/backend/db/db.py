@@ -360,6 +360,24 @@ async def select_measurements_last(conn: Connection):
         await cur.execute(q)
         return await cur.fetchall()
 
+async def select_measurements_chart(conn: Connection, meas_id: int, date_start: str, date_end: str):
+    q = """
+    SELECT md.measured_at
+    , i.code AS code
+    , i.measurement_unit AS unit
+    , mv.value
+    FROM measurement_data AS md
+    INNER JOIN measurement_data_value AS mv ON mv.measurement_data_id = md.id
+    LEFT JOIN measurement_indicator AS i ON i.id = mv.indicator_id
+    WHERE md.measurement_id = %(meas_id)s
+    AND md.measured_at >= %(date_start)s
+    AND md.measured_at <  %(date_end)s + INTERVAL 1 DAY
+    ORDER BY md.measured_at
+    """
+    async with conn.cursor() as cur:
+        await cur.execute(q, {"meas_id": meas_id, "date_start": date_start, "date_end": date_end})
+        return await cur.fetchall()
+
 async def select_materials_list(conn: Connection):
     q_material = "SELECT id, material as name FROM material WHERE kind = 0 ORDER BY material"
     async with conn.cursor() as cur:
@@ -1549,3 +1567,4 @@ async def delete_measurement_data_value(conn, sample_id: int, indicator_id: int)
 async def delete_measurement_data(conn, sample_id: int):
     async with conn.cursor() as cur:
         await cur.execute("DELETE FROM measurement_data WHERE id = %(id)s", {"id": sample_id})
+

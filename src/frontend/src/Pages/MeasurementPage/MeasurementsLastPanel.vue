@@ -43,8 +43,17 @@ const elapsed = (v: string): string => {
   return 'только что';
 };
 
-const refresh = () => {
-  store.fetchMeasurementsLast();
+const REFRESH_DEBOUNCE_MS = 500;
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+
+const refresh = (): void => {
+  if (refreshTimer !== undefined) {
+    clearTimeout(refreshTimer);
+  }
+  refreshTimer = setTimeout(() => {
+    refreshTimer = undefined;
+    store.fetchMeasurementsLast();
+  }, REFRESH_DEBOUNCE_MS);
 };
 
 const REFRESH_INTERVAL_MS = 60_000;
@@ -60,6 +69,9 @@ onMounted(() => {
 onUnmounted(() => {
   if (timer !== undefined) {
     clearInterval(timer);
+  }
+  if (refreshTimer !== undefined) {
+    clearTimeout(refreshTimer);
   }
 });
 

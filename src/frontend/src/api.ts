@@ -162,6 +162,23 @@ class ClientAPI {
         return await response.json();
     }
 
+    async fetchMeasurementsChart(params: frontend.IMeasurementsChartQueryParams): Promise<frontend.IMeasurementChart[]> {
+        this.checkToken();
+        const qs = new URLSearchParams({
+            meas_id: String(params.meas_id),
+            date_start: params.meas_date_start,
+            date_end: params.meas_date_end,
+        });
+        const response = await fetch(`${BASE_URL}/measurements_chart?${qs}`, {
+            headers: this.requestHeaders(),
+        });
+        if (!response.ok) {
+            throw new Error(`measurements_chart: HTTP ${response.status}`);
+        }
+        return await response.json();
+    }
+
+
     async fetchMetricsInventoryAging(params: frontend.IMetricsInventoryAgingQueryParams = {}) {
         this.checkToken();
 

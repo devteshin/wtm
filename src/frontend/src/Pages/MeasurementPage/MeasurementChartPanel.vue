@@ -1,0 +1,150 @@
+<template>
+  <div class="chart-root">
+    <div class="chart-toolbar">
+      <el-select
+        v-model="selectedMeasurementId"
+        class="chart-measurement"
+        placeholder="Измерение"
+        filterable
+      >
+        <el-option
+          v-for="m in measurementsList"
+          :key="m.id"
+          :label="m.name"
+          :value="m.id"
+        />
+      </el-select>
+
+      <el-date-picker
+        v-model="period"
+        type="daterange"
+        range-separator="—"
+        start-placeholder="с"
+        end-placeholder="по"
+        :clearable="false"
+        format="DD.MM.YYYY"
+        value-format="YYYY-MM-DD"
+        class="chart-period"
+      />
+
+      <el-button
+        type="primary"
+        :disabled="!selectedMeasurementId || !period"
+        @click="build"
+      >Сформировать</el-button>
+    </div>
+
+    <div ref="chartEl" class="chart-canvas"></div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ElMessage } from 'element-plus';
+import * as echarts from 'echarts';
+import useApplicationStore from '@/store';
+
+const store = useApplicationStore();
+
+const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
+
+const selectedMeasurementId = ref<number | null>(null);
+const period = ref<[string, string] | null>(null);
+
+const chartEl = ref<HTMLDivElement>();
+let chart: echarts.ECharts | undefined;
+let observer: ResizeObserver | undefined;
+
+const fmt = (v: string): string => v.slice(0, 16).replace('T', ' ');
+
+const build = async (): Promise<void> => {
+  if (!selectedMeasurementId.value || !period.value) return;
+  try {
+    await store.fetchMeasurementsChart({
+      meas_id: selectedMeasurementId.value,
+      meas_date_start: period.value[0],
+      meas_date_end: period.value[1],
+    });
+    await nextTick();
+    render();
+  } catch (e) {
+    console.error('Ошибка загрузки данных графика:', e);
+    ElMessage.error('Не удалось построить график');
+  }
+};
+
+const render = (): void => {
+  const rows = store.measurements_chart;
+  if (!chart || !rows.length) return;
+
+  // ось X: уникальные отсортированные моменты измерений
+  const xData = [...new Set(rows.map(r => r.measured_at))].sort();
+
+  // серии по показателям: code → значения по каждому моменту
+  const byCode = new Map<string, { name: string; values: (number | null)[] }>();
+  for (const r of rows) {
+    const key = `${r.code}, ${r.measurement_unit}`;
+    if (!byCode.has(r.code)) {
+      byCode.set(r.code, { name: key, values: xData.map(() => null) });
+    }
+    byCode.get(r.code)!.values[xData.indexOf(r.measured_at)] = Number(r.value);
+  }
+
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { top: 0 },
+    grid: { left: 50, right: 20, top: 40, bottom: 40 },
+    xAxis: {
+      type: 'category',
+      data: xData.map(fmt),
+      axisLabel: { rotate: 45 },
+    },
+    yAxis: { type: 'value' },
+    series: [...byCode.values()].map(s => ({
+      name: s.name,
+      type: 'bar',
+      data: s.values,
+    })),
+  }, true);
+};
+
+onMounted(async () => {
+  chart = echarts.init(chartEl.value!);
+  observer = new ResizeObserver(() => chart?.resize());
+  observer.observe(chartEl.value!);
+
+  try {
+    await store.fetchMeasurementsMeta({ meas_id: 0 });
+  } catch (e) {
+    console.error('Ошибка загрузки справочника:', e);
+  }
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
+  chart?.dispose();
+});
+</script>
+
+<style scoped>
+.chart-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chart-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chart-measurement { width: 280px; }
+.chart-period      { max-width: 280px; }
+
+.chart-canvas {
+  flex: 1;
+  min-height: 240px;
+}
+</style>

@@ -108,7 +108,10 @@
     </el-card>
     <el-card class="card-side">
       <MeasurementsLastPanel ref="lastPanel" :auto-refresh="false" />
-    </el-card>    
+    </el-card>
+    <el-card class="card-chart">
+      <MeasurementChartPanel />
+    </el-card>        
   </div>
 </template>
 
@@ -117,6 +120,7 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue';
 import MeasurementsLastPanel from './MeasurementsLastPanel.vue'
+import MeasurementChartPanel from './MeasurementsLastPanel.vue'
 import useApplicationStore from '@/store';
 
 const store = useApplicationStore();
@@ -424,4 +428,20 @@ const deleteSample = async (id: number): Promise<void> => {
 :deep(.el-input-number .el-input__inner) {
   text-align: right;
 }
+
+.card-chart {
+  flex: 1 1 100%;      /* график всегда занимает весь ряд */
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.card-chart :deep(.el-card__body) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 </style>
