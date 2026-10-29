@@ -364,7 +364,7 @@ async def select_measurements_chart(conn: Connection, meas_id: int, date_start: 
     q = """
     SELECT md.measured_at
     , i.code AS code
-    , i.measurement_unit AS unit
+    , i.measurement_unit AS measurement_unit
     , mv.value
     FROM measurement_data AS md
     INNER JOIN measurement_data_value AS mv ON mv.measurement_data_id = md.id

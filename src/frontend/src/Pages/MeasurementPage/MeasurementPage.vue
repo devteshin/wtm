@@ -120,7 +120,7 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue';
 import MeasurementsLastPanel from './MeasurementsLastPanel.vue'
-import MeasurementChartPanel from './MeasurementsLastPanel.vue'
+import MeasurementChartPanel from './MeasurementChartPanel.vue'
 import useApplicationStore from '@/store';
 
 const store = useApplicationStore();
@@ -358,26 +358,34 @@ const deleteSample = async (id: number): Promise<void> => {
 </script>
 
 <style scoped>
-/* раскладка: две карты рядом, на планшете — друг под другом */
 .panel-layout {
+  --top-menu: 120px;        /* верхнее меню */
+  --chart-h: 380px;         /* высота карточки графика */
+  --row-gap: 16px;          /* совпадает с gap */
+
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
   align-items: stretch;
 
-  max-width: 1440px;   /* дальше не растём */
-  margin: 0 auto;      /* центрируем излишек по краям */
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
-/* основная карта: таблица значений */
+.card,
+.card-side {
+  height: calc(100vh - var(--top-menu) - var(--chart-h) - var(--row-gap));
+  min-height: 320px;        /* чтобы на низких окнах ряд не схлопнулся */
+}
+
 .card {
-  flex: 1 1 640px;        
-  min-width: 640px;       
-  height: 50vh;
+  flex: 1 1 640px;
+  min-width: 640px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
 }
+
 
 .card :deep(.el-card__body) {
   flex: 1;
@@ -388,9 +396,8 @@ const deleteSample = async (id: number): Promise<void> => {
 
 /* панель последних измерений */
 .card-side {
-  flex: 0 1 460px;        /* не раздувается, но сжимается при нехватке места */
+  flex: 0 1 460px;
   min-width: 300px;
-  height: 50vh;           /* ровно в один ряд с основной картой */
   display: flex;
   flex-direction: column;
 }
@@ -405,6 +412,14 @@ const deleteSample = async (id: number): Promise<void> => {
 .card-side :deep(.el-table) {
   flex: 1;
   overflow: auto;         /* скролл внутри панели, если измерений много */
+}
+
+.card-chart {
+  flex: 1 1 100%;
+  height: var(--chart-h);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 /* тулбар */
