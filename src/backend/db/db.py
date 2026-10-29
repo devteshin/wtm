@@ -280,7 +280,7 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
     q_indicators = """
     SELECT i.id, i.code, i.measurement_unit, i.min_value, i.max_value, i.value_precision FROM measurement_ind_set AS mis
     LEFT JOIN measurement_indicator AS i ON i.id = mis.measurement_ind_id
-    WHERE %(meas_id)s = 0 OR mis.measurement_id = %(meas_id)s
+    WHERE (%(meas_id)s = 0 OR mis.measurement_id = %(meas_id)s)
     """
     q_operation = """
     SELECT o.id, o.name FROM operations AS o

@@ -97,19 +97,17 @@
     
           <el-table-column label="" width="60" align="center">
             <template #default="{ row }">
-              <el-tooltip content="Удалить" placement="top"></el-tooltip>
-              <el-button :icon="Delete" circle type="danger" plain
-                   @click="removeRow(row as EditableRow)" />
+              <el-tooltip content="Удалить" placement="top">
+                <el-button :icon="Delete" circle type="danger" plain
+                          @click="removeRow(row as EditableRow)" />
+              </el-tooltip>
             </template>
-          </el-table-column>
-          
+          </el-table-column>          
         </el-table>
-        <el-empty v-if="selectedMeasurementId && !loading && rows.length === 0"
-                  description="Измерений за этот день нет" />
       </div>
     </el-card>
     <el-card class="card-side">
-      <MeasurementsLastPanel />
+      <MeasurementsLastPanel ref="lastPanel" :auto-refresh="false" />
     </el-card>    
   </div>
 </template>
@@ -123,6 +121,8 @@ import useApplicationStore from '@/store';
 
 const store = useApplicationStore();
 
+const lastPanel = ref<InstanceType<typeof MeasurementsLastPanel>>();
+
 // ---------- справочники из meta ----------
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
 const operationsList   = computed(() => store.measurements_meta?.operation_list ?? []);
@@ -131,6 +131,10 @@ const indicatorSet = computed(() =>
     .slice()
     .sort((a, b) => a.order_num - b.order_num)   // по возрастанию order_num
 );
+
+const somethingChanged = (): void => {
+  lastPanel.value?.refresh();
+};
 
 const columnLabel = (ind: frontend.IIndicatorSet): string =>
   `${ind.code}, ${ind.measurement_unit}`;
@@ -219,6 +223,7 @@ const onKeyChanged = async (row: EditableRow): Promise<void> => {
         measured_at: row.measuredAt,
         operation_id: row.operationId,
       });
+      somethingChanged();
     } catch (e) {
       console.error('Ошибка обновления пробы:', e);
       ElMessage.error('Не удалось сохранить время/операцию');
@@ -239,6 +244,7 @@ const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<vo
         });
         row.sampleId = res.id;
         row.rowKey = `db-${res.id}`;   // ключ перевыпускается, больше не «new-*»
+        somethingChanged();
       } catch (e: any) {
         console.error('Ошибка сохранения пробы:', e);
         ElMessage.error(e?.message ?? 'Не удалось сохранить пробу');
@@ -258,6 +264,7 @@ const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<vo
         value,
       });
     }
+    somethingChanged();
   } catch (e) {
     console.error('Ошибка сохранения значения:', e);
     ElMessage.error('Не удалось сохранить значение');
@@ -278,6 +285,7 @@ const removeRow = async (row: EditableRow): Promise<void> => {
   if (row.sampleId !== null) {
     try {
       await deleteSample(row.sampleId);
+      somethingChanged();
     } catch (e) {
       console.error('Ошибка удаления:', e);
       ElMessage.error('Не удалось удалить пробу');
@@ -319,8 +327,6 @@ onMounted(async () => {
   }
 });
 
-// ---------- ЗАГЛУШКИ API (заменим на вызовы стора) ----------
-
 const createSample = async (payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> => {
   return store.createMeasurementData(payload);
 };
@@ -361,8 +367,8 @@ const deleteSample = async (id: number): Promise<void> => {
 
 /* основная карта: таблица значений */
 .card {
-  flex: 1 1 640px;        /* рост + база 640 = прежний min-width */
-  min-width: 640px;       /* ниже — перенос на новую строку */
+  flex: 1 1 640px;        
+  min-width: 640px;       
   height: 50vh;
   display: flex;
   flex-direction: column;
@@ -378,7 +384,7 @@ const deleteSample = async (id: number): Promise<void> => {
 
 /* панель последних измерений */
 .card-side {
-  flex: 0 1 360px;        /* не раздувается, но сжимается при нехватке места */
+  flex: 0 1 460px;        /* не раздувается, но сжимается при нехватке места */
   min-width: 300px;
   height: 50vh;           /* ровно в один ряд с основной картой */
   display: flex;

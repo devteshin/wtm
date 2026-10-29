@@ -138,7 +138,7 @@ async def get_materials_meta(request: Request):
     return await jsonify(materials_meta, request)
 
 async def get_measurements_meta(request: Request):
-    meas_id = request.query.get("meas_id")
+    meas_id = int(request.query.get("meas_id") or 0)
     measurements_meta = []
     async with request.app["db"].acquire() as conn:
         measurements_meta = await select_measurements_meta(conn, meas_id=meas_id)
@@ -176,20 +176,16 @@ async def search_operations_handler(request: Request):
 
 
 async def get_measurements_data(request: Request):
-    
-    meas_id = request.query.get("meas_id")
-    operation_id = request.query.get("operation_id")
-    meas_date_start = request.query.get("meas_date_start")
-    meas_date_end = request.query.get("meas_date_end")
+    meas_id = int(request.query.get("meas_id") or 0)
+    operation_id = int(request.query.get("operation_id") or 0)
+    meas_date_start = request.query.get("meas_date_start") or ""
+    meas_date_end = request.query.get("meas_date_end") or ""
 
     measurements_data = []
     async with request.app["db"].acquire() as conn:
         measurements_data = await select_measurements_data(
-            conn,
-            meas_id=meas_id,
-            operation_id=operation_id,
-            meas_date_start=meas_date_start,
-            meas_date_end=meas_date_end
+            conn, meas_id=meas_id, operation_id=operation_id,
+            meas_date_start=meas_date_start, meas_date_end=meas_date_end,
         )
 
     return await jsonify(measurements_data, request)
