@@ -19,8 +19,8 @@
         v-model="period"
         type="daterange"
         range-separator="—"
-        start-placeholder="с"
-        end-placeholder="по"
+        start-placeholder=""
+        end-placeholder=""
         :clearable="false"
         format="DD.MM.YYYY"
         value-format="YYYY-MM-DD"
@@ -81,16 +81,23 @@ const render = (): void => {
   const xData = [...new Set(rows.map(r => r.measured_at))].sort();
 
   // серии по показателям: code → значения по каждому моменту
-  const byCode = new Map<string, { name: string; values: (number | null)[] }>();
-  for (const r of rows) {
-    const key = `${r.code}, ${r.measurement_unit}`;
-    if (!byCode.has(r.code)) {
-      byCode.set(r.code, { name: key, values: xData.map(() => null) });
-    }
-    byCode.get(r.code)!.values[xData.indexOf(r.measured_at)] = Number(r.value);
+const byCode = new Map<string, { name: string; orderNum: number; values: (number | null)[] }>();
+for (const r of rows) {
+  if (!byCode.has(r.code)) {
+    byCode.set(r.code, {
+      name: `${r.code}, ${r.measurement_unit}`,
+      orderNum: r.order_num ?? 0,
+      values: xData.map(() => null),
+    });
   }
+  byCode.get(r.code)!.values[xData.indexOf(r.measured_at)] = Number(r.value);
+}
 
-  chart.setOption({
+const series = [...byCode.values()]
+  .sort((a, b) => a.orderNum - b.orderNum)
+  .map(s => ({ name: s.name, type: 'bar', data: s.values }));
+
+chart.setOption({
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
     grid: { left: 50, right: 20, top: 40, bottom: 40 },
@@ -100,11 +107,7 @@ const render = (): void => {
       axisLabel: { rotate: 45 },
     },
     yAxis: { type: 'value' },
-    series: [...byCode.values()].map(s => ({
-      name: s.name,
-      type: 'bar',
-      data: s.values,
-    })),
+    series: series,
   }, true);
 };
 
@@ -140,8 +143,13 @@ onUnmounted(() => {
   margin-bottom: 16px;
 }
 
+.chart-toolbar :deep(.chart-period) {
+  width: 280px;
+  max-width: 280px;
+  flex: 0 0 auto;   /* не даём flex-потоку растягивать пикер */
+}
+
 .chart-measurement { width: 280px; }
-.chart-period      { max-width: 280px; }
 
 .chart-canvas {
   flex: 1;

@@ -123,6 +123,7 @@ declare namespace frontend {
         measured_at: string
         code: string
         measurement_unit: string
+        order_num: number
         value: number
     }
 

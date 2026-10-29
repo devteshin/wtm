@@ -365,14 +365,16 @@ async def select_measurements_chart(conn: Connection, meas_id: int, date_start: 
     SELECT md.measured_at
     , i.code AS code
     , i.measurement_unit AS measurement_unit
+    , mis.order_num
     , mv.value
     FROM measurement_data AS md
     INNER JOIN measurement_data_value AS mv ON mv.measurement_data_id = md.id
     LEFT JOIN measurement_indicator AS i ON i.id = mv.indicator_id
+    LEFT JOIN measurement_ind_set AS mis ON mis.measurement_id = md.measurement_id AND mis.measurement_ind_id = mv.indicator_id
     WHERE md.measurement_id = %(meas_id)s
     AND md.measured_at >= %(date_start)s
     AND md.measured_at <  %(date_end)s + INTERVAL 1 DAY
-    ORDER BY md.measured_at
+    ORDER BY md.measured_at, mis.order_num 
     """
     async with conn.cursor() as cur:
         await cur.execute(q, {"meas_id": meas_id, "date_start": date_start, "date_end": date_end})
