@@ -113,6 +113,12 @@ declare namespace frontend {
         vals?: Record<string, number>
     }    
 
+    export type IMeasurementLast = {
+        measurement_id: number
+        measurement: string
+        last_measured_at: string | null
+    }
+
     // значения показателя при создании — только заполненные
     export type ISampleValuePayload = {
         indicator_id: number

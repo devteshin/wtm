@@ -8,7 +8,7 @@ from .db import (
     update_job_status, check_can_login, select_tasks_progress, update_rest_gross_weight, update_arrival, delete_arrival, create_arrival, 
     select_materials_meta, select_materials_data, get_material_id, select_selection_data, check_operation_name, search_materials, search_operations,
     check_material_item, select_dnm_doc_number, select_production_report_data,  select_production_graph_data, select_metrics_inventory_aging,
-    select_journal_zone_docs, select_measurements_meta, select_measurements_data,
+    select_journal_zone_docs, select_measurements_meta, select_measurements_data, select_measurements_last,
     insert_measurement_data, update_measurement_data, upsert_measurement_data_value, delete_measurement_data_value, delete_measurement_data,
     DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
 )
@@ -37,6 +37,7 @@ __all__ = (
     "select_materials_data",
     "select_measurements_meta",
     "select_measurements_data",
+    "select_measurements_last",
     "select_metrics_inventory_aging",
     "select_journal_zone_docs",
     "select_production_report_data",

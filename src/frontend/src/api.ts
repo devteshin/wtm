@@ -151,6 +151,16 @@ class ClientAPI {
         const body = await response.json();
         return body;
     }
+    
+    async fetchMeasurementsLast(): Promise<frontend.IMeasurementLast[]> {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/measurements_last`, { headers: this.requestHeaders() });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+        }
+        return await response.json();
+    }
 
     async fetchMetricsInventoryAging(params: frontend.IMetricsInventoryAgingQueryParams = {}) {
         this.checkToken();

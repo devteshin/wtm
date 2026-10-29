@@ -1,115 +1,124 @@
 <template>
-  <el-card class="card">
-    <!-- Тулбар -->
-    <div class="toolbar">
-      <el-select
-        v-model="selectedMeasurementId"
-        class="toolbar-measurement"
-        placeholder="Измерение"
-        filterable
-      >
-        <el-option
-          v-for="m in measurementsList"
-          :key="m.id"
-          :label="m.name"
-          :value="m.id"
-        />
-      </el-select>
-
-      <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
-      <el-date-picker
-        v-model="selectedDate"
-        class="toolbar-date"
-        type="date"
-        :clearable="false"
-        format="DD.MM.YYYY"
-        value-format="YYYY-MM-DD"
-      />
-      <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
-
-      <el-button type="primary" :disabled="!selectedMeasurementId" @click="loadData">Заполнить</el-button>
-      <el-button :disabled="!selectedMeasurementId" @click="addRow">Добавить строку</el-button>
-    </div>
-
-    <!-- Таблица: показывается только после выбора измерения -->
-    <div class="table-container" v-if="selectedMeasurementId">
-      <el-table
-        :data="rows"
-        v-loading="loading"
-        border
-        row-key="rowKey"
-        height="100%"
-      >
-        <el-table-column label="Время измерения" width="200">
-          <template #default="{ row }">
-            <el-date-picker
-              v-model="row.measuredAt"
-              type="datetime"
-              :clearable="false"
-              format="DD.MM.YYYY HH:mm"
-              value-format="YYYY-MM-DD HH:mm:ss"
-              :disabled-date="disableOtherDays"
-              style="width: 100%"
-              @change="onKeyChanged(row as EditableRow)"
-            />
-          </template>
-        </el-table-column>
-  
-        <el-table-column label="Операция" min-width="200">
-          <template #default="{ row }">
-            <el-select
-              v-model="row.operationId"
-              placeholder="—"
-              filterable
-              style="width: 100%"
-              @change="onKeyChanged(row as EditableRow)"
-            >
-              <el-option
-                v-for="op in operationsList"
-                :key="op.id"
-                :label="op.name"
-                :value="op.id"
-              />
-            </el-select>
-          </template>
-        </el-table-column>
-  
-        <el-table-column
-          v-for="ind in indicatorSet"
-          :key="ind.id"
-          :label="columnLabel(ind)"
-          width="120"
-          align="right"
+  <div class="panel-layout">
+    <el-card class="card">
+      <!-- Тулбар -->
+      <div class="toolbar">
+        <el-select
+          v-model="selectedMeasurementId"
+          class="toolbar-measurement"
+          placeholder="Измерение"
+          filterable
         >
-          <template #default="{ row }">
-            <el-input-number
-              v-model="row.values[String(ind.id)]"
-              :controls="false"
-              :precision="ind.value_precision ?? 2"
-              :min="ind.min_value ?? 0"
-              :max="ind.max_value ?? 100"
-              style="width: 100%; text-align: right"
-              @change="onValueChanged(row as EditableRow, ind.id)"
-            />
-          </template>
-        </el-table-column>
+          <el-option
+            v-for="m in measurementsList"
+            :key="m.id"
+            :label="m.name"
+            :value="m.id"
+          />
+        </el-select>
   
-        <el-table-column label="" width="90" align="right">
-          <template #default="{ row }">
-            <el-button link type="danger" @click="removeRow(row as EditableRow)">Удалить</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="selectedMeasurementId && !loading && rows.length === 0"
-                description="Измерений за этот день нет" />
-    </div>
-  </el-card>
+        <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
+        <el-date-picker
+          v-model="selectedDate"
+          class="toolbar-date"
+          type="date"
+          :clearable="false"
+          format="DD.MM.YYYY"
+          value-format="YYYY-MM-DD"
+        />
+        <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
+  
+        <el-button type="primary" :disabled="!selectedMeasurementId" @click="loadData">Заполнить</el-button>
+        <el-button :disabled="!selectedMeasurementId" @click="addRow">Добавить строку</el-button>
+      </div>
+  
+      <!-- Таблица: показывается только после выбора измерения -->
+      <div class="table-container" v-if="selectedMeasurementId">
+        <el-table
+          :data="rows"
+          v-loading="loading"
+          border
+          row-key="rowKey"
+          height="100%"
+        >
+          <el-table-column label="Время измерения" width="200">
+            <template #default="{ row }">
+              <el-date-picker
+                v-model="row.measuredAt"
+                type="datetime"
+                :clearable="false"
+                format="DD.MM.YYYY HH:mm"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                :disabled-date="disableOtherDays"
+                style="width: 100%"
+                @change="onKeyChanged(row as EditableRow)"
+              />
+            </template>
+          </el-table-column>
+    
+          <el-table-column label="Операция" min-width="200">
+            <template #default="{ row }">
+              <el-select
+                v-model="row.operationId"
+                placeholder="—"
+                filterable
+                style="width: 100%"
+                @change="onKeyChanged(row as EditableRow)"
+              >
+                <el-option
+                  v-for="op in operationsList"
+                  :key="op.id"
+                  :label="op.name"
+                  :value="op.id"
+                />
+              </el-select>
+            </template>
+          </el-table-column>
+    
+          <el-table-column
+            v-for="ind in indicatorSet"
+            :key="ind.id"
+            :label="columnLabel(ind)"
+            width="120"
+            align="right"
+          >
+            <template #default="{ row }">
+              <el-input-number
+                v-model="row.values[String(ind.id)]"
+                :controls="false"
+                :precision="ind.value_precision ?? 2"
+                :min="ind.min_value ?? 0"
+                :max="ind.max_value ?? 100"
+                style="width: 100%; text-align: right"
+                @change="onValueChanged(row as EditableRow, ind.id)"
+              />
+            </template>
+          </el-table-column>
+    
+          <el-table-column label="" width="60" align="center">
+            <template #default="{ row }">
+              <el-tooltip content="Удалить" placement="top"></el-tooltip>
+              <el-button :icon="Delete" circle type="danger" plain
+                   @click="removeRow(row as EditableRow)" />
+            </template>
+          </el-table-column>
+          
+        </el-table>
+        <el-empty v-if="selectedMeasurementId && !loading && rows.length === 0"
+                  description="Измерений за этот день нет" />
+      </div>
+    </el-card>
+    <el-card class="card-side">
+      <MeasurementsLastPanel />
+    </el-card>    
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
+import { ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue';
+import MeasurementsLastPanel from './MeasurementsLastPanel.vue'
 import useApplicationStore from '@/store';
 
 const store = useApplicationStore();
@@ -143,7 +152,7 @@ const rows = ref<EditableRow[]>([]);
 
 // ---------- загрузка ----------
 const loadData = async (): Promise<void> => {
-  if (!selectedMeasurementId.value) return;
+  if (!selectedMeasurementId.value || !selectedDate.value) return;
   try {
     loading.value = true;
     await Promise.all([
@@ -339,11 +348,22 @@ const deleteSample = async (id: number): Promise<void> => {
 </script>
 
 <style scoped>
-/* карточка: полэкрана, вертикальный расклад */
+/* раскладка: две карты рядом, на планшете — друг под другом */
+.panel-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+
+  max-width: 1440px;   /* дальше не растём */
+  margin: 0 auto;      /* центрируем излишек по краям */
+}
+
+/* основная карта: таблица значений */
 .card {
+  flex: 1 1 640px;        /* рост + база 640 = прежний min-width */
+  min-width: 640px;       /* ниже — перенос на новую строку */
   height: 50vh;
-  width: 50%;          
-  min-width: 640px;    
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -351,9 +371,30 @@ const deleteSample = async (id: number): Promise<void> => {
 
 .card :deep(.el-card__body) {
   flex: 1;
-  min-height: 0;              /* без этого таблица не ограничится высотой карточки */
+  min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* панель последних измерений */
+.card-side {
+  flex: 0 1 360px;        /* не раздувается, но сжимается при нехватке места */
+  min-width: 300px;
+  height: 50vh;           /* ровно в один ряд с основной картой */
+  display: flex;
+  flex-direction: column;
+}
+
+.card-side :deep(.el-card__body) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-side :deep(.el-table) {
+  flex: 1;
+  overflow: auto;         /* скролл внутри панели, если измерений много */
 }
 
 /* тулбар */

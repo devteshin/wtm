@@ -335,7 +335,8 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     (%(meas_date_end)s = '' OR DATE(measured_at) <  %(meas_date_end)s  + INTERVAL 1 DAY))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
-    GROUP BY md.id, m.name, m.id, o.name, o.id, measured_at 
+    GROUP BY md.id, m.name, m.id, o.name, o.id, measured_at
+    ORDER BY measured_at DESC
     """
 
     async with conn.cursor() as cur:
@@ -345,6 +346,19 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
             row["vals"] = json.loads(row["vals"]) if row["vals"] else {}
 
     return measurement_data
+
+async def select_measurements_last(conn: Connection):
+    q = """
+    SELECT m.id AS measurement_id, m.name AS measurement
+    , MAX(md.measured_at) AS last_measured_at
+    FROM measurement AS m
+    LEFT JOIN measurement_data AS md ON md.measurement_id = m.id
+    GROUP BY m.id, m.name
+    ORDER BY last_measured_at DESC, m.name
+    """
+    async with conn.cursor() as cur:
+        await cur.execute(q)
+        return await cur.fetchall()
 
 async def select_materials_list(conn: Connection):
     q_material = "SELECT id, material as name FROM material WHERE kind = 0 ORDER BY material"

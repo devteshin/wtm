@@ -31,6 +31,8 @@ export default defineStore("app_store", () => {
     const materials_list = ref<frontend.IMaterial | null>(null);
     /** данные измерения показателей */
     const measurements_data = ref<Array<frontend.IMeasurementsData>>([]);
+    /** последние проведенные измерения показателей */
+    const measurements_last = ref<frontend.IMeasurementLast[]>([]);
     /** остатки материалов для отчета по остаткам */
     const materials_data = ref<Array<frontend.IMaterialsData>>([]);
     /** данные метрики inventory aging */
@@ -74,6 +76,11 @@ export default defineStore("app_store", () => {
     /** запрос к API для получения данных измерения показателей */
     const fetchMeasurementsData = (params?: frontend.IMeasurementsQueryParams) => {
         return api.fetchMeasurementsData(params).then(body => measurements_data.value = body).finally(() => loading.value = false);
+    };
+
+    /** запрос к API для получения данных о последнем проведенном измерении показателей */
+    const fetchMeasurementsLast = (): Promise<frontend.IMeasurementLast[]> => {
+        return api.fetchMeasurementsLast().then(body => measurements_last.value = body);
     };
 
     /** запрос к API для получения метрик срок хранения материалов */
@@ -416,6 +423,7 @@ export default defineStore("app_store", () => {
         fetchMaterialsData,
         fetchMeasurementsMeta,
         fetchMeasurementsData,
+        fetchMeasurementsLast,
         fetchMetricsInventoryAging,
         fetchZoneDocs,
         fetchProductionReportData,
@@ -457,6 +465,7 @@ export default defineStore("app_store", () => {
         materials_data,
         measurements_meta,
         measurements_data,
+        measurements_last,
         metrics_inventory_aging,
         zone_docs,
         production_report_data,
