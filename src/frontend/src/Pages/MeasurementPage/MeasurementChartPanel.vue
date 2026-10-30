@@ -105,7 +105,11 @@ chart.setOption({
     xAxis: {
       type: 'category',
       data: xData.map(v => rows.find(r => r.measured_at === v)?.measured_at_fmt ?? v),
-      axisLabel: { rotate: 45 },
+      axisLabel: {
+        show: true,
+        interval: Math.ceil(xData.length / 6),   // ~6 подписей на всю ширину
+        rotate: 0,
+      },
     },
     yAxis: { type: 'value' },
     series: series,

@@ -104,7 +104,7 @@
           <el-table-column v-if="canEdit" label="" width="60" align="center">
             <template #default="{ row }">
               <el-tooltip content="Удалить" placement="top">
-                <el-button :icon="Delete" circle type="danger" plain
+                <el-button :icon="Delete" circle type="danger" plain tabindex="-1"
                           @click="removeRow(row as EditableRow)" />
               </el-tooltip>
             </template>
@@ -467,19 +467,12 @@ const deleteSample = async (id: number): Promise<void> => {
   text-align: right;
 }
 
-.card-chart {
+.card-chart :deep(.el-card__body){
   flex: 1 1 100%;      /* график всегда занимает весь ряд */
   height: 380px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-}
-
-.card-chart :deep(.el-card__body) {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .cell-value {

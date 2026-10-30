@@ -337,7 +337,7 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
     GROUP BY md.id, m.name, m.id, o.name, o.id, measured_at, measured_at_fmt 
-    ORDER BY measured_at DESC
+    ORDER BY measured_at
     """
 
     async with conn.cursor() as cur:

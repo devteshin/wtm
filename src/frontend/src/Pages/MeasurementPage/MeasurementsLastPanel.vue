@@ -5,7 +5,7 @@
         <el-table-column label="Прошло" min-width="90" align="right">
             <template #default="{ row }">
             <span v-if="row.last_measured_at">{{ elapsed(row.last_measured_at) }}</span>
-            <el-tag v-else type="info" size="small">нет данных</el-tag>
+            <el-tag v-else type="info" size="small">—</el-tag>
             </template>
         </el-table-column>
 
