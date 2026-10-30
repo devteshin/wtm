@@ -121,6 +121,7 @@ declare namespace frontend {
 
     export type IMeasurementChart = {
         measured_at: string
+        measured_at_fmt: string
         code: string
         measurement_unit: string
         order_num: number

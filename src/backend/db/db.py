@@ -363,6 +363,7 @@ async def select_measurements_last(conn: Connection):
 async def select_measurements_chart(conn: Connection, meas_id: int, date_start: str, date_end: str):
     q = """
     SELECT md.measured_at
+    , DATE_FORMAT(md.measured_at, '%%d.%%m.%%Y %%H:%%i') AS measured_at_fmt
     , i.code AS code
     , i.measurement_unit AS measurement_unit
     , mis.order_num

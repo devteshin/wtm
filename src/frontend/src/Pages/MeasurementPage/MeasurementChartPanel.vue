@@ -103,7 +103,7 @@ chart.setOption({
     grid: { left: 50, right: 20, top: 40, bottom: 40 },
     xAxis: {
       type: 'category',
-      data: xData.map(fmt),
+      data: xData.map(v => rows.find(r => r.measured_at === v)?.measured_at_fmt ?? v),
       axisLabel: { rotate: 45 },
     },
     yAxis: { type: 'value' },
