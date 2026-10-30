@@ -323,7 +323,8 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     q_measurement_data = """
     SELECT md.id, m.name AS measurement, m.id AS measurement_id
     , o.name AS operation, o.id AS operation_id
-    , measured_at 
+    , measured_at
+    , DATE_FORMAT(measured_at, '%%d.%%m.%%Y %%H:%%i') AS measured_at_fmt 
     , JSON_OBJECTAGG(mv.indicator_id, mv.value) AS vals
     FROM measurement_data AS md
     LEFT JOIN measurement AS m ON m.id = md.measurement_id
@@ -335,7 +336,7 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     (%(meas_date_end)s = '' OR DATE(measured_at) <  %(meas_date_end)s  + INTERVAL 1 DAY))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
-    GROUP BY md.id, m.name, m.id, o.name, o.id, measured_at
+    GROUP BY md.id, m.name, m.id, o.name, o.id, measured_at, measured_at_fmt 
     ORDER BY measured_at DESC
     """
 

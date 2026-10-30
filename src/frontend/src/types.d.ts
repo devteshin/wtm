@@ -106,6 +106,7 @@ declare namespace frontend {
     export type IMeasurementsData = {
         id: number
         measured_at: string
+        measured_at_fmt: string
         measurement_id: number
         measurement: string
         operation_id: number

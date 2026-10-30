@@ -29,7 +29,7 @@
         <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
   
         <el-button type="primary" :disabled="!selectedMeasurementId" @click="loadData">Заполнить</el-button>
-        <el-button :disabled="!selectedMeasurementId" @click="addRow">Добавить строку</el-button>
+        <el-button v-if="canEdit" :disabled="!selectedMeasurementId" @click="addRow">Добавить строку</el-button>
       </div>
   
       <!-- Таблица: показывается только после выбора измерения -->
@@ -44,6 +44,7 @@
           <el-table-column label="Время измерения" width="200">
             <template #default="{ row }">
               <el-date-picker
+                v-if="canEdit"
                 v-model="row.measuredAt"
                 type="datetime"
                 :clearable="false"
@@ -53,12 +54,14 @@
                 style="width: 100%"
                 @change="onKeyChanged(row as EditableRow)"
               />
+              <span v-else>{{ row.measuredAtFmt ?? '—' }}</span>
             </template>
           </el-table-column>
     
           <el-table-column label="Операция" min-width="200">
             <template #default="{ row }">
               <el-select
+                v-if="canEdit"
                 v-model="row.operationId"
                 placeholder="—"
                 filterable
@@ -72,6 +75,7 @@
                   :value="op.id"
                 />
               </el-select>
+              <span v-else>{{ row.operationName ?? '—' }}</span>
             </template>
           </el-table-column>
     
@@ -84,6 +88,7 @@
           >
             <template #default="{ row }">
               <el-input-number
+                v-if="canEdit"
                 v-model="row.values[String(ind.id)]"
                 :controls="false"
                 :precision="ind.value_precision ?? 2"
@@ -92,10 +97,11 @@
                 style="width: 100%; text-align: right"
                 @change="onValueChanged(row as EditableRow, ind.id)"
               />
+              <span v-else class="cell-value">{{ formatValue(row as EditableRow, ind) }}</span>
             </template>
           </el-table-column>
     
-          <el-table-column label="" width="60" align="center">
+          <el-table-column v-if="canEdit" label="" width="60" align="center">
             <template #default="{ row }">
               <el-tooltip content="Удалить" placement="top">
                 <el-button :icon="Delete" circle type="danger" plain
@@ -123,6 +129,12 @@ import MeasurementsLastPanel from './MeasurementsLastPanel.vue'
 import MeasurementChartPanel from './MeasurementChartPanel.vue'
 import useApplicationStore from '@/store';
 
+const props = withDefaults(
+  defineProps<{ editable?: boolean }>(),
+  { editable: true },   
+);
+
+const canEdit = computed(() => props.editable);
 const store = useApplicationStore();
 
 const lastPanel = ref<InstanceType<typeof MeasurementsLastPanel>>();
@@ -152,7 +164,9 @@ type EditableRow = {
   rowKey: string;
   sampleId: number | null;      // id пробы (measurement_data), null — ещё не сохранена
   measuredAt: string | null;
+  measuredAtFmt: string | null;
   operationId: number | null;
+  operationName: string | null;
   values: Record<string, number | null>;   // indicator_id → значение
 };
 
@@ -181,12 +195,19 @@ const loadData = async (): Promise<void> => {
   }
 };
 
+const formatValue = (row: EditableRow, ind: frontend.IIndicatorSet): string => {
+  const v = row.values[String(ind.id)];
+  return v === null || v === undefined ? '—' : Number(v).toFixed(ind.value_precision ?? 2);
+};
+
 const mapFromStore = (): void => {
   rows.value = (store.measurements_data ?? []).map((r: frontend.IMeasurementsData, i: number) => ({
     rowKey: `db-${r.id}`,
     sampleId: r.id,
     measuredAt: r.measured_at,
+    measuredAtFmt: r.measured_at_fmt,
     operationId: (r as any).operation_id ?? null,
+    operationName: (r as any).operation ?? null,
     values: Object.fromEntries(
       indicatorSet.value.map(ind => [String(ind.id), r.vals?.[String(ind.id)] ?? null])
     ),
@@ -203,7 +224,9 @@ const addRow = (): void => {
     rowKey: `new-${++newRowSeq}`,
     sampleId: null,
     measuredAt: null,
+    measuredAtFmt: null,
     operationId: null,
+    operationName: null,
     values: Object.fromEntries(indicatorSet.value.map(ind => [String(ind.id), null])),
   });
 };
@@ -457,6 +480,12 @@ const deleteSample = async (id: number): Promise<void> => {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+.cell-value {
+  display: block;
+  text-align: right;
+  width: 100%;
 }
 
 </style>

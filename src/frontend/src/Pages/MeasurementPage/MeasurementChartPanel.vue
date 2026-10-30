@@ -21,7 +21,8 @@
         range-separator="—"
         start-placeholder=""
         end-placeholder=""
-        :clearable="false"
+        :shortcuts="shortcuts"
+        clearable
         format="DD.MM.YYYY"
         value-format="YYYY-MM-DD"
         class="chart-period"
@@ -127,6 +128,44 @@ onUnmounted(() => {
   observer?.disconnect();
   chart?.dispose();
 });
+
+const shortcuts = [
+  {
+    text: 'Сегодня',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      return [start, end]
+    },
+  },
+  {
+    text: 'Неделя',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setDate(start.getDate() - 7)
+      return [start, end]
+    },
+  },
+  {
+    text: 'Месяц',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setMonth(start.getMonth() - 1)
+      return [start, end]
+    },
+  },
+  {
+    text: '3 месяца',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setMonth(start.getMonth() - 3)
+      return [start, end]
+    },
+  },
+]
 </script>
 
 <style scoped>
