@@ -122,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue';
 import MeasurementsLastPanel from './MeasurementsLastPanel.vue'
@@ -331,11 +331,10 @@ const fmtDateLocal = (d: Date): string => {
 const selectedDate = ref<string>(fmtDateLocal(new Date()));
 
 const shiftDay = (days: number): void => {
-  const [y, m, d] = selectedDate.value.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  dt.setDate(dt.getDate() + days);
-  selectedDate.value = fmtDateLocal(dt);
-  void loadData();
+    const [y, m, d] = selectedDate.value.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + days);
+    selectedDate.value = fmtDateLocal(dt);
 };
 
 const disableOtherDays = (d: Date): boolean =>
@@ -376,6 +375,14 @@ const deleteSampleValue = async (sampleId: number, indicatorId: number): Promise
 const deleteSample = async (id: number): Promise<void> => {
   await store.deleteMeasurementData(id);
 };
+
+watch([selectedMeasurementId, selectedDate], async ([measId, date]) => {
+    rows.value = [];   // сбрасываем таблицу — старые данные к новому выбору не относятся
+
+    if (measId && date) {
+        await loadData();
+    }
+});
 
 
 </script>
