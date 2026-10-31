@@ -104,7 +104,7 @@ const routes = computed(() => {
     //const stockID = route.params.stockID as string;
     const stockID = store.currentStockID;
     const role = store.currentUser?.role_id;
-    const menuRoutes: Array<{ label: string; path: string; icon: string }> = [];
+    const menuRoutes: Array<{ label: string; path: string; query?: Record<string, string>; icon: string }> = [];
 
     // role_id = 1 — полное меню
     if (role === 1) {
@@ -119,7 +119,8 @@ const routes = computed(() => {
                 { label: "Задачи", path: `/stock/${stockID}`, icon: "MessageBox" },
                 { label: "Операции", path: `/stock/${stockID}/operations`, icon: "MessageBox" },
                 { label: "Материалы", path: `/material`, icon: "MessageBox" },
-                { label: "Производство", path: `/production`, icon: "MessageBox" }
+                { label: "Производство", path: `/production`, icon: "MessageBox" },
+                { label: "Измерения", path: `/measurements?editable=0`, query: { editable: "0" }, icon: "MessageBox" }
             );
         }
     }
@@ -132,6 +133,13 @@ const routes = computed(() => {
             { label: "Показатели", path: `/metrics`, icon: "MessageBox" }
         );
     }
+
+    if (role === 3) {
+        menuRoutes.push(
+            { label: "Измерения", path: `/measurements`, icon: "MessageBox" }
+        );
+    }
+
 
     return menuRoutes;
 });

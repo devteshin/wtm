@@ -98,8 +98,16 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/Pages/ZonesPage/ZoneDocsPage.vue")
     },
     {
-        path: "/meas_page",
-        component: () => import("@/Pages/MeasurementPage/MeasurementPage.vue")
+        path: "/measurements",
+        component: () => import("@/Pages/MeasurementPage/MeasurementPage.vue"),
+        props: route => {
+        const editable = route.query.editable !== "0";
+        return { editable };
+        },
+    },
+    {
+    path: "/:pathMatch(.*)*",
+    redirect: "/"
     },
 
 
@@ -109,7 +117,22 @@ const router = createRouter({
     routes: routes
 });
 /** проверка токена перед каждым переходом на страницу */
-router.beforeEach(() => useApplicationStore().checkToken());
+//router.beforeEach(() => useApplicationStore().checkToken());
+
+router.beforeEach((to) => {
+    const store = useApplicationStore();
+    store.checkToken();
+
+    if (!store.currentUser) {
+        return to.path === "/login" ? true : { path: "/login" };
+    }
+
+    const role = store.currentUser.role_id;
+    if (role === 3 && to.path !== "/measurements") return { path: "/measurements" };
+
+    return true;
+});
+
 /** обертка для PWA */
 router.isReady().then(async () => {
     const { registerSW } = await import("virtual:pwa-register");

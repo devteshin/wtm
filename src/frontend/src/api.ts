@@ -54,8 +54,7 @@ class ClientAPI {
         }
     }
 
-    checkToken() {
-        /** проверка токена */
+/*     checkToken() {
         if (!this.token) {
             this.token = window.localStorage.getItem("token");
         }
@@ -66,6 +65,18 @@ class ClientAPI {
             this.decodeToken();
         }
     }
+ */
+
+    checkToken() {
+        if (!this.token) {
+            this.token = window.localStorage.getItem("token");
+        }
+        if (!this.currentUser && this.token) {
+            this.decodeToken();
+        }
+    }
+
+
 
     requestHeaders(): HeadersInit {
         return this.token ? { token: this.token } : {};
