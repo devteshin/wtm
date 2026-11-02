@@ -3,9 +3,10 @@ version: "3.5"
 services:
   wtm:
     container_name: WTM
-    image: ghcr.io/devteshin/wtm:test
+    image: ghcr.io/devteshin/wtm:feature
     restart: always
     volumes:
       - ./config.toml:/app/config.toml:ro
     ports:
       - ${EXPOSE_PORT:-5530}:8080
+
