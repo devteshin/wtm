@@ -42,6 +42,7 @@ const elapsed = (v: string): string => {
   }
   return 'только что';
 };
+ 
 
 const REFRESH_DEBOUNCE_MS = 500;
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
