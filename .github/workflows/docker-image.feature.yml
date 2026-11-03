@@ -13,7 +13,7 @@ jobs:
       contents: read
     steps:
     - uses: actions/checkout@v4
- - name: Build the Docker image
+    - name: Build the Docker image
       run: |
         SHORT_SHA=${GITHUB_SHA::7}
         docker build . --file Dockerfile \
