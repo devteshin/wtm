@@ -13,13 +13,23 @@ jobs:
       contents: read
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag wtm:feature --label "runnumber=${GITHUB_RUN_ID}" --label "org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/wtm"
+ - name: Build the Docker image
+      run: |
+        SHORT_SHA=${GITHUB_SHA::7}
+        docker build . --file Dockerfile \
+          --tag wtm:feature \
+          --tag wtm:sha-$SHORT_SHA \
+          --label "runnumber=${GITHUB_RUN_ID}" \
+          --label "org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/wtm"
+
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
     - name: Push image
       run: |
-        IMAGE_NAME=wtm:feature
-        IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-        docker tag $IMAGE_NAME $IMAGE_ID
-        docker push $IMAGE_ID        
+        SHORT_SHA=${GITHUB_SHA::7}
+        IMAGE_ID=ghcr.io/${{ github.repository_owner }}/wtm
+        docker tag wtm:feature $IMAGE_ID:feature
+        docker tag wtm:feature $IMAGE_ID:sha-$SHORT_SHA
+        docker push $IMAGE_ID:feature
+        docker push $IMAGE_ID:sha-$SHORT_SHA
