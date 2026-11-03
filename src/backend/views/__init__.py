@@ -10,7 +10,8 @@ from .handlers import (
     check_material_item_handler, get_materials_meta, get_materials_data, get_selection_data, update_task_handler, search_materials_handler, search_operations_handler,
     get_production_report_data, get_production_graph_data, get_metrics_inventory_aging, get_journal_zone_docs, get_measurements_meta, get_measurements_data,
     get_measurements_last, get_measurements_chart,
-    post_measurement_data, put_measurement_data, put_measurement_data_value, delete_measurement_data_handler, delete_measurement_data_value_handler)
+    post_measurement_data, put_measurement_data, put_measurement_data_value, delete_measurement_data_handler, delete_measurement_data_value_handler,
+    get_scada_test)
 
 
 def index_spa(path: str, filename: str):
@@ -76,7 +77,8 @@ def setup_handlers(app: Application):
         ("GET", "/api/operation/check_name", check_operation_name_handler, "check_operation_name_handler"),
         ("GET", "/api/selection_data", get_selection_data, "get_selection_data"),
         ("PUT", "/api/rest_gross_weight", rest_gross_weight, "rest_gross_weight"),
-        ("POST", "/api/check_item", check_material_item_handler, "check_material_item_handler")
+        ("POST", "/api/check_item", check_material_item_handler, "check_material_item_handler"),
+        ("GET", "/api/scada_test", get_scada_test, "scada_test")
     ]
     for method, path, func, name in [*views]:
         app.router.add_route(method, path, func, name=name)

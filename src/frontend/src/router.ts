@@ -106,6 +106,11 @@ const routes: Array<RouteRecordRaw> = [
         },
     },
     {
+        path: '/test_scada',
+        component: () => import('@/Pages/TestScada.vue')
+    },
+
+    {
     path: "/:pathMatch(.*)*",
     redirect: "/"
     },

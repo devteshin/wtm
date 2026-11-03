@@ -916,6 +916,30 @@ class ClientAPI {
         }
         return;
     }
+
+    async fetchScadaTestData(params: frontend.IScadaTestParams = {}) {
+    this.checkToken();
+
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+        }
+    });
+
+    const url = `${BASE_URL}/scada_test${
+        queryParams.toString() ? `?${queryParams.toString()}` : ''
+    }`;
+
+    const response = await fetch(url, { headers: this.requestHeaders() });
+    if (response.status === 403) {
+        window.localStorage.removeItem("token");
+        location.href = "/login";
+    }
+    const body = await response.json();
+    return body;
+    }
+
 }
 
 export default ClientAPI;

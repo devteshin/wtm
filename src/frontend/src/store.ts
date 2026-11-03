@@ -66,7 +66,9 @@ export default defineStore("app_store", () => {
     /** задание */
     const task = ref<frontend.ITaskP | null>(null);
     const doc_list = shallowRef<Array<frontend.IDocList>>([]);
-
+    const scada_rows = ref<frontend.IScadaTestRow[]>([]);
+    const scada_error = ref<string | null>(null);
+    const scada_loading = ref(false);
 
     const doLogin = (payload: frontend.ILoginPayload) => api.doLogin(payload);
 
@@ -381,6 +383,21 @@ export default defineStore("app_store", () => {
         return api.deleteMeasurementValue(sampleId, indicatorId);
     };
 
+    const fetchScadaTestData = (params?: frontend.IScadaTestParams) => {
+        scada_error.value = null;
+        scada_loading.value = true;
+        return api.fetchScadaTestData(params)
+            .then(body => {
+            scada_rows.value = Array.isArray(body) ? body : [];
+            })
+            .catch((e: unknown) => {
+            // ошибка уже приходит как 400 с текстом из HTTPBadRequest
+            scada_error.value = e instanceof Error ? e.message : String(e);
+            scada_rows.value = [];
+            })
+            .finally(() => scada_loading.value = false);
+    };
+
     
     /** ID таймера */
     let timer: number | null = null;
@@ -466,6 +483,7 @@ export default defineStore("app_store", () => {
         upsertMeasurementValue,
         deleteMeasurementData,
         deleteMeasurementValue,
+        fetchScadaTestData,
         stocks,
         operations,
         operation,
@@ -494,6 +512,9 @@ export default defineStore("app_store", () => {
         changePassword,
         logOut,
         loading,
+        scada_loading,
+        scada_rows,
+        scada_error,
         isLandscape,
 
         doAutofetch,

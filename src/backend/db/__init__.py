@@ -12,7 +12,7 @@ from .db import (
     insert_measurement_data, update_measurement_data, upsert_measurement_data_value, delete_measurement_data_value, delete_measurement_data,
     DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
 )
-
+from .scada_db import select_scada_test_data, tdatetime_to_iso
 
 async def create_connect_db(user: str, password: str, host: str, port: int, db: str) -> Pool:
     return await create_pool(
@@ -75,5 +75,7 @@ __all__ = (
     "DocumentExistsError",
     "MaterialError",
     "ItemsExistsError",
-    "ItemsConsumptionError"
+    "ItemsConsumptionError",
+    "select_scada_test_data",
+    "tdatetime_to_iso"    
 )

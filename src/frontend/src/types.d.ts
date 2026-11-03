@@ -565,5 +565,18 @@ declare namespace frontend {
         next_doc_number_list: string;
     }
 
+    export interface IScadaTestParams {
+        limit?: number;
+    }
+
+    export interface IScadaTestRow {
+        code: number;
+        stationID: number;
+        passportID: number;
+        valueTime: number | null;
+        value_time_iso: string | null;
+        valueData: number | string | null;
+    }
+
 
 }

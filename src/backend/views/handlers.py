@@ -6,11 +6,15 @@ from db import (check_user, select_task, select_tasks, change_password, select_m
                 check_material_item, check_operation_name, update_operation, delete_operation, update_operation_task, search_materials, search_operations,
                 select_production_report_data, select_production_graph_data, select_metrics_inventory_aging, select_journal_zone_docs,
                 select_measurements_meta, select_measurements_data, select_measurements_last, select_measurements_chart,
-                insert_measurement_data, update_measurement_data, delete_measurement_data_value, upsert_measurement_data_value, delete_measurement_data
+                insert_measurement_data, update_measurement_data, delete_measurement_data_value, upsert_measurement_data_value, delete_measurement_data,
+                select_scada_test_data
                 )
+
 from utils import jsonify
 from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, MaterialError
 import json
+import asyncio
+import sqlite3
 
 async def login_handler(request: Request):
     """ хэндлен авторизация """
@@ -694,3 +698,21 @@ async def delete_measurement_data_value_handler(request: Request):
     async with request.app["db"].acquire() as conn:
         await delete_measurement_data_value(conn, sample_id, indicator_id)
     return await jsonify({}, request)
+
+async def get_scada_test(request: Request):
+    """ тест: чтение N последних записей из базы Симп Лайт (SQLite) """
+    db_path = request.app["scada_db_path"]
+    try:
+        limit = int(request.query.get("limit", 20))
+    except ValueError:
+        limit = 20
+    limit = max(1, min(limit, 1000))
+
+    try:
+        data = await asyncio.to_thread(select_scada_test_data, db_path, limit)
+    except sqlite3.Error as exc:
+        raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
+    except OSError as exc:
+        raise HTTPBadRequest(body=str(exc))  # pylint: disable=raise-missing-from
+
+    return await jsonify(data, request)
