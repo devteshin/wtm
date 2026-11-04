@@ -26,7 +26,7 @@ def init_app() -> Application:
     cnf = read_config("config.toml")
     app["config"] = cnf
     app["crypto"] = CryptoGuard(cnf["service"]["secret"])
-    app["scada_db_path"] = r"C:\Users\user\Desktop\wtmdev\wtm\scripts\sq_test.db"
+    app["scada_db_path"] = r"/app/scripts/sq_test.db"
     app.on_startup.append(_on_startup)
     app.on_shutdown.append(_on_shutdown)
     setup_handlers(app)
