@@ -1,0 +1,15 @@
+[sqlite]
+path = "C:/path/to/sq.db"
+
+[mysql]
+host = "your-cloud-host"
+port = 3306
+user = "scada_agent"
+password = "your-password-here"
+database = "your-database-name"
+charset = "utf8mb4"
+
+[agent]
+batch_size = 5000
+interval_sec = 30   # прод: 3600
+retry_sec = 30

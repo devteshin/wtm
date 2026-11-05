@@ -2,3 +2,8 @@
 config.toml
 node_modules/
 scripts/*.db
+# scada-agent: локальные конфиги и состояние
+scada-agent/config_agent.toml
+scada-agent/state.json
+scada-agent/__pycache__/
+scada-agent/*.pyc
