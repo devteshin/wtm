@@ -1,9 +1,22 @@
-.vscode
-config.toml
+# IDE
+.vscode/
+
+# Python (везде, не только в scada-agent)
+__pycache__/
+*.pyc
+
+# Node
 node_modules/
-scripts/*.db
-# scada-agent: локальные конфиги и состояние
+
+# локальные конфиги с секретами
+config.toml
 scada-agent/config_agent.toml
+
+# scada-агент: состояние и логи
 scada-agent/state.json
-scada-agent/__pycache__/
-scada-agent/*.pyc
+scada-agent/logs/
+
+# базы SCADA и их журналы WAL
+*.db
+*.db-shm
+*.db-wal
