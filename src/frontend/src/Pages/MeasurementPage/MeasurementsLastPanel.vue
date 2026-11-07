@@ -35,7 +35,10 @@ const elapsed = (v: string): string => {
     return `${days} дн ${hours} ч`;
   }
   if (hours > 0) {
-    return `${hours} ч`;
+    if (minutes == hours * 60) {
+      return `${hours} ч`;  
+    }
+    return `${hours} ч ${minutes - hours * 60} мин`;
   }
   if (minutes > 0) {
     return `${minutes} мин`;
