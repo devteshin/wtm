@@ -644,13 +644,16 @@ async def rest_gross_weight(request: Request):
 # POST /api/measurement_data
 async def post_measurement_data(request: Request):
     payload = await request.json()
+    probe_num_raw = payload.get("probe_num")
+    probe_num = int(probe_num_raw) if probe_num_raw not in (None, "") else None
+
     async with request.app["db"].acquire() as conn:
         result = await insert_measurement_data(
             conn,
             measurement_id=int(payload["measurement_id"]),
             measured_at=payload["measured_at"],
             operation_id=int(payload["operation_id"]),
-            probe_num=int(payload["probe_num"]),
+            probe_num=probe_num,
             values=payload.get("values") or [],
             entered_by=request.user_id,
         )
