@@ -854,6 +854,15 @@ class ClientAPI {
             window.localStorage.removeItem("token");
             location.href = "/login";
         }
+        if (!response.ok) {
+            let detail = "";
+            try {
+                detail = (await response.json())?.detail ?? "";
+            } catch { /* тело не JSON — обойдёмся без detail */ }
+            throw Object.assign(new Error(detail || `HTTP ${response.status}`), {
+                status: response.status,
+            });
+        }        
     }
 
     async upsertMeasurementValue(

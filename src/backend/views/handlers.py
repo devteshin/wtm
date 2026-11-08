@@ -650,6 +650,7 @@ async def post_measurement_data(request: Request):
             measurement_id=int(payload["measurement_id"]),
             measured_at=payload["measured_at"],
             operation_id=int(payload["operation_id"]),
+            probe_num=int(payload["probe_num"]),
             values=payload.get("values") or [],
             entered_by=request.user_id,
         )

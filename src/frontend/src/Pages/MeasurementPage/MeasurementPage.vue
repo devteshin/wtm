@@ -17,16 +17,19 @@
           />
         </el-select>
   
-        <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
-        <el-date-picker
-          v-model="selectedDate"
-          class="toolbar-date"
-          type="date"
-          :clearable="false"
-          format="DD.MM.YYYY"
-          value-format="YYYY-MM-DD"
-        />
-        <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
+        <template v-if="!isProbeKind">
+          <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
+          <el-date-picker
+            v-model="selectedDate"
+            class="toolbar-date"
+            type="date"
+            :clearable="false"
+            format="DD.MM.YYYY"
+            value-format="YYYY-MM-DD"
+          />
+          <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
+        </template>
+
   
         <el-button type="primary" :disabled="!selectedMeasurementId" @click="loadData">Заполнить</el-button>
         <el-button v-if="canEdit" :disabled="!selectedMeasurementId" @click="addRow">Добавить строку</el-button>
@@ -44,7 +47,7 @@
           <el-table-column label="Время измерения" width="200">
             <template #default="{ row }">
               <el-date-picker
-                v-if="canEdit"
+                v-if="canEdit && !isProbeKind"
                 v-model="row.measuredAt"
                 type="datetime"
                 :clearable="false"
@@ -78,7 +81,23 @@
               <span v-else>{{ row.operationName ?? '—' }}</span>
             </template>
           </el-table-column>
-    
+
+          <el-table-column v-if="isProbeKind" label="№ пробы" width="110" align="right">
+            <template #default="{ row }">
+              <el-input-number
+                v-if="canEdit"
+                v-model="row.probeNum"
+                :controls="false"
+                :precision="0"
+                :min="1"
+                style="width: 100%; text-align: right"
+                @change="onKeyChanged(row as EditableRow)"
+              />
+              <span v-else>{{ row.probeNum ?? '—' }}</span>
+            </template>
+          </el-table-column>          
+          
+
           <el-table-column
             v-for="ind in indicatorSet"
             :key="ind.id"
@@ -157,12 +176,19 @@ const columnLabel = (ind: frontend.IIndicatorSet): string =>
 
 // ---------- состояние ----------
 const selectedMeasurementId = ref<number | null>(null);
+const selectedMeasurement = computed(() =>
+  measurementsList.value.find(m => m.id === selectedMeasurementId.value) ?? null
+);
+
+// 1 = по времени, 2 = по пробам
+const isProbeKind = computed(() => selectedMeasurement.value?.measure_kind === 2);  
 
 const loading = ref(false);
 
 type EditableRow = {
   rowKey: string;
   sampleId: number | null;      // id пробы (measurement_data), null — ещё не сохранена
+  probeNum: number | null; // для измерений по пробам
   measuredAt: string | null;
   measuredAtFmt: string | null;
   operationId: number | null;
@@ -182,8 +208,9 @@ const loadData = async (): Promise<void> => {
       store.fetchMeasurementsData({
         meas_id: selectedMeasurementId.value,
         operation_id: 0,
-        meas_date_start: selectedDate.value,
-        meas_date_end: selectedDate.value,
+        ...(isProbeKind.value
+          ? {}
+          : { meas_date_start: selectedDate.value, meas_date_end: selectedDate.value }),
       }),
     ]);
     mapFromStore();
@@ -201,6 +228,14 @@ const formatValue = (row: EditableRow, ind: frontend.IIndicatorSet): string => {
 };
 
 const mapFromStore = (): void => {
+  const list = [...(store.measurements_data ?? [])];
+  if (isProbeKind.value) {
+    list.sort((a, b) =>
+      ((a as any).operation_id - (b as any).operation_id) ||
+      (((a as any).probe_num ?? 0) - ((b as any).probe_num ?? 0))
+    );
+  }
+
   rows.value = (store.measurements_data ?? []).map((r: frontend.IMeasurementsData, i: number) => ({
     rowKey: `db-${r.id}`,
     sampleId: r.id,
@@ -208,6 +243,7 @@ const mapFromStore = (): void => {
     measuredAtFmt: r.measured_at_fmt,
     operationId: (r as any).operation_id ?? null,
     operationName: (r as any).operation ?? null,
+    probeNum: (r as any).probe_num ?? null,
     values: Object.fromEntries(
       indicatorSet.value.map(ind => [String(ind.id), r.vals?.[String(ind.id)] ?? null])
     ),
@@ -227,6 +263,7 @@ const addRow = (): void => {
     measuredAtFmt: null,
     operationId: null,
     operationName: null,
+    probeNum: null,
     values: Object.fromEntries(indicatorSet.value.map(ind => [String(ind.id), null])),
   });
 };
@@ -237,46 +274,89 @@ const filledValues = (row: EditableRow): frontend.ISampleValuePayload[] =>
     .map(ind => ({ indicator_id: ind.id, value: row.values[String(ind.id)] }))
     .filter((v): v is frontend.ISampleValuePayload => v.value !== null && v.value !== undefined);
 
-const isRowReady = (row: EditableRow): boolean =>
-  row.sampleId !== null ||
-  (!!row.measuredAt && row.operationId !== null && filledValues(row).length > 0);
+const isRowReady = (row: EditableRow): boolean => {
+  if (row.sampleId !== null) return true;
+  if (filledValues(row).length === 0) return false;
+  if (isProbeKind.value) return row.operationId !== null && row.probeNum !== null;
+  return !!row.measuredAt && row.operationId !== null;
+};
 
-// ---------- события редактирования ----------
-const onKeyChanged = async (row: EditableRow): Promise<void> => {
-  // время/операция у сохранённой пробы — обновляем пробу целиком
-  if (row.sampleId !== null && row.measuredAt && row.operationId !== null) {
-    try {
-      await updateSample(row.sampleId, {
-        measured_at: row.measuredAt,
-        operation_id: row.operationId,
-      });
-      somethingChanged();
-    } catch (e) {
-      console.error('Ошибка обновления пробы:', e);
-      ElMessage.error('Не удалось сохранить время/операцию');
-    }
+
+// ---------- создание пробы, когда строка готова ----------
+const fmtNowLocal = (): string => {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ` +
+         `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+};
+
+const creatingRows = new WeakSet<EditableRow>(); // защита от гонки двойного create
+
+const createRowIfReady = async (row: EditableRow): Promise<void> => {
+  if (row.sampleId !== null || !isRowReady(row) || creatingRows.has(row)) return;
+
+  creatingRows.add(row);
+  try {
+    const payload: frontend.ISamplePayload = {
+      measurement_id: selectedMeasurementId.value!,
+      measured_at: isProbeKind.value ? fmtNowLocal() : row.measuredAt!,
+      operation_id: row.operationId!,
+      values: filledValues(row),
+    };
+
+    if (isProbeKind.value) payload.probe_num = row.probeNum!;
+
+    const res = await createSample(payload);
+    row.sampleId = res.id;
+    row.rowKey = `db-${res.id}`;
+    somethingChanged();
+  } catch (e: any) {
+    console.error('Ошибка сохранения пробы:', e);
+    ElMessage.error(e?.message ?? 'Не удалось сохранить пробу');
+  } finally {
+    creatingRows.delete(row);
   }
 };
 
-const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<void> => {
-  // 1. Новая строка: как только готова — сохраняем пробу с имеющимися значениями
+
+// ---------- события редактирования ----------
+
+const onKeyChanged = async (row: EditableRow): Promise<void> => {
   if (row.sampleId === null) {
-    if (isRowReady(row)) {
-      try {
-        const res = await createSample({
-          measurement_id: selectedMeasurementId.value!,
-          measured_at: row.measuredAt!,
-          operation_id: row.operationId!,
-          values: filledValues(row),
-        });
-        row.sampleId = res.id;
-        row.rowKey = `db-${res.id}`;   // ключ перевыпускается, больше не «new-*»
+    await createRowIfReady(row);
+    return;
+  }
+  try {
+    if (isProbeKind.value) {
+      // «перенос пробы на другую бочку» — правим номер
+      if (row.operationId !== null && row.probeNum !== null) {
+        await updateSample(row.sampleId, { operation_id: row.operationId, probe_num: row.probeNum });
         somethingChanged();
-      } catch (e: any) {
-        console.error('Ошибка сохранения пробы:', e);
-        ElMessage.error(e?.message ?? 'Не удалось сохранить пробу');
       }
+    } else if (row.measuredAt && row.operationId !== null) {
+      await updateSample(row.sampleId, { measured_at: row.measuredAt, operation_id: row.operationId });
+      somethingChanged();
     }
+  } catch (e: any) {
+    console.error('Ошибка обновления пробы:', e);
+    // уникальный ключ uq_probe: на бэкенде стоит вернуть 409 на дубликат
+    ElMessage.error(
+      e?.status === 409
+        ? 'Проба с таким номером для этой операции уже есть'
+        : 'Не удалось сохранить изменения пробы'
+    );
+  }
+};
+
+
+
+
+
+
+const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<void> => {
+  // 1. Новая строка: как только готова — создаём пробу со всеми введёнными значениями
+  if (row.sampleId === null) {
+    await createRowIfReady(row);
     return;
   }
 
@@ -284,7 +364,7 @@ const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<vo
   try {
     const value = row.values[String(indicatorId)];
     if (value === null || value === undefined) {
-      await deleteSampleValue(row.sampleId, indicatorId);   // стёрли поле — запись значения удаляем
+      await deleteSampleValue(row.sampleId, indicatorId);
     } else {
       await upsertValue(row.sampleId, {
         indicator_id: indicatorId,
@@ -297,6 +377,7 @@ const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<vo
     ElMessage.error('Не удалось сохранить значение');
   }
 };
+
 
 const removeRow = async (row: EditableRow): Promise<void> => {
   try {
@@ -376,12 +457,21 @@ const deleteSample = async (id: number): Promise<void> => {
   await store.deleteMeasurementData(id);
 };
 
-watch([selectedMeasurementId, selectedDate], async ([measId, date]) => {
-    rows.value = [];   // сбрасываем таблицу — старые данные к новому выбору не относятся
-
-    if (measId && date) {
-        await loadData();
+watch([selectedMeasurementId, selectedDate], ([measId], [prevMeasId]) => {
+  if (!measId) {
+    rows.value = [];
+    return;
+  }
+  if (isProbeKind.value) {
+    // смена даты не влияет на probe-измерение — реагируем только на смену измерения
+    if (measId !== prevMeasId) {
+      rows.value = [];
+      loadData();
     }
+    return;
+  }
+  rows.value = [];
+  loadData();
 });
 
 

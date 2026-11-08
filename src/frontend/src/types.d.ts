@@ -21,6 +21,7 @@ declare namespace frontend {
     export type IMeasurement = {
         id: number
         name: string
+        measure_kind: number
     }
     
     export type IIndicatorSet = {
@@ -111,6 +112,7 @@ declare namespace frontend {
         measurement: string
         operation_id: number
         operation: string
+        probe_num: number
         vals?: Record<string, number>
     }    
 
@@ -139,6 +141,7 @@ declare namespace frontend {
         measurement_id: number
         measured_at: string
         operation_id: number
+        probe_num?: number
         values: ISampleValuePayload[]
     }
 
@@ -149,6 +152,7 @@ declare namespace frontend {
     export type ISamplePatch = {
         measured_at?: string
         operation_id?: number
+        probe_num?: number
     }
 
     export type IMetricsInventoryAging = {

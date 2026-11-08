@@ -276,7 +276,7 @@ async def select_materials_meta(conn: Connection):
     }
 
 async def select_measurements_meta(conn: Connection, meas_id: int = 0):
-    q_measurement = "SELECT id, name FROM measurement ORDER BY name"
+    q_measurement = "SELECT id, name, measure_kind FROM measurement ORDER BY name"
     q_indicators = """
     SELECT i.id, i.code, i.measurement_unit, i.min_value, i.max_value, i.value_precision FROM measurement_ind_set AS mis
     LEFT JOIN measurement_indicator AS i ON i.id = mis.measurement_ind_id
@@ -323,8 +323,9 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     q_measurement_data = """
     SELECT md.id, m.name AS measurement, m.id AS measurement_id
     , o.name AS operation, o.id AS operation_id
+    , md.probe_num
     , measured_at
-    , DATE_FORMAT(measured_at, '%%d.%%m.%%Y %%H:%%i') AS measured_at_fmt 
+    , DATE_FORMAT(measured_at, '%%d.%%m.%%Y %%H:%%i') AS measured_at_fmt
     , JSON_OBJECTAGG(mv.indicator_id, mv.value) AS vals
     FROM measurement_data AS md
     LEFT JOIN measurement AS m ON m.id = md.measurement_id
@@ -336,7 +337,7 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     (%(meas_date_end)s = '' OR DATE(measured_at) <  %(meas_date_end)s  + INTERVAL 1 DAY))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
-    GROUP BY md.id, m.name, m.id, o.name, o.id, measured_at, measured_at_fmt 
+    GROUP BY md.id, m.name, m.id, o.name, o.id, md.probe_num, measured_at, measured_at_fmt
     ORDER BY measured_at
     """
 
@@ -1517,14 +1518,14 @@ async def update_rest_gross_weight(conn: Connection, doc_id: int, material_id: i
          })
 
 async def insert_measurement_data(conn, measurement_id: int, measured_at: str,
-                                  operation_id: int, values: list, entered_by: int):
+                                  operation_id: int, probe_num: int, values: list, entered_by: int):
     # один запрос — одна транзакция: проба + её значения должны создаваться атомарно
     async with conn.cursor() as cur:
         await cur.execute(
             """INSERT INTO measurement_data
-               (measurement_id, operation_id, measured_at, entered_by)
-               VALUES (%(measurement_id)s, %(operation_id)s, %(measured_at)s, %(entered_by)s)""",
-            {"measurement_id": measurement_id, "operation_id": operation_id,
+               (measurement_id, operation_id, probe_num, measured_at, entered_by)
+               VALUES (%(measurement_id)s, %(operation_id)s, %(probe_num)s, %(measured_at)s, %(entered_by)s)""",
+            {"measurement_id": measurement_id, "operation_id": operation_id, "probe_num": probe_num,
              "measured_at": measured_at, "entered_by": entered_by},
         )
         sample_id = cur.lastrowid
