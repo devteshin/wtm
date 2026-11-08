@@ -666,6 +666,8 @@ async def put_measurement_data(request: Request):
         patch["measured_at"] = payload["measured_at"]
     if "operation_id" in payload:
         patch["operation_id"] = payload["operation_id"]
+    if "probe_num" in payload:
+        patch["probe_num"] = payload["probe_num"]
     async with request.app["db"].acquire() as conn:
         await update_measurement_data(conn, sample_id, patch)
     return await jsonify({}, request)
