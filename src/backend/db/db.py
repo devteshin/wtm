@@ -1582,7 +1582,7 @@ async def fetch_measurement_kind(conn, measurement_id: int) -> int | None:
             (measurement_id,),
         )
         row = await cur.fetchone()
-        return row[0] if row else None
+        return row["measure_kind"] if row else None
 
 async def fetch_sample_kind(conn, sample_id: int) -> int | None:
     """Вид измерения по id пробы (join) или None, если пробы нет."""
@@ -1597,4 +1597,4 @@ async def fetch_sample_kind(conn, sample_id: int) -> int | None:
             (sample_id,),
         )
         row = await cur.fetchone()
-        return row[0] if row else None    
+        return row["measure_kind"] if row else None
