@@ -30,7 +30,7 @@ export default defineStore("app_store", () => {
     /** список материалов id, name */
     const materials_list = ref<frontend.IMaterial | null>(null);
     /** данные измерения показателей */
-    const measurements_data = ref<Array<frontend.IMeasurementsData>>([]);
+    const measurements_data = ref<frontend.IMeasurementsData[]>([]);
     /** последние проведенные измерения показателей */
     const measurements_last = ref<frontend.IMeasurementLast[]>([]);
     /** данные измерения показателей для графика */

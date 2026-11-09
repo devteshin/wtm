@@ -223,14 +223,14 @@ class ClientAPI {
 
     async fetchMeasurementsMeta(
         params: frontend.IMeasurementsMetaQueryParams = {},
-    ): Promise<frontend.IMeasurementsMeta[]> {
+    ): Promise<frontend.IMeasurementsMeta> {
         const qs = this.buildQuery(params);
         return this.request(`${BASE_URL}/measurements_meta${qs ? `?${qs}` : ""}`);
     }
 
     async fetchMeasurementsData(
         params: frontend.IMeasurementsQueryParams = {},
-    ): Promise<frontend.IMeasurementsData[][]> {
+    ): Promise<frontend.IMeasurementsData[]> {
         const qs = this.buildQuery(params);
         return this.request(`${BASE_URL}/measurements_data${qs ? `?${qs}` : ""}`);
     }
@@ -244,8 +244,7 @@ class ClientAPI {
     ): Promise<frontend.IMeasurementChart[]> {
         const qs = new URLSearchParams({
             meas_id: String(params.meas_id),
-            // ВНИМАНИЕ: имя параметра «date_start» не совпадает с «meas_date_start»,
-            // как в fetchMeasurementsData. Проверьте, что бэкенд ждёт именно его.
+            operation_id: String(params.operation_id),
             date_start: params.meas_date_start,
             date_end: params.meas_date_end,
         });

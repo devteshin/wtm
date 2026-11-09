@@ -15,6 +15,22 @@
         />
       </el-select>
 
+      <el-select
+        v-model="selectedOperationId"
+        class="chart-operation"
+        placeholder="Операция"
+        filterable
+        clearable
+        :disabled="!selectedMeasurementId"
+      >
+        <el-option
+          v-for="op in operationsList"
+          :key="op.id"
+          :label="op.name"
+          :value="op.id"
+        />
+      </el-select>
+
       <el-date-picker
         v-model="period"
         type="daterange"
@@ -30,7 +46,7 @@
 
       <el-button
         type="primary"
-        :disabled="!selectedMeasurementId || !period"
+        :disabled="!canBuild"
         @click="build"
       >Сформировать</el-button>
     </div>
@@ -40,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import * as echarts from 'echarts';
 import useApplicationStore from '@/store';
@@ -48,6 +64,13 @@ import useApplicationStore from '@/store';
 const store = useApplicationStore();
 
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
+
+const selectedOperationId = ref<number | null>(null);
+const operationsList = computed(() => store.measurements_meta?.operation_list ?? []);
+const isProbeKind = computed(() => {
+  const m = measurementsList.value.find(m => m.id === selectedMeasurementId.value);
+  return m?.measure_kind === 2;
+});
 
 const selectedMeasurementId = ref<number | null>(null);
 const period = ref<[string, string] | null>(null);
@@ -58,13 +81,22 @@ let observer: ResizeObserver | undefined;
 
 const fmt = (v: string): string => v.slice(0, 16).replace('T', ' ');
 
+const canBuild = computed(() => {
+  if (!selectedMeasurementId.value || !period.value) return false;
+  // probe: операция обязательна; time-based: по желанию
+  return !isProbeKind.value || selectedOperationId.value !== null;
+});
+
 const build = async (): Promise<void> => {
-  if (!selectedMeasurementId.value || !period.value) return;
+  if (!canBuild.value) return;
   try {
     await store.fetchMeasurementsChart({
-      meas_id: selectedMeasurementId.value,
-      meas_date_start: period.value[0],
-      meas_date_end: period.value[1],
+      meas_id: selectedMeasurementId.value!,
+      meas_date_start: period.value![0],
+      meas_date_end: period.value![1],
+      ...(selectedOperationId.value !== null
+              ? { operation_id: selectedOperationId.value }
+              : {}),
     });
     await nextTick();
     render();
@@ -78,41 +110,65 @@ const render = (): void => {
   const rows = store.measurements_chart;
   if (!chart || !rows.length) return;
 
-  // ось X: уникальные отсортированные моменты измерений
-  const xData = [...new Set(rows.map(r => r.measured_at))].sort();
+  const isProbe = isProbeKind.value;
 
-  // серии по показателям: code → значения по каждому моменту
-const byCode = new Map<string, { name: string; orderNum: number; values: (number | null)[] }>();
-for (const r of rows) {
-  if (!byCode.has(r.code)) {
-    byCode.set(r.code, {
-      name: `${r.code}, ${r.measurement_unit}`,
-      orderNum: r.order_num ?? 0,
-      values: xData.map(() => null),
-    });
+  let xData: string[];
+  let xLabels: string[];
+
+  if (isProbe) {
+    const seen = new Set<string>();
+    const probes: number[] = [];
+    for (const r of rows) {
+      const n = r.probe_num ?? 0;
+      if (!seen.has(String(n))) { seen.add(String(n)); probes.push(n); }
+    }
+    probes.sort((a, b) => a - b);
+    xData = probes.map(String);
+    xLabels = probes.map(p => `№${p}`);
+  } else {
+    xData = [...new Set(rows.map(r => r.measured_at))].sort();
+    xLabels = xData.map(v => rows.find(r => r.measured_at === v)?.measured_at_fmt ?? v);
   }
-  byCode.get(r.code)!.values[xData.indexOf(r.measured_at)] = Number(r.value);
-}
 
-const series = [...byCode.values()]
-  .sort((a, b) => a.orderNum - b.orderNum)
-  .map(s => ({ name: s.name, type: 'bar', data: s.values }));
+  // ключ точки на оси: для проб — номер, для повременных — момент измерения
+  const xKeyOf = (r: frontend.IMeasurementChart): string =>
+    isProbe ? String(r.probe_num) : r.measured_at;
+  const indexOfX = new Map<string, number>();
+  xData.forEach((k, i) => indexOfX.set(k, i));
 
-chart.setOption({
+  // серии по показателям: code → значения по каждой точке оси
+  const byCode = new Map<string, { name: string; orderNum: number; values: (number | null)[] }>();
+  for (const r of rows) {
+    if (!byCode.has(r.code)) {
+      byCode.set(r.code, {
+        name: `${r.code}, ${r.measurement_unit}`,
+        orderNum: r.order_num ?? 0,
+        values: xData.map(() => null),
+      });
+    }
+    const idx = indexOfX.get(xKeyOf(r));
+    if (idx !== undefined) byCode.get(r.code)!.values[idx] = Number(r.value);
+  }
+
+  const series = [...byCode.values()]
+    .sort((a, b) => a.orderNum - b.orderNum)
+    .map(s => ({ name: s.name, type: 'bar', data: s.values }));
+
+  chart.setOption({
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
     grid: { left: 50, right: 20, top: 40, bottom: 40 },
     xAxis: {
       type: 'category',
-      data: xData.map(v => rows.find(r => r.measured_at === v)?.measured_at_fmt ?? v),
+      data: xLabels,
       axisLabel: {
         show: true,
-        interval: Math.ceil(xData.length / 6),   // ~6 подписей на всю ширину
+        interval: Math.ceil(xLabels.length / 6),
         rotate: 0,
       },
     },
     yAxis: { type: 'value' },
-    series: series,
+    series,
   }, true);
 };
 
@@ -131,6 +187,13 @@ onMounted(async () => {
 onUnmounted(() => {
   observer?.disconnect();
   chart?.dispose();
+});
+
+watch(selectedMeasurementId, async (id) => {
+  selectedOperationId.value = null;          // смена измерения сбрасывает операцию
+  if (id) {
+    await store.fetchMeasurementsMeta({ meas_id: id });   // подтягиваем операции измерения
+  }
 });
 
 const shortcuts = [

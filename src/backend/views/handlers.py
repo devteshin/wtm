@@ -206,12 +206,17 @@ async def get_measurements_chart(request: Request):
     meas_id = int(request.query.get("meas_id") or 0)
     date_start = request.query.get("date_start") or ""
     date_end = request.query.get("date_end") or ""
+    operation_id = request.query.get("operation_id") or ""
 
     if not meas_id or not date_start or not date_end:
         return await jsonify([], request)
 
+    measure_kind = await fetch_measurement_kind(conn, meas_id)
+    if measure_kind is None:
+        return await jsonify({"detail": "Измерение не найдено"}, request, status=404)
+
     async with request.app["db"].acquire() as conn:
-        data = await select_measurements_chart(conn, meas_id, date_start, date_end)
+        data = await select_measurements_chart(conn, meas_id, date_start, date_end, operation_id, measure_kind)
 
     return await jsonify(data, request)
 

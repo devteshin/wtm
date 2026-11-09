@@ -125,6 +125,7 @@ declare namespace frontend {
     export type IMeasurementChart = {
         measured_at: string
         measured_at_fmt: string
+        probe_num: number
         code: string
         measurement_unit: string
         order_num: number
@@ -334,6 +335,7 @@ declare namespace frontend {
         meas_id: number;
         meas_date_start: string;
         meas_date_end: string;
+        operation_id?: number;
     }
 
     export type IMeasurementsMetaQueryParams = {
