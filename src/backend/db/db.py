@@ -1517,29 +1517,63 @@ async def update_rest_gross_weight(conn: Connection, doc_id: int, material_id: i
              "gross_weight": gross_weight
          })
 
-async def insert_measurement_data(conn, measurement_id: int, measured_at: str,
-                                  operation_id: int, probe_num: int | None, values: list, entered_by: int):
-    # один запрос — одна транзакция: проба + её значения должны создаваться атомарно
-    
+async def insert_measurement_data(conn, measurement_id, measured_at, operation_id,
+                                  probe_num, values, entered_by):
     async with conn.cursor() as cur:
-        await cur.execute(
-            """INSERT INTO measurement_data
-               (measurement_id, operation_id, probe_num, measured_at, entered_by)
-               VALUES (%(measurement_id)s, %(operation_id)s, %(probe_num)s, %(measured_at)s, %(entered_by)s)""",
-            {"measurement_id": measurement_id, "operation_id": operation_id, "probe_num": probe_num,
-             "measured_at": measured_at, "entered_by": entered_by},
-        )
-        sample_id = cur.lastrowid
+        sample_id: int
 
-        for v in values:
+        if probe_num is not None:
+            # upsert: проба с таким ключом уже есть — работаем с ней
             await cur.execute(
-                """INSERT INTO measurement_data_value
-                   (measurement_data_id, indicator_id, value)
-                   VALUES (%(sample_id)s, %(indicator_id)s, %(value)s)""",
-                {"sample_id": sample_id, "indicator_id": v["indicator_id"], "value": v["value"]},
+                """
+                SELECT id FROM measurement_data
+                WHERE measurement_id = %s AND operation_id = %s AND probe_num = %s
+                """,
+                (measurement_id, operation_id, probe_num),
+            )
+            row = await cur.fetchone()
+            if row:
+                sample_id = row["id"]
+                # «время внесения данных» — обновляем на момент повторного ввода
+                await cur.execute(
+                    "UPDATE measurement_data SET measured_at = %s WHERE id = %s",
+                    (measured_at, sample_id),
+                )
+            else:
+                await cur.execute(
+                    """
+                    INSERT INTO measurement_data
+                        (measurement_id, operation_id, probe_num, measured_at, entered_by)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (measurement_id, operation_id, probe_num, measured_at, entered_by),
+                )
+                sample_id = cur.lastrowid
+        else:
+            # time-based: ключа нет, просто вставляем
+            await cur.execute(
+                """
+                INSERT INTO measurement_data
+                    (measurement_id, operation_id, measured_at, entered_by)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (measurement_id, operation_id, measured_at, entered_by),
+            )
+            sample_id = cur.lastrowid
+
+        # перезапись значений: одна проба — один показатель — одно значение
+        for v in values or []:
+            await cur.execute(
+                """
+                INSERT INTO measurement_data_value
+                    (measurement_data_id, indicator_id, value)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE value = VALUES(value)
+                """,
+                (sample_id, v["indicator_id"], v["value"]),
             )
 
-    return {"id": sample_id}
+        return {"id": sample_id}
 
 
 async def update_measurement_data(conn, sample_id: int, patch: dict):

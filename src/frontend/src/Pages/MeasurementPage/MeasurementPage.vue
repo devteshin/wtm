@@ -290,10 +290,31 @@ const fmtNowLocal = (): string => {
          `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 };
 
+
+const findProbeDuplicate = (row: EditableRow): EditableRow | undefined => {
+  if (!isProbeKind.value || row.probeNum === null || row.operationId === null) {
+    return undefined;
+  }
+  return rows.value.find(r =>
+    r.rowKey !== row.rowKey &&
+    r.operationId === row.operationId &&
+    r.probeNum === row.probeNum
+  );
+};
+
 const creatingRows = new WeakSet<EditableRow>(); // защита от гонки двойного create
 
 const createRowIfReady = async (row: EditableRow): Promise<void> => {
   if (row.sampleId !== null || !isRowReady(row) || creatingRows.has(row)) return;
+
+  const dup = findProbeDuplicate(row);
+  if (dup) {
+    ElMessage.warning(
+      `Проба №${row.probeNum} для этой операции уже введена — откорректируйте существующую строку`
+    );
+    row.probeNum = null;   // строка снова «не готова», дубль не создаётся
+    return;
+  }
 
   creatingRows.add(row);
   try {
@@ -328,8 +349,15 @@ const onKeyChanged = async (row: EditableRow): Promise<void> => {
   }
   try {
     if (isProbeKind.value) {
-      // «перенос пробы на другую бочку» — правим номер
       if (row.operationId !== null && row.probeNum !== null) {
+        const dup = findProbeDuplicate(row);
+        if (dup) {
+          ElMessage.warning(
+            `Проба №${row.probeNum} для этой операции уже есть — откорректируйте существующую строку`
+          );
+          row.probeNum = null;   // в БД старый номер не тронут, вернётся при перезагрузке
+          return;
+        }
         await updateSample(row.sampleId, { operation_id: row.operationId, probe_num: row.probeNum });
         somethingChanged();
       }

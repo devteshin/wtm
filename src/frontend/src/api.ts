@@ -829,19 +829,29 @@ class ClientAPI {
         return;
     }
 
-    async createMeasurementData(payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> {
-        this.checkToken();
-        const response = await fetch(`${BASE_URL}/measurement_data`, {
-            method: "POST",
-            headers: this.requestHeaders(),
-            body: JSON.stringify(payload),
-        });
-        if (response.status === 403) {
-            window.localStorage.removeItem("token");
-            location.href = "/login";
-        }
-        return await response.json();
+async createMeasurementData(payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> {
+    this.checkToken();
+    const response = await fetch(`${BASE_URL}/measurement_data`, {
+        method: "POST",
+        headers: this.requestHeaders(),
+        body: JSON.stringify(payload),
+    });
+    if (response.status === 403) {
+        window.localStorage.removeItem("token");
+        location.href = "/login";
+        return Promise.reject(new Error("Unauthorized"));
     }
+    if (!response.ok) {
+        let detail = "";
+        try {
+            detail = (await response.json())?.detail ?? "";
+        } catch { /* тело не JSON */ }
+        throw Object.assign(new Error(detail || `HTTP ${response.status}`), {
+            status: response.status,
+        });
+    }
+    return await response.json();
+}
 
     async updateMeasurementData(id: number, patch: frontend.ISamplePatch): Promise<void> {
         this.checkToken();
