@@ -1532,14 +1532,10 @@ async def insert_measurement_data(conn, measurement_id, measured_at, operation_i
                 (measurement_id, operation_id, probe_num),
             )
             row = await cur.fetchone()
+            
             if row:
                 sample_id = row["id"]
-                # «время внесения данных» — обновляем на момент повторного ввода
-                await cur.execute(
-                    "UPDATE measurement_data SET measured_at = %s WHERE id = %s",
-                    (measured_at, sample_id),
-                )
-            else:
+            else:    
                 await cur.execute(
                     """
                     INSERT INTO measurement_data
