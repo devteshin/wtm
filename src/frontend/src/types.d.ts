@@ -112,7 +112,7 @@ declare namespace frontend {
         measurement: string
         operation_id: number
         operation: string
-        probe_num: number
+        probe_num: number | null
         vals?: Record<string, number>
     }    
 

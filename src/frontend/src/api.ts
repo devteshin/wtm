@@ -38,6 +38,13 @@ type user = {
     role_id: number;
 }
 
+export class UnauthorizedError extends Error {
+    constructor() {
+        super("Unauthorized");
+        this.name = "UnauthorizedError";
+    }
+}
+
 class ClientAPI {
     currentUser: user | null = null;
     token: string | null;
@@ -54,19 +61,6 @@ class ClientAPI {
         }
     }
 
-/*     checkToken() {
-        if (!this.token) {
-            this.token = window.localStorage.getItem("token");
-        }
-        if (!this.token && location.pathname !== "/login") {
-            location.href = "/login";
-        }
-        if (!this.currentUser) {
-            this.decodeToken();
-        }
-    }
- */
-
     checkToken() {
         if (!this.token) {
             this.token = window.localStorage.getItem("token");
@@ -76,8 +70,43 @@ class ClientAPI {
         }
     }
 
+    private buildQuery(params: Record<string, unknown>): string {
+        const qs = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                qs.append(key, String(value));
+            }
+        });
+        return qs.toString();
+    }    
 
-
+    private async request<T>(url: string, init?: RequestInit): Promise<T> {
+        this.checkToken();
+        const response = await fetch(url, {
+            ...init,
+            headers: this.requestHeaders(),
+        });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            // TODO: заменить на unauthorizedHandler?.() из main.ts после подключения роутера
+            location.href = "/login";
+            throw new UnauthorizedError();
+        }
+        if (!response.ok) {
+            let detail = "";
+            try {
+                detail = (await response.json())?.detail ?? "";
+            } catch { /* тело не JSON — обходимся без detail */ }
+            throw Object.assign(new Error(detail || `HTTP ${response.status}`), {
+                status: response.status,
+            });
+        }
+        if (response.status === 204) {
+            return undefined as T;
+        }
+        return (await response.json()) as T;
+    }
+    
     requestHeaders(): HeadersInit {
         return this.token ? { token: this.token } : {};
     }
@@ -116,7 +145,7 @@ class ClientAPI {
         return body;
     }
 
-    async fetchMeasurementsMeta(params: frontend.IMeasurementsMetaQueryParams = {}) {
+/*     async fetchMeasurementsMeta(params: frontend.IMeasurementsMetaQueryParams = {}) {
         this.checkToken();
 
         const queryParams = new URLSearchParams();
@@ -163,6 +192,8 @@ class ClientAPI {
         return body;
     }
     
+
+    
     async fetchMeasurementsLast(): Promise<frontend.IMeasurementLast[]> {
         this.checkToken();
         const response = await fetch(`${BASE_URL}/measurements_last`, { headers: this.requestHeaders() });
@@ -188,6 +219,38 @@ class ClientAPI {
         }
         return await response.json();
     }
+ */
+
+    async fetchMeasurementsMeta(
+        params: frontend.IMeasurementsMetaQueryParams = {},
+    ): Promise<frontend.IMeasurementsMeta[]> {
+        const qs = this.buildQuery(params);
+        return this.request(`${BASE_URL}/measurements_meta${qs ? `?${qs}` : ""}`);
+    }
+
+    async fetchMeasurementsData(
+        params: frontend.IMeasurementsQueryParams = {},
+    ): Promise<frontend.IMeasurementsData[][]> {
+        const qs = this.buildQuery(params);
+        return this.request(`${BASE_URL}/measurements_data${qs ? `?${qs}` : ""}`);
+    }
+
+    async fetchMeasurementsLast(): Promise<frontend.IMeasurementLast[]> {
+        return this.request(`${BASE_URL}/measurements_last`);
+    }
+
+    async fetchMeasurementsChart(
+        params: frontend.IMeasurementsChartQueryParams,
+    ): Promise<frontend.IMeasurementChart[]> {
+        const qs = new URLSearchParams({
+            meas_id: String(params.meas_id),
+            // ВНИМАНИЕ: имя параметра «date_start» не совпадает с «meas_date_start»,
+            // как в fetchMeasurementsData. Проверьте, что бэкенд ждёт именно его.
+            date_start: params.meas_date_start,
+            date_end: params.meas_date_end,
+        });
+        return this.request(`${BASE_URL}/measurements_chart?${qs}`);
+    }    
 
 
     async fetchMetricsInventoryAging(params: frontend.IMetricsInventoryAgingQueryParams = {}) {
@@ -829,29 +892,29 @@ class ClientAPI {
         return;
     }
 
-async createMeasurementData(payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> {
-    this.checkToken();
-    const response = await fetch(`${BASE_URL}/measurement_data`, {
-        method: "POST",
-        headers: this.requestHeaders(),
-        body: JSON.stringify(payload),
-    });
-    if (response.status === 403) {
-        window.localStorage.removeItem("token");
-        location.href = "/login";
-        return Promise.reject(new Error("Unauthorized"));
-    }
-    if (!response.ok) {
-        let detail = "";
-        try {
-            detail = (await response.json())?.detail ?? "";
-        } catch { /* тело не JSON */ }
-        throw Object.assign(new Error(detail || `HTTP ${response.status}`), {
-            status: response.status,
+/*     async createMeasurementData(payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> {
+        this.checkToken();
+        const response = await fetch(`${BASE_URL}/measurement_data`, {
+            method: "POST",
+            headers: this.requestHeaders(),
+            body: JSON.stringify(payload),
         });
+        if (response.status === 403) {
+            window.localStorage.removeItem("token");
+            location.href = "/login";
+            return Promise.reject(new Error("Unauthorized"));
+        }
+        if (!response.ok) {
+            let detail = "";
+            try {
+                detail = (await response.json())?.detail ?? "";
+            } catch {  }
+            throw Object.assign(new Error(detail || `HTTP ${response.status}`), {
+                status: response.status,
+            });
+        }
+        return await response.json();
     }
-    return await response.json();
-}
 
     async updateMeasurementData(id: number, patch: frontend.ISamplePatch): Promise<void> {
         this.checkToken();
@@ -868,7 +931,7 @@ async createMeasurementData(payload: frontend.ISamplePayload): Promise<frontend.
             let detail = "";
             try {
                 detail = (await response.json())?.detail ?? "";
-            } catch { /* тело не JSON — обойдёмся без detail */ }
+            } catch {  }
             throw Object.assign(new Error(detail || `HTTP ${response.status}`), {
                 status: response.status,
             });
@@ -913,6 +976,43 @@ async createMeasurementData(payload: frontend.ISamplePayload): Promise<frontend.
             window.localStorage.removeItem("token");
             location.href = "/login";
         }
+    }
+ */
+
+    async createMeasurementData(
+        payload: frontend.ISamplePayload,
+    ): Promise<frontend.ISampleCreated> {
+        return this.request(`${BASE_URL}/measurement_data`, {
+            method: "POST",
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async updateMeasurementData(id: number, patch: frontend.ISamplePatch): Promise<void> {
+        await this.request(`${BASE_URL}/measurement_data/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(patch),
+        });
+    }
+
+    async upsertMeasurementValue(
+        sampleId: number,
+        v: { indicator_id: number; value: number },
+    ): Promise<void> {
+        await this.request(`${BASE_URL}/measurement_data/${sampleId}/value`, {
+            method: "PUT",
+            body: JSON.stringify(v),
+        });
+    }
+
+    async deleteMeasurementData(id: number): Promise<void> {
+        await this.request(`${BASE_URL}/measurement_data/${id}`, { method: "DELETE" });
+    }
+
+    async deleteMeasurementValue(sampleId: number, indicatorId: number): Promise<void> {
+        await this.request(`${BASE_URL}/measurement_data/${sampleId}/value/${indicatorId}`, {
+            method: "DELETE",
+        });
     }
 
     async doLogin(payload: frontend.ILoginPayload) {
