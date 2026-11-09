@@ -1518,8 +1518,9 @@ async def update_rest_gross_weight(conn: Connection, doc_id: int, material_id: i
          })
 
 async def insert_measurement_data(conn, measurement_id: int, measured_at: str,
-                                  operation_id: int, probe_num: int, values: list, entered_by: int):
+                                  operation_id: int, probe_num: int | None, values: list, entered_by: int):
     # один запрос — одна транзакция: проба + её значения должны создаваться атомарно
+    
     async with conn.cursor() as cur:
         await cur.execute(
             """INSERT INTO measurement_data
@@ -1573,3 +1574,27 @@ async def delete_measurement_data(conn, sample_id: int):
     async with conn.cursor() as cur:
         await cur.execute("DELETE FROM measurement_data WHERE id = %(id)s", {"id": sample_id})
 
+async def fetch_measurement_kind(conn, measurement_id: int) -> int | None:
+    """Вид измерения (measure_kind) или None, если измерения нет."""
+    async with conn.cursor() as cur:
+        await cur.execute(
+            "SELECT measure_kind FROM measurement WHERE id = %s",
+            (measurement_id,),
+        )
+        row = await cur.fetchone()
+        return row[0] if row else None
+
+async def fetch_sample_kind(conn, sample_id: int) -> int | None:
+    """Вид измерения по id пробы (join) или None, если пробы нет."""
+    async with conn.cursor() as cur:
+        await cur.execute(
+            """
+            SELECT m.measure_kind
+            FROM measurement_data d
+            JOIN measurement m ON m.id = d.measurement_id
+            WHERE d.id = %s
+            """,
+            (sample_id,),
+        )
+        row = await cur.fetchone()
+        return row[0] if row else None    

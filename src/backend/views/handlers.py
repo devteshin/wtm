@@ -1,3 +1,5 @@
+import datetime
+
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, HTTPException, Request, Response
 
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
@@ -7,6 +9,7 @@ from db import (check_user, select_task, select_tasks, change_password, select_m
                 select_production_report_data, select_production_graph_data, select_metrics_inventory_aging, select_journal_zone_docs,
                 select_measurements_meta, select_measurements_data, select_measurements_last, select_measurements_chart,
                 insert_measurement_data, update_measurement_data, delete_measurement_data_value, upsert_measurement_data_value, delete_measurement_data,
+                fetch_measurement_kind, fetch_sample_kind,
                 select_scada_test_data
                 )
 
@@ -646,12 +649,25 @@ async def post_measurement_data(request: Request):
     payload = await request.json()
     probe_num_raw = payload.get("probe_num")
     probe_num = int(probe_num_raw) if probe_num_raw not in (None, "") else None
+    measured_at = payload.get("measured_at")
+    if not measured_at:
+        measured_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
     async with request.app["db"].acquire() as conn:
+        measure_kind = await fetch_measurement_kind(conn, int(payload["measurement_id"]))
+        if measure_kind is None:
+            return await jsonify({"detail": "Измерение не найдено"}, request, status=404)
+
+        if measure_kind == 2 and probe_num is None:
+            return await jsonify({"detail": "Для этого измерения требуется номер пробы"}, request, status=400)
+        if measure_kind != 2 and probe_num is not None:
+            return await jsonify({"detail": "Для этого измерения номер пробы не используется"}, request, status=400)
+
         result = await insert_measurement_data(
             conn,
             measurement_id=int(payload["measurement_id"]),
-            measured_at=payload["measured_at"],
+            measured_at=measured_at,
             operation_id=int(payload["operation_id"]),
             probe_num=probe_num,
             values=payload.get("values") or [],
@@ -659,21 +675,58 @@ async def post_measurement_data(request: Request):
         )
     return await jsonify(result, request)
 
-
 # PUT /api/measurement_data/{sample_id}
 async def put_measurement_data(request: Request):
     sample_id = int(request.match_info["sample_id"])
     payload = await request.json()
+
     patch = {}
-    if "measured_at" in payload:
+    if "measured_at" in payload and payload["measured_at"]:
         patch["measured_at"] = payload["measured_at"]
-    if "operation_id" in payload:
-        patch["operation_id"] = payload["operation_id"]
+    if "operation_id" in payload and payload["operation_id"] is not None:
+        patch["operation_id"] = int(payload["operation_id"])
+
     if "probe_num" in payload:
-        patch["probe_num"] = payload["probe_num"]
+        probe_num_raw = payload["probe_num"]
+        patch["probe_num"] = (
+            int(probe_num_raw) if probe_num_raw not in (None, "") else None
+        )
+
+    
     async with request.app["db"].acquire() as conn:
-        await update_measurement_data(conn, sample_id, patch)
-    return await jsonify({}, request)
+        # истина о типе измерения — из базы, не из payload
+        measure_kind = await fetch_sample_kind(conn, sample_id)
+        if measure_kind is None:
+            return await jsonify({"detail": "Проба не найдена"}, request, status=404)
+
+
+        if measure_kind != 2 and patch.get("probe_num") is not None:
+            return await jsonify(
+                {"detail": "Для этого измерения номер пробы не используется"},
+                request, status=400,
+            )
+        # для probe-измерения отправлять пустой probe_num бессмысленно:
+        # у пробы номер обязан быть — запрещаем его стирание
+        if measure_kind == 2 and "probe_num" in patch and patch["probe_num"] is None:
+            return await jsonify(
+                {"detail": "Для этого измерения требуется номер пробы"},
+                request, status=400,
+            )
+
+        if not patch:
+            return await jsonify({"detail": "Нет данных для обновления"}, request, status=400)
+        
+        try:
+            result = await update_measurement_data(conn, sample_id, patch)
+        except Exception as e:
+            # дубликат uq_probe при переносе пробы на занятый номер
+            if getattr(e, "args", None) and "Duplicate entry" in str(e.args[0]):
+                return await jsonify(
+                    {"detail": "Проба с таким номером для этой операции уже есть"},
+                    request, status=409,
+                )
+            raise
+    return await jsonify(result or {}, request)
 
 
 # PUT /api/measurement_data/{sample_id}/value
