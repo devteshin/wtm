@@ -1,5 +1,5 @@
 <template>
-  <div class="panel-layout">
+  <div class="panel-layout" :class="{ 'chart-collapsed': chartCollapsed }">
     <el-card class="card">
       <!-- Тулбар -->
       <div class="toolbar">
@@ -33,6 +33,16 @@
   
         <el-button type="primary" :disabled="!selectedMeasurementId" @click="loadData">Заполнить</el-button>
         <el-button v-if="canEdit" :disabled="!selectedMeasurementId" @click="addRow">Добавить строку</el-button>
+
+        <el-tooltip
+          :content="chartCollapsed ? 'Показать график' : 'Развернуть таблицу'"
+          placement="top"
+        >
+          <el-button class="btn-toggle-chart" circle :icon="chartCollapsed ? Bottom : Top" @click="toggleChart" />
+        </el-tooltip>
+        
+
+
       </div>
   
       <!-- Таблица: показывается только после выбора измерения -->
@@ -147,6 +157,7 @@ import { ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue';
 import MeasurementsLastPanel from './MeasurementsLastPanel.vue'
 import MeasurementChartPanel from './MeasurementChartPanel.vue'
 import useApplicationStore from '@/store';
+import { Bottom, Top } from '@element-plus/icons-vue';
 
 const props = withDefaults(
   defineProps<{ editable?: boolean }>(),
@@ -157,6 +168,15 @@ const canEdit = computed(() => props.editable);
 const store = useApplicationStore();
 
 const lastPanel = ref<InstanceType<typeof MeasurementsLastPanel>>();
+
+const CHART_PREF_KEY = 'measurements:chart-collapsed';
+const chartCollapsed = ref(localStorage.getItem(CHART_PREF_KEY) === '1');
+
+const toggleChart = (): void => {
+  chartCollapsed.value = !chartCollapsed.value;
+  localStorage.setItem(CHART_PREF_KEY, chartCollapsed.value ? '1' : '0');
+};  
+
 
 // ---------- справочники из meta ----------
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
@@ -524,6 +544,7 @@ watch([selectedMeasurementId, selectedDate], ([measId], [prevMeasId]) => {
 .card-side {
   height: calc(100vh - var(--top-menu) - var(--chart-h) - var(--row-gap));
   min-height: 320px;        /* чтобы на низких окнах ряд не схлопнулся */
+  transition: height 0.25s ease;
 }
 
 .card {
@@ -604,6 +625,19 @@ watch([selectedMeasurementId, selectedDate], ([measId], [prevMeasId]) => {
   display: block;
   text-align: right;
   width: 100%;
+}
+
+.panel-layout.chart-collapsed .card,
+.panel-layout.chart-collapsed .card-side {
+  height: calc(100vh - var(--top-menu));
+}
+
+.panel-layout.chart-collapsed .card-chart {
+  display: none;
+}
+
+.toolbar .btn-toggle-chart {
+  margin-left: auto;
 }
 
 </style>

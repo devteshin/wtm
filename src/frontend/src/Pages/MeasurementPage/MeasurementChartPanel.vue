@@ -79,8 +79,6 @@ const chartEl = ref<HTMLDivElement>();
 let chart: echarts.ECharts | undefined;
 let observer: ResizeObserver | undefined;
 
-const fmt = (v: string): string => v.slice(0, 16).replace('T', ' ');
-
 const canBuild = computed(() => {
   if (!selectedMeasurementId.value || !period.value) return false;
   // probe: операция обязательна; time-based: по желанию
@@ -255,7 +253,8 @@ const shortcuts = [
   flex: 0 0 auto;   /* не даём flex-потоку растягивать пикер */
 }
 
-.chart-measurement { width: 280px; }
+.chart-measurement { width: 320px; }
+.chart-operation { width: 320px; }
 
 .chart-canvas {
   flex: 1;
