@@ -153,11 +153,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue';
+import { ArrowLeft, ArrowRight, Delete, Bottom, Top } from '@element-plus/icons-vue';
 import MeasurementsLastPanel from './MeasurementsLastPanel.vue'
 import MeasurementChartPanel from './MeasurementChartPanel.vue'
 import useApplicationStore from '@/store';
-import { Bottom, Top } from '@element-plus/icons-vue';
+import { storeToRefs } from 'pinia';
+import { useMeasurementsPanelStore } from '@/storeMeasurementPanel.js';
+
+const measurementsStore = useMeasurementsPanelStore();
+const { selectedMeasurementId, selectedDate, chartCollapsed } = storeToRefs(measurementsStore);
+
 
 const props = withDefaults(
   defineProps<{ editable?: boolean }>(),
@@ -169,14 +174,9 @@ const store = useApplicationStore();
 
 const lastPanel = ref<InstanceType<typeof MeasurementsLastPanel>>();
 
-const CHART_PREF_KEY = 'measurements:chart-collapsed';
-const chartCollapsed = ref(localStorage.getItem(CHART_PREF_KEY) === '1');
-
 const toggleChart = (): void => {
-  chartCollapsed.value = !chartCollapsed.value;
-  localStorage.setItem(CHART_PREF_KEY, chartCollapsed.value ? '1' : '0');
-};  
-
+  measurementsStore.setChartCollapsed(!chartCollapsed.value);
+};
 
 // ---------- справочники из meta ----------
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
@@ -195,7 +195,6 @@ const columnLabel = (ind: frontend.IIndicatorSet): string =>
   `${ind.code}, ${ind.measurement_unit}`;
 
 // ---------- состояние ----------
-const selectedMeasurementId = ref<number | null>(null);
 const selectedMeasurement = computed(() =>
   measurementsList.value.find(m => m.id === selectedMeasurementId.value) ?? null
 );
@@ -218,9 +217,18 @@ type EditableRow = {
 
 const rows = ref<EditableRow[]>([]);
 
+let lastLoadedKey = '';
+
+const loadKey = (): string =>
+  isProbeKind.value
+    ? `probe:${selectedMeasurementId.value}`
+    : `time:${selectedMeasurementId.value}:${selectedDate.value}`;
+
+
 // ---------- загрузка ----------
 const loadData = async (): Promise<void> => {
   if (!selectedMeasurementId.value || !selectedDate.value) return;
+  lastLoadedKey = loadKey();
   try {
     loading.value = true;
     await Promise.all([
@@ -397,10 +405,6 @@ const onKeyChanged = async (row: EditableRow): Promise<void> => {
 };
 
 
-
-
-
-
 const onValueChanged = async (row: EditableRow, indicatorId: number): Promise<void> => {
   // 1. Новая строка: как только готова — создаём пробу со всеми введёнными значениями
   if (row.sampleId === null) {
@@ -457,8 +461,6 @@ const fmtDateLocal = (d: Date): string => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-const selectedDate = ref<string>(fmtDateLocal(new Date()));
-
 const shiftDay = (days: number): void => {
     const [y, m, d] = selectedDate.value.split('-').map(Number);
     const dt = new Date(y, m - 1, d);
@@ -480,6 +482,26 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+
+  // Восстановление после загрузки справочника
+  measurementsStore.loadFromStorage();
+  // Нет сохранённой даты — начинаем с сегодняшнего дня
+  if (!measurementsStore.selectedDate) {
+    measurementsStore.setSelection({ date: fmtDateLocal(new Date()) });
+  }  
+
+  // Измерение из хранилища могло исчезнуть из справочника — отбрасываем
+  const restoredId = measurementsStore.selectedMeasurementId;
+  if (restoredId !== null && !measurementsList.value.some(m => m.id === restoredId)) {
+    measurementsStore.setSelection({ measId: null });
+    measurementsStore.saveToStorage();
+  }
+  // При возврате через роутинг стор уже заполнен и watcher не сработает —
+  // при обновлении страницы watcher сработает, но увидит тот же ключ и пропустит
+  if (selectedMeasurementId.value) {
+    rows.value = [];
+    loadData();
+  }  
 });
 
 const createSample = async (payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> => {
@@ -505,19 +527,16 @@ const deleteSample = async (id: number): Promise<void> => {
   await store.deleteMeasurementData(id);
 };
 
-watch([selectedMeasurementId, selectedDate], ([measId], [prevMeasId]) => {
+watch([selectedMeasurementId, selectedDate], ([measId]) => {
+  measurementsStore.saveToStorage();
+
   if (!measId) {
     rows.value = [];
+    lastLoadedKey = '';
     return;
   }
-  if (isProbeKind.value) {
-    // смена даты не влияет на probe-измерение — реагируем только на смену измерения
-    if (measId !== prevMeasId) {
-      rows.value = [];
-      loadData();
-    }
-    return;
-  }
+  // уже загружено при монтировании (возврат через роутинг / свежий рефреш)
+  if (loadKey() === lastLoadedKey) return;
   rows.value = [];
   loadData();
 });

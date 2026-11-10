@@ -60,20 +60,21 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import * as echarts from 'echarts';
 import useApplicationStore from '@/store';
+import { storeToRefs } from 'pinia';
+import { useMeasurementsChartStore } from '@/storeMeasurementChart';
+
+const chartStore = useMeasurementsChartStore();
+const { selectedMeasurementId, selectedOperationId, period } = storeToRefs(chartStore);
 
 const store = useApplicationStore();
 
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
 
-const selectedOperationId = ref<number | null>(null);
 const operationsList = computed(() => store.measurements_meta?.operation_list ?? []);
 const isProbeKind = computed(() => {
   const m = measurementsList.value.find(m => m.id === selectedMeasurementId.value);
   return m?.measure_kind === 2;
 });
-
-const selectedMeasurementId = ref<number | null>(null);
-const period = ref<[string, string] | null>(null);
 
 const chartEl = ref<HTMLDivElement>();
 let chart: echarts.ECharts | undefined;
@@ -170,6 +171,9 @@ const render = (): void => {
   }, true);
 };
 
+// ---------- восстановление состояния ----------
+let restoring = false;
+
 onMounted(async () => {
   chart = echarts.init(chartEl.value!);
   observer = new ResizeObserver(() => chart?.resize());
@@ -180,18 +184,64 @@ onMounted(async () => {
   } catch (e) {
     console.error('Ошибка загрузки справочника:', e);
   }
+
+  restoring = true;
+
+  // Восстанавливаем селекты из localStorage
+  chartStore.loadFromStorage();
+
+  // Измерение могло исчезнуть из справочника — тогда операция тоже не имеет смысла
+  const restoredId = chartStore.selectedMeasurementId;
+  if (restoredId !== null && !measurementsList.value.some(m => m.id === restoredId)) {
+    chartStore.setSelection({ measId: null, opId: null });
+    chartStore.saveToStorage();
+  }
+
+  // Подтягиваем операции восстановленного измерения
+  if (selectedMeasurementId.value) {
+    try {
+      await store.fetchMeasurementsMeta({ meas_id: selectedMeasurementId.value });
+    } catch (e) {
+      console.error('Ошибка загрузки операций измерения:', e);
+    }
+
+    // операция тоже могла исчезнуть из справочника
+    const restoredOp = chartStore.selectedOperationId;
+    if (restoredOp !== null && !operationsList.value.some(op => op.id === restoredOp)) {
+      chartStore.setSelection({ opId: null });
+      chartStore.saveToStorage();
+    }
+  }
+
+  restoring = false;
+
+  // Всё готово — строим график автоматически, без нажатия «Сформировать»
+  if (canBuild.value) {
+    await build();
+  }
 });
+
+// ---------- реакция на селекты ----------
+
+watch(selectedMeasurementId, async (id) => {
+  // при ручной смене измерения сбрасываем операцию;
+  // во время восстановления не трогаем — иначе потеряем её
+  if (!restoring) {
+    selectedOperationId.value = null;
+  }
+  if (id) {
+    await store.fetchMeasurementsMeta({ meas_id: id });
+  }
+  chartStore.saveToStorage();
+});
+
+watch(selectedOperationId, () => chartStore.saveToStorage());
+
+watch(period, () => chartStore.saveToStorage());
 
 onUnmounted(() => {
   observer?.disconnect();
   chart?.dispose();
-});
-
-watch(selectedMeasurementId, async (id) => {
-  selectedOperationId.value = null;          // смена измерения сбрасывает операцию
-  if (id) {
-    await store.fetchMeasurementsMeta({ meas_id: id });   // подтягиваем операции измерения
-  }
 });
 
 const shortcuts = [
