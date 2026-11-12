@@ -15,6 +15,7 @@ scada-agent/config_agent.toml
 # scada-агент: состояние и логи
 scada-agent/state.json
 scada-agent/logs/
+scada-agent/*.log
 
 # базы SCADA и их журналы WAL
 *.db

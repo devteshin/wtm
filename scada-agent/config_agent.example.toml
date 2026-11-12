@@ -1,5 +1,5 @@
 [sqlite]
-path = "C:/path/to/sq.db"
+path = "C:/path/to/sq_real.db"
 
 [mysql]
 host = "your-cloud-host"
@@ -10,6 +10,5 @@ database = "your-database-name"
 charset = "utf8mb4"
 
 [agent]
-batch_size = 5000
-interval_sec = 30   # прод: 3600
-retry_sec = 30
+poll_sec = 60
+batch_size = 500
