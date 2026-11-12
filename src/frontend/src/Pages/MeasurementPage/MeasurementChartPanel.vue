@@ -86,7 +86,12 @@ const canBuild = computed(() => {
   return !isProbeKind.value || selectedOperationId.value !== null;
 });
 
+const clearChart = (): void => {
+  chart?.clear();
+};
+
 const build = async (): Promise<void> => {
+  clearChart();
   if (!canBuild.value) return;
   try {
     await store.fetchMeasurementsChart({
@@ -214,30 +219,28 @@ onMounted(async () => {
   }
 
   restoring = false;
-
-  // Всё готово — строим график автоматически, без нажатия «Сформировать»
-  if (canBuild.value) {
-    await build();
-  }
+  await build();
 });
 
 // ---------- реакция на селекты ----------
 
-watch(selectedMeasurementId, async (id) => {
-  // при ручной смене измерения сбрасываем операцию;
-  // во время восстановления не трогаем — иначе потеряем её
-  if (!restoring) {
-    selectedOperationId.value = null;
-  }
-  if (id) {
-    await store.fetchMeasurementsMeta({ meas_id: id });
-  }
-  chartStore.saveToStorage();
-});
+watch(
+  [selectedMeasurementId, selectedOperationId, period],
+  ([measId], [prevMeasId]) => {
+    // смена измерения: сброс операции и подтягивание её списка
+    if (measId !== prevMeasId && !restoring) {
+      selectedOperationId.value = null;
+    }
+    if (measId && measId !== prevMeasId) {
+      void store.fetchMeasurementsMeta({ meas_id: measId });
+    }
 
-watch(selectedOperationId, () => chartStore.saveToStorage());
+    // невалидной комбинации фильтров не соответствует никакой график
+    if (!canBuild.value) clearChart();
 
-watch(period, () => chartStore.saveToStorage());
+    chartStore.saveToStorage();
+  },
+);
 
 onUnmounted(() => {
   observer?.disconnect();
