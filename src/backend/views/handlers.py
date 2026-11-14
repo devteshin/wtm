@@ -1,6 +1,8 @@
 import datetime
 
 from aiohttp.web import HTTPBadRequest, HTTPForbidden, HTTPCreated, HTTPNotFound, HTTPConflict, HTTPException, Request, Response
+from aiomysql import IntegrityError
+from multidict import MultiDict
 
 from db import (check_user, select_task, select_tasks, change_password, select_materials_meta, select_materials_data, select_selection_data,
                 select_stocks, select_operations, select_operation_data, select_operations_meta, select_dnm_doc_number, select_operation, select_arrival, select_max_tare_id,
@@ -18,6 +20,12 @@ from db import DocumentExistsError, ItemsExistsError, ItemsConsumptionError, Mat
 import json
 import asyncio
 import sqlite3
+
+class ValidationError(Exception):
+    """400 — параметры запроса не соответствуют типу измерения"""
+
+class MeasurementNotFound(Exception):
+    """404 — измерение не существует"""
 
 async def login_handler(request: Request):
     """ хэндлен авторизация """
@@ -181,18 +189,67 @@ async def search_operations_handler(request: Request):
 
     return await jsonify(operations_list, request)
 
+async def parse_dim_params(conn, query: MultiDict, meas_id: int):
+    """Определяет тип измерения и разбирает размерности.
+    kind, operation_id, material_id. operation_id/material_id — None,
+    если параметр не передан."""
+    kind = await fetch_measurement_kind(conn, meas_id)
+    if kind is None:
+        raise MeasurementNotFound()
+
+    def _int_or_none(name: str) -> int | None:
+        raw = query.get(name)
+        if raw is None or raw == "":
+            return None
+        try:
+            return int(raw)
+        except ValueError:
+            raise ValidationError(f"{name} должен быть числом")
+
+    operation_id = _int_or_none("operation_id")
+    material_id = _int_or_none("material_id")
+
+    if kind == 2:
+        if material_id is None:
+            raise ValidationError("material_id обязателен для измерений по пробам")
+        if operation_id is not None:
+            raise ValidationError("operation_id не применяется для измерений по пробам")
+    else:
+        if material_id is not None:
+            raise ValidationError("material_id не применяется для повременных измерений")
+
+    return kind, operation_id, material_id
 
 async def get_measurements_data(request: Request):
-    meas_id = int(request.query.get("meas_id") or 0)
-    operation_id = int(request.query.get("operation_id") or 0)
-    meas_date_start = request.query.get("meas_date_start") or ""
-    meas_date_end = request.query.get("meas_date_end") or ""
+    try:
+        meas_id = int(request.query.get("meas_id") or 0)
+    except ValueError:
+        return await jsonify({"detail": "meas_id должен быть числом"}, request, status=400)
+    if meas_id <= 0:
+        return await jsonify({"detail": "meas_id обязателен"}, request, status=400)
 
-    measurements_data = []
+    meas_date_start = request.query.get("meas_date_start") or None
+    meas_date_end = request.query.get("meas_date_end") or None
+
     async with request.app["db"].acquire() as conn:
+        try:
+            meas_kind, operation_id, material_id = await parse_dim_params(conn, request.query, meas_id)
+        except MeasurementNotFound:
+            return await jsonify({"detail": "Измерение не найдено"}, request, status=404)
+        except ValidationError as e:
+            return await jsonify({"detail": str(e)}, request, status=400)
+
+        if meas_kind != 2 and (not meas_date_start or not meas_date_end):
+            return await jsonify({"detail": "Требуется период meas_date_start — meas_date_end"},
+                                 request, status=400)
+
         measurements_data = await select_measurements_data(
-            conn, meas_id=meas_id, operation_id=operation_id,
-            meas_date_start=meas_date_start, meas_date_end=meas_date_end,
+            conn,
+            meas_id=meas_id,
+            operation_id=operation_id,
+            material_id=material_id,
+            meas_date_start=meas_date_start or "",
+            meas_date_end=meas_date_end or "",
         )
 
     return await jsonify(measurements_data, request)
@@ -203,20 +260,28 @@ async def get_measurements_last(request: Request):
     return await jsonify(rows, request)
 
 async def get_measurements_chart(request: Request):
-    meas_id = int(request.query.get("meas_id") or 0)
-    date_start = request.query.get("date_start") or ""
-    date_end = request.query.get("date_end") or ""
-    operation_id = request.query.get("operation_id") or ""
+    try:
+        meas_id = int(request.query.get("meas_id") or 0)
+    except ValueError:
+        return await jsonify({"detail": "meas_id должен быть числом"}, request, status=400)
+    if meas_id <= 0:
+        return await jsonify({"detail": "meas_id обязателен"}, request, status=400)
 
-    if not meas_id or not date_start or not date_end:
-        return await jsonify([], request)
+    meas_date_start = request.query.get("meas_date_start") or None
+    meas_date_end = request.query.get("meas_date_end") or None
 
     async with request.app["db"].acquire() as conn:
-        measure_kind = await fetch_measurement_kind(conn, meas_id)
-        if measure_kind is None:
+        try:
+            meas_kind, operation_id, material_id = await parse_dim_params(conn, request.query, meas_id)
+        except MeasurementNotFound:
             return await jsonify({"detail": "Измерение не найдено"}, request, status=404)
+        except ValidationError as e:
+            return await jsonify({"detail": str(e)}, request, status=400)
 
-        data = await select_measurements_chart(conn, meas_id, date_start, date_end, operation_id, measure_kind)
+        if meas_kind != 2 and (not meas_date_start or not meas_date_end):
+            return await jsonify({"detail": "Требуется период meas_date_start — meas_date_end"},
+                                 request, status=400)
+        data = await select_measurements_chart(conn, meas_id, meas_date_start, meas_date_end, operation_id, material_id, meas_kind)
 
     return await jsonify(data, request)
 
@@ -669,14 +734,21 @@ async def post_measurement_data(request: Request):
         if measure_kind != 2 and probe_num is not None:
             return await jsonify({"detail": "Для этого измерения номер пробы не используется"}, request, status=400)
 
+        if measure_kind == 2:
+            operation_id=0
+            material_id=int(payload["material_id"])
+        else:    
+            operation_id=int(payload["operation_id"])
+            material_id=0
         result = await insert_measurement_data(
             conn,
             measurement_id=int(payload["measurement_id"]),
             measured_at=measured_at,
-            operation_id=int(payload["operation_id"]),
+            operation_id=operation_id,
+            material_id=material_id,
             probe_num=probe_num,
             values=payload.get("values") or [],
-            entered_by=request.user_id,
+            entered_by=request.user_id
         )
     return await jsonify(result, request)
 
@@ -690,12 +762,22 @@ async def put_measurement_data(request: Request):
         patch["measured_at"] = payload["measured_at"]
     if "operation_id" in payload and payload["operation_id"] is not None:
         patch["operation_id"] = int(payload["operation_id"])
+    if "material_id" in payload and payload["material_id"] is not None:
+        patch["material_id"] = int(payload["material_id"])
 
     if "probe_num" in payload:
         probe_num_raw = payload["probe_num"]
-        patch["probe_num"] = (
-            int(probe_num_raw) if probe_num_raw not in (None, "") else None
-        )
+        if probe_num_raw not in (None, ""):
+            try:
+                patch["probe_num"] = int(probe_num_raw)
+            except (TypeError, ValueError):
+                return await jsonify(
+                    {"detail": "probe_num должен быть числом"}, request, status=400,
+                )
+            if patch["probe_num"] < 1:
+                return await jsonify(
+                    {"detail": "Номер пробы должен быть не меньше 1"}, request, status=400,
+                )
 
     
     async with request.app["db"].acquire() as conn:
@@ -704,33 +786,43 @@ async def put_measurement_data(request: Request):
         if measure_kind is None:
             return await jsonify({"detail": "Проба не найдена"}, request, status=404)
 
-
         if measure_kind != 2 and patch.get("probe_num") is not None:
-            return await jsonify(
-                {"detail": "Для этого измерения номер пробы не используется"},
-                request, status=400,
-            )
-        # для probe-измерения отправлять пустой probe_num бессмысленно:
-        # у пробы номер обязан быть — запрещаем его стирание
-        if measure_kind == 2 and "probe_num" in patch and patch["probe_num"] is None:
-            return await jsonify(
-                {"detail": "Для этого измерения требуется номер пробы"},
-                request, status=400,
-            )
+            return await jsonify({"detail": "Для этого измерения номер пробы не используется"},
+                                 request, status=400)
+        if measure_kind == 2 and "probe_num" not in patch:
+            return await jsonify({"detail": "Для этого измерения требуется номер пробы"},
+                                 request, status=400)
+
+        if measure_kind == 2:
+            if "operation_id" in patch:
+                return await jsonify({"detail": "Операция не применяется для измерений по пробам"},
+                                     request, status=400)
+            if patch.get("material_id") == 0:
+                return await jsonify({"detail": "Для этого измерения требуется материал"},
+                                     request, status=400)
+        else:
+            if "material_id" in patch:
+                return await jsonify({"detail": "Материал не применяется для повременных измерений"},
+                                     request, status=400)
+            patch.pop("probe_num", None)   # страховка: время-пробе номер не пишем
+
+        if measure_kind == 2 and "measured_at" in patch:
+            return await jsonify({"detail": "Время внесения пробы не изменяется"},
+                                 request, status=400)
 
         if not patch:
             return await jsonify({"detail": "Нет данных для обновления"}, request, status=400)
         
         try:
             result = await update_measurement_data(conn, sample_id, patch)
-        except Exception as e:
-            # дубликат uq_probe при переносе пробы на занятый номер
-            if getattr(e, "args", None) and "Duplicate entry" in str(e.args[0]):
+        except IntegrityError as e:
+            if e.args[0] == 1062:   # ER_DUP_ENTRY: дубль uq_probe
                 return await jsonify(
-                    {"detail": "Проба с таким номером для этой операции уже есть"},
+                    {"detail": "Проба с таким номером для этого материала уже есть"},
                     request, status=409,
                 )
             raise
+
     return await jsonify(result or {}, request)
 
 

@@ -8,16 +8,25 @@ const isIsoDate = (v: unknown): v is string =>
 
 export const useMeasurementsPanelStore = defineStore('measurementsPanel', () => {
   const selectedMeasurementId = ref<number | null>(null)
+  const selectedMaterialId = ref<number | null>(null)
   const selectedDate = ref<string>('')          // 'YYYY-MM-DD', '' — не выбрана
   const chartCollapsed = ref(false)             // свёрнут ли график
 
   const setSelection = (payload: {
     measId?: number | null
+    materialId?: number | null
     date?: string
   }) => {
+    if (payload.measId !== undefined && payload.measId !== selectedMeasurementId.value) {
+      // материал принадлежит probe-режиму измерения — при смене измерения он теряет смысл
+      selectedMaterialId.value = null
+    }
     if (payload.measId !== undefined) selectedMeasurementId.value = payload.measId
+    if (payload.materialId !== undefined) selectedMaterialId.value = payload.materialId
     if (payload.date !== undefined) selectedDate.value = payload.date
+    saveToStorage()
   }
+
 
   const setChartCollapsed = (v: boolean): void => {
     chartCollapsed.value = v
@@ -26,6 +35,7 @@ export const useMeasurementsPanelStore = defineStore('measurementsPanel', () => 
 
   const reset = (): void => {
     selectedMeasurementId.value = null
+    selectedMaterialId.value = null
     selectedDate.value = ''
     saveToStorage()
   }
@@ -38,6 +48,9 @@ export const useMeasurementsPanelStore = defineStore('measurementsPanel', () => 
 
       if (data.selectedMeasurementId === null || Number.isFinite(data.selectedMeasurementId)) {
         selectedMeasurementId.value = data.selectedMeasurementId
+      }
+      if (data.selectedMaterialId === null || Number.isFinite(data.selectedMaterialId)) {
+        selectedMaterialId.value = data.selectedMaterialId
       }
       if (isIsoDate(data.selectedDate)) {
         selectedDate.value = data.selectedDate
@@ -54,6 +67,7 @@ export const useMeasurementsPanelStore = defineStore('measurementsPanel', () => 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         selectedMeasurementId: selectedMeasurementId.value,
+        selectedMaterialId: selectedMaterialId.value,
         selectedDate: selectedDate.value,
         chartCollapsed: chartCollapsed.value,
         timestamp: Date.now(),
@@ -65,6 +79,7 @@ export const useMeasurementsPanelStore = defineStore('measurementsPanel', () => 
 
   return {
     selectedMeasurementId,
+    selectedMaterialId,
     selectedDate,
     chartCollapsed,
     setSelection,

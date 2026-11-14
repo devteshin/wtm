@@ -2,7 +2,7 @@
 
 import json
 
-from aiomysql import Connection
+from aiomysql import Connection, IntegrityError
 from functools import reduce
 
 class DocumentExistsError(Exception):
@@ -289,6 +289,14 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
     WHERE o.done = 0
     ORDER BY name
     """
+    q_material = """
+    SELECT material.id, material.material AS name FROM operations AS o
+    LEFT JOIN technical_process AS tp ON tp.id = o.tp_id
+    LEFT JOIN material ON material.id = o.product_id
+    INNER JOIN measurement AS m ON m.tp_id = tp.id AND (%(meas_id)s = 0 OR m.id = %(meas_id)s)
+    WHERE o.done = 0 AND material.id IS NOT NULL
+    ORDER BY name
+    """
     q_indicator_set = """
     SELECT i.id, i.code, i.measurement_unit, i.min_value, i.max_value, i.value_precision, mis.order_num
     FROM measurement_ind_set AS mis
@@ -298,6 +306,7 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
     """
 
     operation_list = []
+    material_list = []
     indicators_list = []
     indicator_set_list = []
 
@@ -307,6 +316,8 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
         if meas_id:
             await cur.execute(q_operation, {"meas_id": meas_id})
             operation_list = await cur.fetchall()
+            await cur.execute(q_material, {"meas_id": meas_id})
+            material_list = await cur.fetchall()
             await cur.execute(q_indicators, {"meas_id": meas_id})
             indicators_list = await cur.fetchall()
             await cur.execute(q_indicator_set, {"meas_id": meas_id})
@@ -315,11 +326,12 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
     return {
         "measurement_list": measurement_list,
         "operation_list": operation_list,
+        "material_list": material_list,
         "indicators_list": indicators_list,
         "indicator_set_list": indicator_set_list
     }
 
-async def select_measurements_data(conn: Connection, meas_id: int = 0, operation_id: int = 0, meas_date_start: str = '', meas_date_end: str = ''):
+async def select_measurements_data(conn: Connection, meas_id: int = 0, operation_id: int = 0, material_id: int = 0, meas_date_start: str = '', meas_date_end: str = ''):
     q_measurement_data = """
     SELECT md.id, m.name AS measurement, m.id AS measurement_id
     , o.name AS operation, o.id AS operation_id
@@ -332,17 +344,19 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     LEFT JOIN operations AS o ON o.id = md.operation_id
     LEFT JOIN measurement_data_value AS mv ON mv.measurement_data_id=md.id
     WHERE 
-    ((%(meas_date_start)s = '' OR DATE(measured_at) >= %(meas_date_start)s) 
+    ((%(meas_date_start)s = '' OR measured_at >= %(meas_date_start)s) 
     AND 
-    (%(meas_date_end)s = '' OR DATE(measured_at) <  %(meas_date_end)s  + INTERVAL 1 DAY))
+    (%(meas_date_end)s = '' OR measured_at <  %(meas_date_end)s  + INTERVAL 1 DAY))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
     AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
+    AND (%(material_id)s = 0 OR md.material_id = %(material_id)s)
     GROUP BY md.id, m.name, m.id, o.name, o.id, md.probe_num, measured_at, measured_at_fmt
     ORDER BY measured_at
     """
 
     async with conn.cursor() as cur:
-        await cur.execute(q_measurement_data, {"meas_id": meas_id, "operation_id": operation_id, "meas_date_start": meas_date_start, "meas_date_end": meas_date_end})
+        await cur.execute(q_measurement_data, {"meas_id": meas_id,
+                            "operation_id": operation_id, "material_id": material_id, "meas_date_start": meas_date_start, "meas_date_end": meas_date_end})
         measurement_data = await cur.fetchall()
         for row in measurement_data:
             row["vals"] = json.loads(row["vals"]) if row["vals"] else {}
@@ -363,13 +377,16 @@ async def select_measurements_last(conn: Connection):
         return await cur.fetchall()
 
 async def select_measurements_chart(conn, meas_id, date_start, date_end,
-                                    operation_id, measure_kind):
+                                    operation_id, material_id, measure_kind):
 
     conds = [
-        "md.measurement_id = %(meas_id)s",
-        "(%(operation_id)s IS NULL OR %(operation_id)s = md.operation_id)",
+        "md.measurement_id = %(meas_id)s"
     ]
-    if measure_kind != 2:
+
+    if measure_kind == 2:
+        conds.append("(%(material_id)s IS NULL OR %(material_id)s = md.material_id)")
+    else:
+        conds.append("(%(operation_id)s IS NULL OR %(operation_id)s = md.operation_id)")
         conds.append("md.measured_at >= %(date_start)s")
         conds.append("md.measured_at < DATE_ADD(%(date_end)s, INTERVAL 1 DAY)")
 
@@ -395,6 +412,7 @@ async def select_measurements_chart(conn, meas_id, date_start, date_end,
             "date_start": date_start,
             "date_end": date_end,
             "operation_id": operation_id,
+            "material_id": material_id,
         })
         return await cur.fetchall()
 
@@ -1532,44 +1550,68 @@ async def update_rest_gross_weight(conn: Connection, doc_id: int, material_id: i
              "gross_weight": gross_weight
          })
 
-async def insert_measurement_data(conn, measurement_id, measured_at, operation_id,
-                                  probe_num, values, entered_by):
+async def insert_measurement_data(conn, measurement_id: int, measured_at: str,
+                                  operation_id: int, material_id: int,
+                                  probe_num: int | None, values: list | None,
+                                  entered_by: int):
     async with conn.cursor() as cur:
         sample_id: int
 
         if probe_num is not None:
-            # upsert: проба с таким ключом уже есть — работаем с ней
-            await cur.execute(
-                """
-                SELECT id FROM measurement_data
-                WHERE measurement_id = %s AND operation_id = %s AND probe_num = %s
-                """,
-                (measurement_id, operation_id, probe_num),
-            )
+            # probe-проба размерится материалом; операция не применима
+            operation_id = 0
+
+            q_dup = """
+            SELECT id FROM measurement_data
+            WHERE measurement_id = %(measurement_id)s
+              AND operation_id = 0
+              AND material_id = %(material_id)s
+              AND probe_num = %(probe_num)s
+            """
+            params = {
+                "measurement_id": measurement_id,
+                "material_id": material_id,
+                "probe_num": probe_num,
+            }
+            await cur.execute(q_dup, params)
             row = await cur.fetchone()
-            
+
             if row:
                 sample_id = row["id"]
-            else:    
-                await cur.execute(
-                    """
-                    INSERT INTO measurement_data
-                        (measurement_id, operation_id, probe_num, measured_at, entered_by)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (measurement_id, operation_id, probe_num, measured_at, entered_by),
-                )
-                sample_id = cur.lastrowid
-        else:
-            # time-based: ключа нет, просто вставляем
-            await cur.execute(
-                """
+            else:
+                q_ins = """
                 INSERT INTO measurement_data
-                    (measurement_id, operation_id, measured_at, entered_by)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (measurement_id, operation_id, measured_at, entered_by),
-            )
+                    (measurement_id, operation_id, material_id, probe_num, measured_at, entered_by)
+                VALUES (%(measurement_id)s, %(operation_id)s, %(material_id)s, %(probe_num)s, %(measured_at)s, %(entered_by)s)
+                """
+                try:
+                    await cur.execute(q_ins, {
+                        **params,
+                        "operation_id": 0,
+                        "measured_at": measured_at,
+                        "entered_by": entered_by,
+                    })
+                    sample_id = cur.lastrowid
+                except IntegrityError:
+                    # гонка двойного create: кто-то успел вставить ту же пробу
+                    await cur.execute(q_dup, params)
+                    row = await cur.fetchone()
+                    if row is None:
+                        raise
+                    sample_id = row["id"]
+        else:
+            q_ins = """
+            INSERT INTO measurement_data
+                (measurement_id, operation_id, measured_at, entered_by)
+            VALUES (%(measurement_id)s, %(operation_id)s, %(measured_at)s, %(entered_by)s)
+            """
+            # material_id не передаём — колонка NOT NULL DEFAULT 0
+            await cur.execute(q_ins, {
+                "measurement_id": measurement_id,
+                "operation_id": operation_id,
+                "measured_at": measured_at,
+                "entered_by": entered_by,
+            })
             sample_id = cur.lastrowid
 
         # перезапись значений: одна проба — один показатель — одно значение
@@ -1578,10 +1620,14 @@ async def insert_measurement_data(conn, measurement_id, measured_at, operation_i
                 """
                 INSERT INTO measurement_data_value
                     (measurement_data_id, indicator_id, value)
-                VALUES (%s, %s, %s)
+                VALUES (%(measurement_data_id)s, %(indicator_id)s, %(value)s)
                 ON DUPLICATE KEY UPDATE value = VALUES(value)
                 """,
-                (sample_id, v["indicator_id"], v["value"]),
+                {
+                    "measurement_data_id": sample_id,
+                    "indicator_id": v["indicator_id"],
+                    "value": v["value"],
+                },
             )
 
         return {"id": sample_id}

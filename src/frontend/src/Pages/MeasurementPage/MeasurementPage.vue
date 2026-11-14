@@ -16,7 +16,23 @@
             :value="m.id"
           />
         </el-select>
-  
+
+        <el-select
+          v-if="isProbeKind"
+          v-model="selectedMaterialId"
+          class="toolbar-material"
+          placeholder="Материал"
+          filterable
+        >
+          <el-option
+            v-for="mat in materialsList"
+            :key="mat.id"
+            :label="mat.name"
+            :value="mat.id"
+          />
+        </el-select>
+
+
         <template v-if="!isProbeKind">
           <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
           <el-date-picker
@@ -31,8 +47,8 @@
         </template>
 
   
-        <el-button type="primary" :disabled="!selectedMeasurementId" @click="loadData">Заполнить</el-button>
-        <el-button v-if="canEdit" :disabled="!selectedMeasurementId" @click="addRow">Добавить строку</el-button>
+        <el-button type="primary" :disabled="!selectedMeasurementId || (isProbeKind && !selectedMaterialId)" @click="loadData">Заполнить</el-button>
+        <el-button v-if="canEdit" :disabled="!selectedMeasurementId || (isProbeKind && !selectedMaterialId)" @click="addRow">Добавить строку</el-button>
 
         <el-tooltip
           :content="chartCollapsed ? 'Показать график' : 'Развернуть таблицу'"
@@ -71,7 +87,7 @@
             </template>
           </el-table-column>
     
-          <el-table-column label="Операция" min-width="200">
+          <el-table-column v-if="!isProbeKind" label="Операция" min-width="200">
             <template #default="{ row }">
               <el-select
                 v-if="canEdit"
@@ -161,7 +177,7 @@ import { storeToRefs } from 'pinia';
 import { useMeasurementsPanelStore } from '@/storeMeasurementPanel.js';
 
 const measurementsStore = useMeasurementsPanelStore();
-const { selectedMeasurementId, selectedDate, chartCollapsed } = storeToRefs(measurementsStore);
+const { selectedMeasurementId, selectedMaterialId, selectedDate, chartCollapsed } = storeToRefs(measurementsStore);
 
 
 const props = withDefaults(
@@ -181,6 +197,7 @@ const toggleChart = (): void => {
 // ---------- справочники из meta ----------
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
 const operationsList   = computed(() => store.measurements_meta?.operation_list ?? []);
+const materialsList = computed(() => store.measurements_meta?.material_list ?? []);
 const indicatorSet = computed(() =>
   (store.measurements_meta?.indicator_set_list ?? [])
     .slice()
@@ -221,13 +238,14 @@ let lastLoadedKey = '';
 
 const loadKey = (): string =>
   isProbeKind.value
-    ? `probe:${selectedMeasurementId.value}`
+    ? `probe:${selectedMeasurementId.value}:${selectedMaterialId.value ?? '-'}`
     : `time:${selectedMeasurementId.value}:${selectedDate.value}`;
 
 
 // ---------- загрузка ----------
 const loadData = async (): Promise<void> => {
-  if (!selectedMeasurementId.value || !selectedDate.value) return;
+  if (!selectedMeasurementId.value) return;
+  if (isProbeKind.value ? !selectedMaterialId.value : !selectedDate.value) return;
   lastLoadedKey = loadKey();
   try {
     loading.value = true;
@@ -235,9 +253,8 @@ const loadData = async (): Promise<void> => {
       store.fetchMeasurementsMeta({ meas_id: selectedMeasurementId.value }),
       store.fetchMeasurementsData({
         meas_id: selectedMeasurementId.value,
-        operation_id: 0,
         ...(isProbeKind.value
-          ? {}
+          ? { material_id: selectedMaterialId.value! }
           : { meas_date_start: selectedDate.value, meas_date_end: selectedDate.value }),
       }),
     ]);
@@ -258,13 +275,10 @@ const formatValue = (row: EditableRow, ind: frontend.IIndicatorSet): string => {
 const mapFromStore = (): void => {
   const list = [...(store.measurements_data ?? [])];
   if (isProbeKind.value) {
-    list.sort((a, b) =>
-      ((a as any).operation_id - (b as any).operation_id) ||
-      (((a as any).probe_num ?? 0) - ((b as any).probe_num ?? 0))
-    );
+    list.sort((a, b) =>  (((a as any).probe_num ?? 0) - ((b as any).probe_num ?? 0)));
   }
 
-  rows.value = (store.measurements_data ?? []).map((r: frontend.IMeasurementsData, i: number) => ({
+  rows.value = (list ?? []).map((r: frontend.IMeasurementsData) => ({
     rowKey: `db-${r.id}`,
     sampleId: r.id,
     measuredAt: r.measured_at,
@@ -305,7 +319,7 @@ const filledValues = (row: EditableRow): frontend.ISampleValuePayload[] =>
 const isRowReady = (row: EditableRow): boolean => {
   if (row.sampleId !== null) return true;
   if (filledValues(row).length === 0) return false;
-  if (isProbeKind.value) return row.operationId !== null && row.probeNum !== null;
+  if (isProbeKind.value) return row.probeNum !== null && selectedMaterialId.value !== null;
   return !!row.measuredAt && row.operationId !== null;
 };
 
@@ -320,12 +334,12 @@ const fmtNowLocal = (): string => {
 
 
 const findProbeDuplicate = (row: EditableRow): EditableRow | undefined => {
-  if (!isProbeKind.value || row.probeNum === null || row.operationId === null) {
+  if (!isProbeKind.value || row.probeNum === null || selectedMaterialId.value === null) {
     return undefined;
   }
   return rows.value.find(r =>
     r.rowKey !== row.rowKey &&
-    r.operationId === row.operationId &&
+    r.sampleId !== null &&                       // учитываем только сохранённые строки
     r.probeNum === row.probeNum
   );
 };
@@ -338,7 +352,7 @@ const createRowIfReady = async (row: EditableRow): Promise<void> => {
   const dup = findProbeDuplicate(row);
   if (dup) {
     ElMessage.warning(
-      `Проба №${row.probeNum} для этой операции уже введена — откорректируйте существующую строку`
+      `Проба №${row.probeNum} для этого материала уже введена — откорректируйте существующую строку`
     );
     row.probeNum = null;   // строка снова «не готова», дубль не создаётся
     return;
@@ -349,11 +363,15 @@ const createRowIfReady = async (row: EditableRow): Promise<void> => {
     const payload: frontend.ISamplePayload = {
       measurement_id: selectedMeasurementId.value!,
       measured_at: isProbeKind.value ? fmtNowLocal() : row.measuredAt!,
-      operation_id: row.operationId!,
       values: filledValues(row),
     };
 
-    if (isProbeKind.value) payload.probe_num = row.probeNum!;
+    if (isProbeKind.value) {
+      payload.material_id = selectedMaterialId.value!;
+      payload.probe_num = row.probeNum!;
+    } else {
+      payload.operation_id = row.operationId!;
+    }
 
     const res = await createSample(payload);
     row.sampleId = res.id;
@@ -376,19 +394,20 @@ const onKeyChanged = async (row: EditableRow): Promise<void> => {
     return;
   }
   try {
-    if (isProbeKind.value) {
-      if (row.operationId !== null && row.probeNum !== null) {
-        const dup = findProbeDuplicate(row);
-        if (dup) {
-          ElMessage.warning(
-            `Проба №${row.probeNum} для этой операции уже есть — откорректируйте существующую строку`
-          );
-          row.probeNum = null;   // в БД старый номер не тронут, вернётся при перезагрузке
-          return;
-        }
-        await updateSample(row.sampleId, { operation_id: row.operationId, probe_num: row.probeNum });
-        somethingChanged();
+  if (isProbeKind.value) {
+    if (row.probeNum !== null) {
+      const dup = findProbeDuplicate(row);
+      if (dup) {
+        ElMessage.warning(
+          `Проба №${row.probeNum} для этого материала уже есть — откорректируйте существующую строку`
+        );
+        row.probeNum = null;
+        return;
       }
+      await updateSample(row.sampleId, { probe_num: row.probeNum });
+      somethingChanged();
+    }
+
     } else if (row.measuredAt && row.operationId !== null) {
       await updateSample(row.sampleId, { measured_at: row.measuredAt, operation_id: row.operationId });
       somethingChanged();
@@ -496,12 +515,17 @@ onMounted(async () => {
     measurementsStore.setSelection({ measId: null });
     measurementsStore.saveToStorage();
   }
-  // При возврате через роутинг стор уже заполнен и watcher не сработает —
-  // при обновлении страницы watcher сработает, но увидит тот же ключ и пропустит
-  if (selectedMeasurementId.value) {
+  const restoredMaterialId = measurementsStore.selectedMaterialId;
+  if (restoredMaterialId !== null && !materialsList.value.some(m => m.id === restoredMaterialId)) {
+    measurementsStore.setSelection({ materialId: null });  
+    measurementsStore.saveToStorage();
+  }
+
+
+  if (selectedMeasurementId.value && (!isProbeKind.value || selectedMaterialId.value)) {
     rows.value = [];
     loadData();
-  }  
+  }
 });
 
 const createSample = async (payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> => {
@@ -527,19 +551,21 @@ const deleteSample = async (id: number): Promise<void> => {
   await store.deleteMeasurementData(id);
 };
 
-watch([selectedMeasurementId, selectedDate], ([measId]) => {
-  measurementsStore.saveToStorage();
+watch(
+  [selectedMeasurementId, selectedDate, selectedMaterialId],
+  ([measId]) => {
+    measurementsStore.saveToStorage();
 
-  if (!measId) {
+    if (!measId) {
+      rows.value = [];
+      lastLoadedKey = '';
+      return;
+    }
+    if (loadKey() === lastLoadedKey) return;
     rows.value = [];
-    lastLoadedKey = '';
-    return;
-  }
-  // уже загружено при монтировании (возврат через роутинг / свежий рефреш)
-  if (loadKey() === lastLoadedKey) return;
-  rows.value = [];
-  loadData();
-});
+    loadData();
+  },
+);
 
 
 </script>
@@ -620,6 +646,7 @@ watch([selectedMeasurementId, selectedDate], ([measId]) => {
 
 .toolbar-measurement { width: 320px; }
 .toolbar-date        { width: 140px; }
+.toolbar-material { width: 220px; }
 
 /* таблица забирает всё место под тулбаром */
 .table-container {

@@ -14,6 +14,7 @@ declare namespace frontend {
     export type IMeasurementsMeta = {
         measurement_list: Array<IMeasurement> 
         operation_list: Array<IOpertion>
+        material_list: Array<IMaterial>
         indicator_list: Array<IIndicator>
         indicator_set_list: Array<IIndicatorSet>
     }
@@ -141,7 +142,8 @@ declare namespace frontend {
     export type ISamplePayload = {
         measurement_id: number
         measured_at: string
-        operation_id: number
+        operation_id?: number
+        material_id?: number
         probe_num?: number
         values: ISampleValuePayload[]
     }
@@ -153,6 +155,7 @@ declare namespace frontend {
     export type ISamplePatch = {
         measured_at?: string
         operation_id?: number
+        material_id?: number
         probe_num?: number
     }
 
@@ -327,6 +330,7 @@ declare namespace frontend {
     export type IMeasurementsQueryParams = {
         meas_id?: number;
         operation_id?: number;
+        material_id?: number;
         meas_date_start?: string;
         meas_date_end?: string;
     }
