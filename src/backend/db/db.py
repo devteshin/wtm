@@ -348,8 +348,8 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     AND 
     (%(meas_date_end)s = '' OR measured_at <  %(meas_date_end)s  + INTERVAL 1 DAY))
     AND (%(meas_id)s = 0 OR md.measurement_id = %(meas_id)s)
-    AND (%(operation_id)s = 0 OR md.operation_id = %(operation_id)s)
-    AND (%(material_id)s = 0 OR md.material_id = %(material_id)s)
+    AND (%(operation_id)s IS NULL OR md.operation_id = %(operation_id)s)
+    AND (%(material_id)s IS NULL OR md.material_id = %(material_id)s)
     GROUP BY md.id, m.name, m.id, o.name, o.id, md.probe_num, measured_at, measured_at_fmt
     ORDER BY measured_at
     """
@@ -357,7 +357,7 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     async with conn.cursor() as cur:
         await cur.execute(q_measurement_data, {"meas_id": meas_id,
                             "operation_id": operation_id, "material_id": material_id, "meas_date_start": meas_date_start, "meas_date_end": meas_date_end})
-        print(cur._executed)
+        #print(cur._executed)
         measurement_data = await cur.fetchall()
         for row in measurement_data:
             row["vals"] = json.loads(row["vals"]) if row["vals"] else {}
