@@ -267,8 +267,8 @@ async def get_measurements_chart(request: Request):
     if meas_id <= 0:
         return await jsonify({"detail": "meas_id обязателен"}, request, status=400)
 
-    meas_date_start = request.query.get("date_start") or None
-    meas_date_end = request.query.get("date_end") or None
+    meas_date_start = request.query.get("meas_date_start") or None
+    meas_date_end = request.query.get("meas_date_end") or None
 
     async with request.app["db"].acquire() as conn:
         try:
@@ -279,7 +279,7 @@ async def get_measurements_chart(request: Request):
             return await jsonify({"detail": str(e)}, request, status=400)
 
         if meas_kind != 2 and (not meas_date_start or not meas_date_end):
-            return await jsonify({"detail": "Требуется период date_start — date_end"},
+            return await jsonify({"detail": "Требуется период meas_date_start — meas_date_end"},
                                  request, status=400)
         data = await select_measurements_chart(conn, meas_id, meas_date_start, meas_date_end, operation_id, material_id, meas_kind)
 

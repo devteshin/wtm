@@ -105,6 +105,7 @@ const canBuild = computed(() => {
 const build = async (): Promise<void> => {
   clearChart();
   if (!canBuild.value) return;
+  console.log('isProbeKind.value',isProbeKind.value)
   try {
     await store.fetchMeasurementsChart({
       meas_id: selectedMeasurementId.value!,

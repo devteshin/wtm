@@ -242,14 +242,13 @@ class ClientAPI {
     async fetchMeasurementsChart(
         params: frontend.IMeasurementsChartQueryParams,
     ): Promise<frontend.IMeasurementChart[]> {
-        const qs = new URLSearchParams({
-            meas_id: String(params.meas_id),
-            operation_id: String(params.operation_id),
-            date_start: params.meas_date_start,
-            date_end: params.meas_date_end,
-        });
+        const qs = new URLSearchParams({ meas_id: String(params.meas_id) });
+        if (params.material_id !== undefined)  qs.set('material_id', String(params.material_id));
+        if (params.operation_id !== undefined) qs.set('operation_id', String(params.operation_id));
+        if (params.meas_date_start)            qs.set('meas_date_start', params.meas_date_start);
+        if (params.meas_date_end)              qs.set('meas_date_end', params.meas_date_end);
         return this.request(`${BASE_URL}/measurements_chart?${qs}`);
-    }    
+    }
 
 
     async fetchMetricsInventoryAging(params: frontend.IMetricsInventoryAgingQueryParams = {}) {
