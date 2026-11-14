@@ -20,9 +20,10 @@ export const useMeasurementsPanelStore = defineStore('measurementsPanel', () => 
     if (payload.measId !== undefined && payload.measId !== selectedMeasurementId.value) {
       // материал принадлежит probe-режиму измерения — при смене измерения он теряет смысл
       selectedMaterialId.value = null
+    } else {
+      if (payload.materialId !== undefined) selectedMaterialId.value = payload.materialId
     }
     if (payload.measId !== undefined) selectedMeasurementId.value = payload.measId
-    if (payload.materialId !== undefined) selectedMaterialId.value = payload.materialId
     if (payload.date !== undefined) selectedDate.value = payload.date
     saveToStorage()
   }

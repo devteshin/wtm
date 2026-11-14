@@ -12,21 +12,32 @@ const isPeriod = (v: unknown): v is [string, string] =>
 export const useMeasurementsChartStore = defineStore('measurementsChart', () => {
   const selectedMeasurementId = ref<number | null>(null)
   const selectedOperationId = ref<number | null>(null)
+  const selectedMaterialId = ref<number | null>(null)
   const period = ref<[string, string] | null>(null)
 
   const setSelection = (payload: {
     measId?: number | null
     opId?: number | null
+    materialId?: number | null
     period?: [string, string] | null
   }) => {
+    if (payload.measId !== undefined && payload.measId !== selectedMeasurementId.value) {
+      // материал принадлежит probe-режиму измерения — при смене измерения он теряет смысл
+      selectedMaterialId.value = null
+      selectedOperationId.value = null
+    } else {
+      if (payload.opId !== undefined) selectedOperationId.value = payload.opId
+      if (payload.materialId !== undefined) selectedMaterialId.value = payload.materialId
+    }
+
     if (payload.measId !== undefined) selectedMeasurementId.value = payload.measId
-    if (payload.opId !== undefined) selectedOperationId.value = payload.opId
     if (payload.period !== undefined) period.value = payload.period
   }
 
   const reset = (): void => {
     selectedMeasurementId.value = null
     selectedOperationId.value = null
+    selectedMaterialId.value = null
     period.value = null
     saveToStorage()
   }
@@ -43,6 +54,9 @@ export const useMeasurementsChartStore = defineStore('measurementsChart', () => 
       if (data.selectedOperationId === null || Number.isFinite(data.selectedOperationId)) {
         selectedOperationId.value = data.selectedOperationId
       }
+      if (data.selectedMaterialId === null || Number.isFinite(data.selectedMaterialId)) {
+        selectedMaterialId.value = data.selectedMaterialId
+      }
       if (isPeriod(data.period) || data.period === null) {
         period.value = data.period
       }
@@ -56,6 +70,7 @@ export const useMeasurementsChartStore = defineStore('measurementsChart', () => 
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         selectedMeasurementId: selectedMeasurementId.value,
         selectedOperationId: selectedOperationId.value,
+        selectedMaterialId: selectedMaterialId.value,
         period: period.value,
         timestamp: Date.now(),
       }))
@@ -67,6 +82,7 @@ export const useMeasurementsChartStore = defineStore('measurementsChart', () => 
   return {
     selectedMeasurementId,
     selectedOperationId,
+    selectedMaterialId,
     period,
     setSelection,
     reset,

@@ -337,9 +337,10 @@ declare namespace frontend {
 
     export type IMeasurementsChartQueryParams = {
         meas_id: number;
-        meas_date_start: string;
-        meas_date_end: string;
+        meas_date_start?: string;
+        meas_date_end?: string;
         operation_id?: number;
+        material_id?: number;
     }
 
     export type IMeasurementsMetaQueryParams = {

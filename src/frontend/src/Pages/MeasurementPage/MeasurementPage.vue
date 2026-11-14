@@ -47,8 +47,8 @@
         </template>
 
   
-        <el-button type="primary" :disabled="!selectedMeasurementId || (isProbeKind && !selectedMaterialId)" @click="loadData">Заполнить</el-button>
-        <el-button v-if="canEdit" :disabled="!selectedMeasurementId || (isProbeKind && !selectedMaterialId)" @click="addRow">Добавить строку</el-button>
+        <el-button type="primary" :disabled="!canLoad" @click="loadData">Заполнить</el-button>
+        <el-button v-if="canEdit" :disabled="!canLoad" @click="addRow">Добавить строку</el-button>
 
         <el-tooltip
           :content="chartCollapsed ? 'Показать график' : 'Развернуть таблицу'"
@@ -178,7 +178,7 @@ import { useMeasurementsPanelStore } from '@/storeMeasurementPanel.js';
 
 const measurementsStore = useMeasurementsPanelStore();
 const { selectedMeasurementId, selectedMaterialId, selectedDate, chartCollapsed } = storeToRefs(measurementsStore);
-
+const store = useApplicationStore();
 
 const props = withDefaults(
   defineProps<{ editable?: boolean }>(),
@@ -186,7 +186,12 @@ const props = withDefaults(
 );
 
 const canEdit = computed(() => props.editable);
-const store = useApplicationStore();
+const canLoad = computed(() =>
+  !!selectedMeasurementId.value &&
+  (isProbeKind.value
+    ? selectedMaterialId.value !== null
+    : !!selectedDate.value)
+);
 
 const lastPanel = ref<InstanceType<typeof MeasurementsLastPanel>>();
 
@@ -246,6 +251,7 @@ const loadKey = (): string =>
 const loadData = async (): Promise<void> => {
   if (!selectedMeasurementId.value) return;
   if (isProbeKind.value ? !selectedMaterialId.value : !selectedDate.value) return;
+
   lastLoadedKey = loadKey();
   try {
     loading.value = true;
@@ -494,7 +500,7 @@ const disableOtherDays = (d: Date): boolean =>
 onMounted(async () => {
   try {
     loading.value = true;
-    await store.fetchMeasurementsMeta({ meas_id: 0 });
+    await store.fetchMeasurementsMeta({ meas_id: 0 });   // measurement_list для селектора измерений
   } catch (e) {
     console.error('Ошибка загрузки справочника:', e);
     ElMessage.error('Не удалось загрузить список измерений');
@@ -502,12 +508,11 @@ onMounted(async () => {
     loading.value = false;
   }
 
-  // Восстановление после загрузки справочника
   measurementsStore.loadFromStorage();
-  // Нет сохранённой даты — начинаем с сегодняшнего дня
+
   if (!measurementsStore.selectedDate) {
     measurementsStore.setSelection({ date: fmtDateLocal(new Date()) });
-  }  
+  }
 
   // Измерение из хранилища могло исчезнуть из справочника — отбрасываем
   const restoredId = measurementsStore.selectedMeasurementId;
@@ -515,16 +520,27 @@ onMounted(async () => {
     measurementsStore.setSelection({ measId: null });
     measurementsStore.saveToStorage();
   }
-  const restoredMaterialId = measurementsStore.selectedMaterialId;
-  if (restoredMaterialId !== null && !materialsList.value.some(m => m.id === restoredMaterialId)) {
-    measurementsStore.setSelection({ materialId: null });  
-    measurementsStore.saveToStorage();
-  }
 
+  if (selectedMeasurementId.value) {
+    try {
+      // мета конкретного измерения — единственный источник material_list
+      await store.fetchMeasurementsMeta({ meas_id: selectedMeasurementId.value });
+    } catch (e) {
+      console.error('Ошибка загрузки справочника измерения:', e);
+    }
 
-  if (selectedMeasurementId.value && (!isProbeKind.value || selectedMaterialId.value)) {
+    // материал валидируем только теперь — список заполнен
+    const restoredMaterialId = measurementsStore.selectedMaterialId;
+    if (restoredMaterialId !== null &&
+        !materialsList.value.some(m => m.id === restoredMaterialId)) {
+      measurementsStore.setSelection({ materialId: null });
+      measurementsStore.saveToStorage();
+    }
+
     rows.value = [];
-    loadData();
+    if (!isProbeKind.value || selectedMaterialId.value) {
+      loadData();
+    }
   }
 });
 

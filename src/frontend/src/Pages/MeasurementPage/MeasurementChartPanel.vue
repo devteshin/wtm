@@ -16,6 +16,7 @@
       </el-select>
 
       <el-select
+        v-if="!isProbeKind"
         v-model="selectedOperationId"
         class="chart-operation"
         placeholder="Операция"
@@ -23,15 +24,22 @@
         clearable
         :disabled="!selectedMeasurementId"
       >
-        <el-option
-          v-for="op in operationsList"
-          :key="op.id"
-          :label="op.name"
-          :value="op.id"
-        />
+        <el-option v-for="op in operationsList" :key="op.id" :label="op.name" :value="op.id" />
       </el-select>
 
-      <el-date-picker
+      <el-select
+        v-if="isProbeKind"
+        v-model="selectedMaterialId"
+        class="chart-operation"
+        placeholder="Материал"
+        filterable
+        clearable
+        :disabled="!selectedMeasurementId"
+      >
+        <el-option v-for="mat in materialsList" :key="mat.id" :label="mat.name" :value="mat.id" />
+      </el-select>
+
+      <el-date-picker v-if="!isProbeKind"
         v-model="period"
         type="daterange"
         range-separator="—"
@@ -64,13 +72,15 @@ import { storeToRefs } from 'pinia';
 import { useMeasurementsChartStore } from '@/storeMeasurementChart';
 
 const chartStore = useMeasurementsChartStore();
-const { selectedMeasurementId, selectedOperationId, period } = storeToRefs(chartStore);
+const { selectedMeasurementId, selectedOperationId, selectedMaterialId, period } = storeToRefs(chartStore);
 
 const store = useApplicationStore();
 
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
 
 const operationsList = computed(() => store.measurements_meta?.operation_list ?? []);
+const materialsList = computed(() => store.measurements_meta?.material_list ?? []);
+
 const isProbeKind = computed(() => {
   const m = measurementsList.value.find(m => m.id === selectedMeasurementId.value);
   return m?.measure_kind === 2;
@@ -80,15 +90,17 @@ const chartEl = ref<HTMLDivElement>();
 let chart: echarts.ECharts | undefined;
 let observer: ResizeObserver | undefined;
 
-const canBuild = computed(() => {
-  if (!selectedMeasurementId.value || !period.value) return false;
-  // probe: операция обязательна; time-based: по желанию
-  return !isProbeKind.value || selectedOperationId.value !== null;
-});
-
 const clearChart = (): void => {
   chart?.clear();
 };
+
+const canBuild = computed(() => {
+  if (!selectedMeasurementId.value) return false;
+  return isProbeKind.value
+    ? selectedMaterialId.value !== null
+    : !!period.value;
+});
+
 
 const build = async (): Promise<void> => {
   clearChart();
@@ -96,12 +108,18 @@ const build = async (): Promise<void> => {
   try {
     await store.fetchMeasurementsChart({
       meas_id: selectedMeasurementId.value!,
-      meas_date_start: period.value![0],
-      meas_date_end: period.value![1],
-      ...(selectedOperationId.value !== null
+      ...(isProbeKind.value
+        ? { material_id: selectedMaterialId.value! }
+        : {
+            meas_date_start: period.value![0],
+            meas_date_end: period.value![1],
+            ...(selectedOperationId.value !== null
               ? { operation_id: selectedOperationId.value }
               : {}),
+          }),
     });
+
+
     await nextTick();
     render();
   } catch (e) {
@@ -202,19 +220,35 @@ onMounted(async () => {
     chartStore.saveToStorage();
   }
 
-  // Подтягиваем операции восстановленного измерения
   if (selectedMeasurementId.value) {
     try {
       await store.fetchMeasurementsMeta({ meas_id: selectedMeasurementId.value });
     } catch (e) {
-      console.error('Ошибка загрузки операций измерения:', e);
+      console.error('Ошибка загрузки справочника измерения:', e);
     }
 
-    // операция тоже могла исчезнуть из справочника
-    const restoredOp = chartStore.selectedOperationId;
-    if (restoredOp !== null && !operationsList.value.some(op => op.id === restoredOp)) {
-      chartStore.setSelection({ opId: null });
-      chartStore.saveToStorage();
+    if (isProbeKind.value) {
+      // материал валидируем только теперь — список заполнен
+      const restoredMat = chartStore.selectedMaterialId;
+      if (restoredMat !== null && !materialsList.value.some(m => m.id === restoredMat)) {
+        chartStore.setSelection({ materialId: null });
+        chartStore.saveToStorage();
+      }
+      // операция не принадлежит probe-режиму — на всякий случай
+      if (chartStore.selectedOperationId !== null) {
+        chartStore.setSelection({ opId: null });
+        chartStore.saveToStorage();
+      }
+    } else {
+      const restoredOp = chartStore.selectedOperationId;
+      if (restoredOp !== null && !operationsList.value.some(op => op.id === restoredOp)) {
+        chartStore.setSelection({ opId: null });
+        chartStore.saveToStorage();
+      }
+      if (chartStore.selectedMaterialId !== null) {
+        chartStore.setSelection({ materialId: null });
+        chartStore.saveToStorage();
+      }
     }
   }
 
@@ -225,19 +259,17 @@ onMounted(async () => {
 // ---------- реакция на селекты ----------
 
 watch(
-  [selectedMeasurementId, selectedOperationId, period],
+  [selectedMeasurementId, selectedOperationId, selectedMaterialId, period],
   ([measId], [prevMeasId]) => {
-    // смена измерения: сброс операции и подтягивание её списка
     if (measId !== prevMeasId && !restoring) {
       selectedOperationId.value = null;
+      selectedMaterialId.value = null;   // оба фильтра принадлежат режиму измерения
     }
     if (measId && measId !== prevMeasId) {
       void store.fetchMeasurementsMeta({ meas_id: measId });
     }
 
-    // невалидной комбинации фильтров не соответствует никакой график
     if (!canBuild.value) clearChart();
-
     chartStore.saveToStorage();
   },
 );
