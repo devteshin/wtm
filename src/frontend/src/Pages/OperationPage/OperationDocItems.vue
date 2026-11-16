@@ -19,6 +19,7 @@ const store = useApplicationStore();
 const props = defineProps({
     operation: { type: String, required: true },
     operation_material: { type: String, required: true },
+    operation_product_list: { type: Array as PropType<string[]>, required: true },
     material: { type: String, required: true },
     material_list: { type: Array as PropType<string[]>, required: true },
     items: { type: Array as PropType<frontend.IArrivalItems[]>, required: true },
@@ -264,6 +265,7 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
             <el-button type="primary" :icon="Edit" @click="dialogVisible = true" style="margin-left: 10px;" />
             <DialogNewMaterial
               v-model:dialogVisible="dialogVisible"
+              :operation_material_list = "props.operation_product_list"
               :initial-value="operation_material"
               :material_list ="props.material_list"
               @update:dialogVisible="dialogVisible = $event"

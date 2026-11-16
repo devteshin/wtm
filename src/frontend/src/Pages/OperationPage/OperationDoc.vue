@@ -27,6 +27,7 @@ const doc_date = ref('');
 const doc_operation = ref('');
 const doc_operation_material = ref('');
 const doc_material_list = ref(['']);
+const doc_operation_product_list = ref(['']);
 const doc_items = ref([<frontend.IArrivalItems>{}]);
 const doc_base_raw_materials = ref<frontend.IBaseRawMaterial[]>([]);  
 const doc_raw_materials = ref<frontend.IRawMaterial[]>([]);  
@@ -212,6 +213,7 @@ const loadGridNumbers = async () => {
         doc_base_raw_materials.value = store.arrival.base_raw_materials;
         doc_items.value = store.arrival.items;
         doc_material_list.value = doc_items.value.map(i => i.material).filter(function(elem, index, self) {return index === self.indexOf(elem);})
+        doc_operation_product_list.value = store.arrival.operation_product_list;
     };
 
     doc_changed = false
@@ -758,6 +760,7 @@ const onDrawerClose = () => {
                         :material="material"
                         :operation="doc_operation"
                         :operation_material="doc_operation_material"
+                        :operation_product_list="doc_operation_product_list"
                         v-model:material_list="doc_material_list"
                         v-model:items="doc_items"
                         :table-width="'100%'"

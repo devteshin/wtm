@@ -555,6 +555,7 @@ declare namespace frontend {
         doc_date: string
         operation: string
         operation_material: string
+        operation_product_list: Array<string>
         raw_materials: Array<IRawMaterial>
         base_raw_materials: Array<IBaseRawMaterial>
         items: Array<IArrivalItems>

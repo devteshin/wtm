@@ -1029,6 +1029,13 @@ WHERE
 	doc_id = %(doc_id)s 
     """
 
+    q_operation_product_list = """
+    SELECT m.material AS product_name FROM arrival_doc AS doc
+    INNER JOIN operation_products AS op ON op.operation_id = doc.operation
+    LEFT JOIN material AS m ON m.id = op.product_id
+    WHERE doc.id = %(doc_id)s
+    """
+
     arrival = {}
 
     arrival = await select_arrival_meta(conn, doc_id)
@@ -1039,6 +1046,8 @@ WHERE
     async with conn.cursor() as cur:
         await cur.execute(q_items, {"doc_id": doc_id})
         arrival_items = await cur.fetchall()
+        await cur.execute(q_operation_product_list, {"doc_id": doc_id})
+        arrival_operation_product_list = await cur.fetchall()
 
     items_shape_data = await select_shape_data(conn, doc_id)
 
@@ -1067,6 +1076,7 @@ WHERE
     # получаем материалы (позиции документа) списанные на операцию текущего документа прихода из производства по ссылке из этого документа
     # на документ production_doc 
     arrival["raw_materials"] = await select_raw_materials_to_arrival_doc_operation(conn, doc_id)
+    arrival['operation_product_list'] = [item["product_name"] for item in arrival_operation_product_list]
 
     return arrival
 
