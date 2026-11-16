@@ -64,7 +64,9 @@
       <!-- Таблица: показывается только после выбора измерения -->
       <div class="table-container" v-if="selectedMeasurementId">
         <el-table
+          ref="tableRef"
           :data="rows"
+          highlight-current-row
           v-loading="loading"
           border
           row-key="rowKey"
@@ -167,8 +169,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ElMessage, ElMessageBox, TableInstance } from 'element-plus';
 import { ArrowLeft, ArrowRight, Delete, Bottom, Top } from '@element-plus/icons-vue';
 import MeasurementsLastPanel from './MeasurementsLastPanel.vue'
 import MeasurementChartPanel from './MeasurementChartPanel.vue'
@@ -184,6 +186,9 @@ const props = withDefaults(
   defineProps<{ editable?: boolean }>(),
   { editable: true },   
 );
+
+const tableRef = ref<TableInstance>();
+const tableWrapEl = ref<HTMLElement>(); // или сам ref на .el-table через root-элемент
 
 const canEdit = computed(() => props.editable);
 const canLoad = computed(() =>
@@ -302,7 +307,7 @@ const mapFromStore = (): void => {
 // ---------- добавление строки ----------
 let newRowSeq = 0;
 
-const addRow = (): void => {
+/* const addRow = (): void => {
   if (!selectedMeasurementId.value) return;
   rows.value.push({
     rowKey: `new-${++newRowSeq}`,
@@ -315,6 +320,34 @@ const addRow = (): void => {
     values: Object.fromEntries(indicatorSet.value.map(ind => [String(ind.id), null])),
   });
 };
+ */
+const addRow = async (): Promise<void> => {
+  if (!selectedMeasurementId.value) return;
+  rows.value.push({
+    rowKey: `new-${++newRowSeq}`,
+    sampleId: null,
+    measuredAt: null,
+    measuredAtFmt: null,
+    operationId: null,
+    operationName: null,
+    probeNum: null,
+    values: Object.fromEntries(indicatorSet.value.map(ind => [String(ind.id), null])),
+  });
+
+  await nextTick();
+
+  const last = rows.value[rows.value.length - 1];
+  if (!last) return;
+
+  // подсветка + фокус: строка становится current-row
+  tableRef.value?.setCurrentRow(last);
+
+  // докрутить контейнер таблицы к строке
+  const tableEl = tableRef.value?.$el as HTMLElement | undefined;
+  const tr = tableEl?.querySelector('.el-table__body tbody tr:last-child');
+  tr?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+};
+
 
 // ---------- готовность строки ----------
 const filledValues = (row: EditableRow): frontend.ISampleValuePayload[] =>
