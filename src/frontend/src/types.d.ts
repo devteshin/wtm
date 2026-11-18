@@ -48,7 +48,18 @@ declare namespace frontend {
         id: number
         name: string
     }
-    
+
+    export type IProcessingSchemMeasurements = {
+       measurement: Array<IProcessingSchemMeasurement>
+    }    
+
+    export type IProcessingSchemMeasurement = {
+       measurement_id: number
+       operation_id: number
+       material_ids: Array<number>
+    }
+   
+
     export type IProcessingSchem = {
         id: number
         name: string

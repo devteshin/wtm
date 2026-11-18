@@ -364,6 +364,41 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
 
     return measurement_data
 
+async def select_processing_scheme_measurements(conn: Connection, ps_id: int = 0):
+    q_scheme_measurements = """
+    SELECT
+        measurement_id,
+        operation_id,
+        JSON_ARRAYAGG(material_id) AS material_ids
+    FROM (
+        SELECT DISTINCT
+            meas.id AS measurement_id,
+            o.id    AS operation_id,
+            COALESCE(op.product_id, o.product_id) AS material_id
+        FROM operations AS o
+        INNER JOIN production_sequence_items AS psi
+            ON psi.operation = o.id AND psi.ps_id = %(ps_id)s
+        INNER JOIN measurement AS meas
+            ON meas.tp_id = o.tp_id
+        LEFT JOIN operation_products AS op
+            ON op.operation_id = o.id
+    ) t
+    GROUP BY measurement_id, operation_id
+    ORDER BY measurement_id, operation_id
+    """
+
+    async with conn.cursor() as cur:
+        await cur.execute(q_scheme_measurements, {"ps_id": ps_id})
+        scheme_measurements = await cur.fetchall()
+        for row in scheme_measurements:
+            row["material_ids"] = (
+                [v for v in json.loads(row["material_ids"]) if v is not None]
+                if row["material_ids"] else []
+            )
+
+    return scheme_measurements
+
+
 async def select_measurements_last(conn: Connection):
     q = """
     SELECT m.id AS measurement_id, m.name AS measurement

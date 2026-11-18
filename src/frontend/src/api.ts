@@ -250,6 +250,11 @@ class ClientAPI {
         return this.request(`${BASE_URL}/measurements_chart?${qs}`);
     }
 
+    async fetchProcessingSchemeMeasurements(
+        schemeId: number,
+    ): Promise<frontend.IProcessingSchemMeasurements> {
+        return this.request(`${BASE_URL}/processing_scheme_measurements/${schemeId}`);
+    }
 
     async fetchMetricsInventoryAging(params: frontend.IMetricsInventoryAgingQueryParams = {}) {
         this.checkToken();
