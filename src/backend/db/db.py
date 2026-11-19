@@ -374,11 +374,13 @@ async def select_processing_scheme_measurements(conn: Connection, ps_id: int = 0
     q_scheme_measurements = """
     SELECT
         measurement_id,
+        measure_kind,
         operation_id,
         JSON_ARRAYAGG(material_id) AS material_ids
     FROM (
         SELECT DISTINCT
             meas.id AS measurement_id,
+            meas.measure_kind AS measure_kind,
             o.id    AS operation_id,
             COALESCE(op.product_id, o.product_id) AS material_id
         FROM operations AS o

@@ -3,7 +3,7 @@
     <!-- Тулбар: в managed-режиме селекты — неактивные заголовки, кнопок загрузки/добавления нет -->
     <div class="toolbar">
       <el-select
-        :model-value="activeMeasurementId"
+        v-model="measurementModel"
         class="toolbar-measurement"
         placeholder="Измерение"
         filterable
@@ -19,7 +19,7 @@
 
       <el-select
         v-if="isProbeKind"
-        :model-value="activeMaterialId"
+        v-model="materialModel"
         class="toolbar-material"
         placeholder="Материал"
         filterable
@@ -36,7 +36,7 @@
       <template v-if="!isProbeKind">
         <el-button v-if="!isManaged" :icon="ArrowLeft" circle @click="shiftDay(-1)" />
         <el-date-picker
-          :model-value="activeDate"
+          v-model="dateModel"
           class="toolbar-date"
           type="date"
           :clearable="false"
@@ -201,6 +201,33 @@ const store = useApplicationStore();
 const tableRef = ref<TableInstance>();
 const canEdit = computed(() => props.editable);
 
+// ---------- двусторонние модели для тулбара ----------
+const measurementModel = computed<number | null>({
+  get: () => activeMeasurementId.value,
+  set: (id) => {
+    if (isManaged.value || id === null) return;
+    tableStore.setSelection({ measId: id, materialId: null }); // материал сбрасываем: мета у каждого измерения своя
+  },
+});
+
+const materialModel = computed<number | null>({
+  get: () => activeMaterialId.value,
+  set: (id) => {
+    if (isManaged.value) return;
+    tableStore.setSelection({ materialId: id });
+  },
+});
+
+const dateModel = computed<string | null>({
+  get: () => activeDate.value,
+  set: (d) => {
+    if (isManaged.value || d === null) return;
+    tableStore.setSelection({ date: d });
+  },
+});
+
+
+
 // ---------- активные значения (пропсы в managed, стор в uncontrolled) ----------
 const activeMeasurementId = computed<number | null>(() =>
   isManaged.value ? props.measurementId! : selectedMeasurementId.value);
@@ -334,6 +361,7 @@ const runLoad = async (
       store.fetchMeasurementsData(params),
     ]);
     if (isManaged.value) localMeta.value = metaRes ?? null;
+    if (loadKey() !== lastLoadedKey) return;   // ответ устарел — не перетираем таблицу
     mapFromStore();
   } catch (e) {
     console.error('Ошибка загрузки измерений:', e);
@@ -582,17 +610,20 @@ const shiftDay = (days: number): void => {
 const disableOtherDays = (d: Date): boolean =>
   fmtDateLocal(d) !== activeDate.value;
 
+// true, пока идёт восстановление состояния из storage — watch в это время молчит
+let hydrating = true;
+
 // ---------- старт ----------
 onMounted(async () => {
   if (isManaged.value) {
-    // managed: родитель уже всё знает — сразу грузим свою мета и данные
-    await loadData();
+    hydrating = false;
+    await loadData();   // managed: родитель уже всё знает — сразу грузим
     return;
   }
 
   try {
     loading.value = true;
-    await store.fetchMeasurementsMeta({ meas_id: 0 });   // measurement_list для селектора измерений
+    await store.fetchMeasurementsMeta({ meas_id: 0 });   // measurement_list для селектора
   } catch (e) {
     console.error('Ошибка загрузки справочника:', e);
     ElMessage.error('Не удалось загрузить список измерений');
@@ -621,7 +652,7 @@ onMounted(async () => {
       console.error('Ошибка загрузки справочника измерения:', e);
     }
 
-    // материал валидируем только теперь — список заполнен
+    // материал валидируем только теперь — список заполнен детерминированно
     const restoredMaterialId = tableStore.selectedMaterialId;
     if (restoredMaterialId !== null &&
         !materialOptions.value.some(m => m.id === restoredMaterialId)) {
@@ -629,11 +660,10 @@ onMounted(async () => {
       tableStore.saveToStorage();
     }
 
-    rows.value = [];
-    if (!isProbeKind.value || selectedMaterialId.value) {
-      loadData();
-    }
+    await loadData();
   }
+
+  hydrating = false;
 });
 
 const createSample = async (payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> => {
@@ -677,7 +707,7 @@ watch(
 watch(
   [selectedMeasurementId, selectedDate, selectedMaterialId],
   ([measId]) => {
-    if (isManaged.value) return;
+    if (isManaged.value || hydrating) return;
     tableStore.saveToStorage();
 
     if (!measId) {
@@ -690,6 +720,7 @@ watch(
     loadData();
   },
 );
+
 </script>
 
 <style scoped>

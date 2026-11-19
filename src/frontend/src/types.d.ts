@@ -51,6 +51,7 @@ declare namespace frontend {
 
     export type IProcessingSchemeMeasurement = {
        measurement_id: number
+       measure_kind: number
        operation_id: number
        material_ids: Array<number>
     }
