@@ -252,8 +252,12 @@ class ClientAPI {
 
     async fetchProcessingSchemeMeasurements(
         schemeId: number,
-    ): Promise<frontend.IProcessingSchemMeasurements> {
+    ): Promise<frontend.IProcessingSchemeMeasurement[]> {
         return this.request(`${BASE_URL}/processing_scheme_measurements/${schemeId}`);
+    }
+
+    async fetchProcessingSchemes(): Promise<frontend.IProcessingScheme[]> {
+        return this.request(`${BASE_URL}/processing_schemes`);
     }
 
     async fetchMetricsInventoryAging(params: frontend.IMetricsInventoryAgingQueryParams = {}) {

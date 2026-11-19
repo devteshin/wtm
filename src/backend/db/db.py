@@ -233,6 +233,12 @@ async def select_selection_data(
 
     return report_result
 
+async def select_processing_schemes(conn: Connection):
+    q_processing_schemes = "SELECT id, name FROM production_sequences ORDER BY name"
+    async with conn.cursor() as cur:
+        await cur.execute(q_processing_schemes)
+        processing_schemes = await cur.fetchall()
+    return processing_schemes    
 
 async def select_materials_meta(conn: Connection):
     q_stock = "SELECT id, name FROM stock WHERE app = 1"

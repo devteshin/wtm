@@ -11,7 +11,7 @@ from db import (check_user, select_task, select_tasks, change_password, select_m
                 select_production_report_data, select_production_graph_data, select_metrics_inventory_aging, select_journal_zone_docs,
                 select_measurements_meta, select_measurements_data, select_measurements_last, select_measurements_chart,
                 insert_measurement_data, update_measurement_data, delete_measurement_data_value, upsert_measurement_data_value, delete_measurement_data,
-                fetch_measurement_kind, fetch_sample_kind, select_processing_scheme_measurements,
+                fetch_measurement_kind, fetch_sample_kind, select_processing_scheme_measurements, select_processing_schemes,
                 select_scada_test_data
                 )
 
@@ -758,6 +758,14 @@ async def get_processing_scheme_measurements(request: Request):
 
     async with request.app["db"].acquire() as conn:
         data = await select_processing_scheme_measurements(conn, scheme_id)
+
+    return await jsonify(data, request)
+
+#GET /api/processing_schemes
+async def get_processing_schemes(request: Request):
+
+    async with request.app["db"].acquire() as conn:
+        data = await select_processing_schemes(conn)
 
     return await jsonify(data, request)
 

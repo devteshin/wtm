@@ -1,12 +1,13 @@
 <template>
   <div class="measurement-table">
-    <!-- Тулбар -->
+    <!-- Тулбар: в managed-режиме селекты — неактивные заголовки, кнопок загрузки/добавления нет -->
     <div class="toolbar">
       <el-select
-        v-model="selectedMeasurementId"
+        :model-value="activeMeasurementId"
         class="toolbar-measurement"
         placeholder="Измерение"
         filterable
+        :disabled="isManaged"
       >
         <el-option
           v-for="m in measurementsList"
@@ -18,13 +19,14 @@
 
       <el-select
         v-if="isProbeKind"
-        v-model="selectedMaterialId"
+        :model-value="activeMaterialId"
         class="toolbar-material"
         placeholder="Материал"
         filterable
+        :disabled="isManaged"
       >
         <el-option
-          v-for="mat in materialsList"
+          v-for="mat in materialOptions"
           :key="mat.id"
           :label="mat.name"
           :value="mat.id"
@@ -32,25 +34,27 @@
       </el-select>
 
       <template v-if="!isProbeKind">
-        <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
+        <el-button v-if="!isManaged" :icon="ArrowLeft" circle @click="shiftDay(-1)" />
         <el-date-picker
-          v-model="selectedDate"
+          :model-value="activeDate"
           class="toolbar-date"
           type="date"
           :clearable="false"
           format="DD.MM.YYYY"
           value-format="YYYY-MM-DD"
+          :disabled="isManaged"
         />
-        <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
+        <el-button v-if="!isManaged" :icon="ArrowRight" circle @click="shiftDay(1)" />
       </template>
 
-      <el-button type="primary" :disabled="!canLoad" @click="loadData">Заполнить</el-button>
-      <el-button v-if="canEdit" :disabled="!canLoad" @click="addRow">Добавить строку</el-button>
-
+      <template v-if="!isManaged">
+        <el-button type="primary" :disabled="!canLoad" @click="loadData">Заполнить</el-button>
+        <el-button v-if="canEdit" :disabled="!canLoad" @click="addRow">Добавить строку</el-button>
+      </template>
     </div>
 
-    <!-- Таблица: показывается только после выбора измерения -->
-    <div class="table-container" v-if="selectedMeasurementId">
+    <!-- Таблица: в managed-режиме всегда рендерится, пока идёт загрузка — показывается v-loading -->
+    <div class="table-container" v-if="activeMeasurementId">
       <el-table
         ref="tableRef"
         :data="rows"
@@ -159,13 +163,35 @@ import { useMeasurementsTableStore } from '@/storeMeasurementTable.js';
 const props = withDefaults(
   defineProps<{
     editable?: boolean;
+    /** Managed-режим: наличие measurementId переводит компонент в управляемый режим */
+    measurementId?: number | null;
+    /** Managed-режим: день ('YYYY-MM-DD') */
+    date?: string | null;
+    /** Managed-режим: материал для probe-измерений */
+    materialId?: number | null;
+    /** Managed-режим: фильтр по операции для time-измерений; не передан — фильтрации нет */
+    operationId?: number | null;
+    /** Managed-режим: имена для «заголовков»-селектов */
+    measurementName?: string;
+    materialName?: string;
   }>(),
-  { editable: true },
+  {
+    editable: true,
+    measurementId: undefined,
+    date: undefined,
+    materialId: undefined,
+    operationId: undefined,
+    measurementName: '',
+    materialName: '',
+  },
 );
 
 const emit = defineEmits<{
   (e: 'changed'): void;         // что-то сохранилось/удалилось — родитель обновляет панель последних
 }>();
+
+/** Managed-режим: выбором управляет родитель через пропсы */
+const isManaged = computed(() => props.measurementId !== undefined);
 
 const tableStore = useMeasurementsTableStore();
 const { selectedMeasurementId, selectedMaterialId, selectedDate } = storeToRefs(tableStore);
@@ -174,11 +200,22 @@ const store = useApplicationStore();
 
 const tableRef = ref<TableInstance>();
 const canEdit = computed(() => props.editable);
+
+// ---------- активные значения (пропсы в managed, стор в uncontrolled) ----------
+const activeMeasurementId = computed<number | null>(() =>
+  isManaged.value ? props.measurementId! : selectedMeasurementId.value);
+const activeDate = computed<string | null>(() =>
+  isManaged.value ? (props.date ?? null) : selectedDate.value);
+const activeMaterialId = computed<number | null>(() =>
+  isManaged.value ? (props.materialId ?? null) : selectedMaterialId.value);
+const activeOperationId = computed<number | null>(() =>
+  isManaged.value ? (props.operationId ?? null) : null);
+
 const canLoad = computed(() =>
-  !!selectedMeasurementId.value &&
+  !!activeMeasurementId.value &&
   (isProbeKind.value
-    ? selectedMaterialId.value !== null
-    : !!selectedDate.value)
+    ? activeMaterialId.value !== null
+    : !!activeDate.value)
 );
 
 const somethingChanged = (): void => {
@@ -186,11 +223,40 @@ const somethingChanged = (): void => {
 };
 
 // ---------- справочники из meta ----------
-const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
-const operationsList   = computed(() => store.measurements_meta?.operation_list ?? []);
-const materialsList = computed(() => store.measurements_meta?.material_list ?? []);
+// В managed-режиме мета держится локально: N карточек с разными измерениями
+// иначе затирали бы друг другу store.measurements_meta
+const localMeta = ref<frontend.IMeasurementsMeta | null>(null);
+const meta = computed<frontend.IMeasurementsMeta | null>(() =>
+  isManaged.value ? localMeta.value : store.measurements_meta ?? null);
+
+type MeasurementOption = frontend.IMeasurementsMeta['measurement_list'][number];
+
+const measurementsList = computed<MeasurementOption[]>(() =>
+  isManaged.value
+    ? (activeMeasurementId.value !== null
+        ? [{
+            id: activeMeasurementId.value,
+            name: props.measurementName || `Измерение #${activeMeasurementId.value}`,
+            // до загрузки мета kind неизвестен: по умолчанию считаем time-режимом (1),
+            // после прихода мета selectedMeasurement возьмёт реальное значение
+            measure_kind: 1,
+          }]
+        : [])
+    : (meta.value?.measurement_list ?? []));
+    
+const materialOptions = computed(() =>
+  isManaged.value
+    ? (activeMaterialId.value !== null
+        ? [{
+            id: activeMaterialId.value,
+            name: props.materialName || `Материал #${activeMaterialId.value}`,
+          }]
+        : [])
+    : (meta.value?.material_list ?? []));
+
+const operationsList = computed(() => meta.value?.operation_list ?? []);
 const indicatorSet = computed(() =>
-  (store.measurements_meta?.indicator_set_list ?? [])
+  (meta.value?.indicator_set_list ?? [])
     .slice()
     .sort((a, b) => a.order_num - b.order_num)   // по возрастанию order_num
 );
@@ -200,8 +266,9 @@ const columnLabel = (ind: frontend.IIndicatorSet): string =>
 
 // ---------- состояние ----------
 const selectedMeasurement = computed(() =>
-  measurementsList.value.find(m => m.id === selectedMeasurementId.value) ?? null
+  measurementsList.value.find(m => m.id === activeMeasurementId.value) ?? null
 );
+
 
 // 1 = по времени, 2 = по пробам
 const isProbeKind = computed(() => selectedMeasurement.value?.measure_kind === 2);
@@ -225,27 +292,48 @@ let lastLoadedKey = '';
 
 const loadKey = (): string =>
   isProbeKind.value
-    ? `probe:${selectedMeasurementId.value}:${selectedMaterialId.value ?? '-'}`
-    : `time:${selectedMeasurementId.value}:${selectedDate.value}`;
+    ? `probe:${activeMeasurementId.value}:${activeMaterialId.value ?? '-'}`
+    : `time:${activeMeasurementId.value}:${activeDate.value}:${activeOperationId.value ?? '-'}`;
 
 
 // ---------- загрузка ----------
 const loadData = async (): Promise<void> => {
-  if (!selectedMeasurementId.value) return;
-  if (isProbeKind.value ? !selectedMaterialId.value : !selectedDate.value) return;
+  if (!activeMeasurementId.value) return;
 
+  const measId = activeMeasurementId.value;
+
+  if (isProbeKind.value) {
+    if (activeMaterialId.value === null) return;
+    const materialId = activeMaterialId.value;
+    await runLoad(measId, { meas_id: measId, material_id: materialId });
+    return;
+  }
+
+  if (!activeDate.value) return;
+  const date = activeDate.value;   // теперь string
+  const params: frontend.IMeasurementsQueryParams = {
+    meas_id: measId,
+    meas_date_start: date,
+    meas_date_end: date,
+    ...(activeOperationId.value !== null
+      ? { operation_id: activeOperationId.value }
+      : {}),
+  };
+  await runLoad(measId, params);
+};
+
+const runLoad = async (
+  measId: number,
+  params: frontend.IMeasurementsQueryParams,
+): Promise<void> => {
   lastLoadedKey = loadKey();
   try {
     loading.value = true;
-    await Promise.all([
-      store.fetchMeasurementsMeta({ meas_id: selectedMeasurementId.value }),
-      store.fetchMeasurementsData({
-        meas_id: selectedMeasurementId.value,
-        ...(isProbeKind.value
-          ? { material_id: selectedMaterialId.value! }
-          : { meas_date_start: selectedDate.value, meas_date_end: selectedDate.value }),
-      }),
+    const [metaRes] = await Promise.all([
+      store.fetchMeasurementsMeta({ meas_id: measId }),
+      store.fetchMeasurementsData(params),
     ]);
+    if (isManaged.value) localMeta.value = metaRes ?? null;
     mapFromStore();
   } catch (e) {
     console.error('Ошибка загрузки измерений:', e);
@@ -281,11 +369,12 @@ const mapFromStore = (): void => {
 };
 
 
-// ---------- добавление строки ----------
+// ---------- добавление строки (только uncontrolled) ----------
 let newRowSeq = 0;
 
 const addRow = async (): Promise<void> => {
-  if (!selectedMeasurementId.value) return;
+  if (isManaged.value) return;
+  if (!activeMeasurementId.value) return;
   rows.value.push({
     rowKey: `new-${++newRowSeq}`,
     sampleId: null,
@@ -321,7 +410,7 @@ const filledValues = (row: EditableRow): frontend.ISampleValuePayload[] =>
 const isRowReady = (row: EditableRow): boolean => {
   if (row.sampleId !== null) return true;
   if (filledValues(row).length === 0) return false;
-  if (isProbeKind.value) return row.probeNum !== null && selectedMaterialId.value !== null;
+  if (isProbeKind.value) return row.probeNum !== null && activeMaterialId.value !== null;
   return !!row.measuredAt && row.operationId !== null;
 };
 
@@ -336,7 +425,7 @@ const fmtNowLocal = (): string => {
 
 
 const findProbeDuplicate = (row: EditableRow): EditableRow | undefined => {
-  if (!isProbeKind.value || row.probeNum === null || selectedMaterialId.value === null) {
+  if (!isProbeKind.value || row.probeNum === null || activeMaterialId.value === null) {
     return undefined;
   }
   return rows.value.find(r =>
@@ -349,6 +438,7 @@ const findProbeDuplicate = (row: EditableRow): EditableRow | undefined => {
 const creatingRows = new WeakSet<EditableRow>(); // защита от гонки двойного create
 
 const createRowIfReady = async (row: EditableRow): Promise<void> => {
+  if (isManaged.value) return;
   if (row.sampleId !== null || !isRowReady(row) || creatingRows.has(row)) return;
 
   const dup = findProbeDuplicate(row);
@@ -363,13 +453,13 @@ const createRowIfReady = async (row: EditableRow): Promise<void> => {
   creatingRows.add(row);
   try {
     const payload: frontend.ISamplePayload = {
-      measurement_id: selectedMeasurementId.value!,
+      measurement_id: activeMeasurementId.value!,
       measured_at: isProbeKind.value ? fmtNowLocal() : row.measuredAt!,
       values: filledValues(row),
     };
 
     if (isProbeKind.value) {
-      payload.material_id = selectedMaterialId.value!;
+      payload.material_id = activeMaterialId.value!;
       payload.probe_num = row.probeNum!;
     } else {
       payload.operation_id = row.operationId!;
@@ -475,24 +565,31 @@ const removeRow = async (row: EditableRow): Promise<void> => {
   rows.value = rows.value.filter(r => r.rowKey !== row.rowKey);
 };
 
-// ---------- навигация по дням ----------
+// ---------- навигация по дням (только uncontrolled) ----------
 const fmtDateLocal = (d: Date): string => {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
 const shiftDay = (days: number): void => {
-  const [y, m, d] = selectedDate.value!.split('-').map(Number);
+  if (isManaged.value) return;
+  const [y, m, d] = (activeDate.value ?? '').split('-').map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setDate(dt.getDate() + days);
   selectedDate.value = fmtDateLocal(dt);
 };
 
 const disableOtherDays = (d: Date): boolean =>
-  fmtDateLocal(d) !== selectedDate.value;
+  fmtDateLocal(d) !== activeDate.value;
 
-// ---------- старт: только справочник измерений ----------
+// ---------- старт ----------
 onMounted(async () => {
+  if (isManaged.value) {
+    // managed: родитель уже всё знает — сразу грузим свою мета и данные
+    await loadData();
+    return;
+  }
+
   try {
     loading.value = true;
     await store.fetchMeasurementsMeta({ meas_id: 0 });   // measurement_list для селектора измерений
@@ -527,7 +624,7 @@ onMounted(async () => {
     // материал валидируем только теперь — список заполнен
     const restoredMaterialId = tableStore.selectedMaterialId;
     if (restoredMaterialId !== null &&
-        !materialsList.value.some(m => m.id === restoredMaterialId)) {
+        !materialOptions.value.some(m => m.id === restoredMaterialId)) {
       tableStore.setSelection({ materialId: null });
       tableStore.saveToStorage();
     }
@@ -562,9 +659,25 @@ const deleteSample = async (id: number): Promise<void> => {
   await store.deleteMeasurementData(id);
 };
 
+// parent вызывает через ref: "обновить все карточки"
+defineExpose({ reload: loadData });
+
+// managed: следим за пропсами родителя
+watch(
+  () => [props.measurementId, props.date, props.materialId, props.operationId] as const,
+  () => {
+    if (!isManaged.value) return;
+    if (loadKey() === lastLoadedKey) return;
+    rows.value = [];
+    loadData();
+  },
+);
+
+// uncontrolled: следим за стором, как раньше
 watch(
   [selectedMeasurementId, selectedDate, selectedMaterialId],
   ([measId]) => {
+    if (isManaged.value) return;
     tableStore.saveToStorage();
 
     if (!measId) {
@@ -615,5 +728,4 @@ watch(
   text-align: right;
   width: 100%;
 }
-
 </style>

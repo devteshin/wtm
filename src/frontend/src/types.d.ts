@@ -7,7 +7,7 @@ declare namespace frontend {
         supplier_list: Array<ISupplier>
         process_list: Array<IProcess>
         operation_list: Array<IOpertion>
-        processing_schemes: Array<IProcessingSchem>
+        processing_schemes: Array<IProcessingScheme>
         zone_list: Array<IZoneList>
     }
 
@@ -49,18 +49,14 @@ declare namespace frontend {
         name: string
     }
 
-    export type IProcessingSchemMeasurements = {
-       measurement: Array<IProcessingSchemMeasurement>
-    }    
-
-    export type IProcessingSchemMeasurement = {
+    export type IProcessingSchemeMeasurement = {
        measurement_id: number
        operation_id: number
        material_ids: Array<number>
     }
    
 
-    export type IProcessingSchem = {
+    export type IProcessingScheme = {
         id: number
         name: string
     }
