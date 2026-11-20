@@ -48,6 +48,7 @@
           :date="card.kind === 'time' ? selectedDate : undefined"
           :material-id="card.kind === 'probe' ? card.materialId : undefined"
           :material-name="card.kind === 'probe' ? card.materialName : ''"
+          :measure-kind="card.kind === 'probe' ? 2 : 1"
         />
       </el-card>
     </div>
@@ -175,13 +176,17 @@ const registerRef = (key: string) => (el: any): void => {
 };
 
 const reloadAll = (): void => {
-  tableRefs.forEach(t => t.reload?.());
+  let i = 0;
+  tableRefs.forEach(t => {
+    const delay = i * 150;   // каждая следующая карточка стартует на 150 мс позже
+    i++;
+    setTimeout(() => t.reload?.(), delay);
+  });
 };
 
 let hydrating = true;
 
 onMounted(async () => {
-  console.log('[multi_layout]: mounted');
   store.loadFromStorage();
 
   try {

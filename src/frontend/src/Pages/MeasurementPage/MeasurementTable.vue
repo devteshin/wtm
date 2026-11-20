@@ -174,6 +174,7 @@ const props = withDefaults(
     /** Managed-режим: имена для «заголовков»-селектов */
     measurementName?: string;
     materialName?: string;
+    measureKind?: 1 | 2;
   }>(),
   {
     editable: true,
@@ -245,6 +246,10 @@ const canLoad = computed(() =>
     : !!activeDate.value)
 );
 
+// мета для активного измерения подтверждена? (uncontrolled: меты из слота; managed: всегда да)
+const metaReady = computed(() =>
+  isManaged.value ? true : selectedMeasurement.value !== null);
+
 const somethingChanged = (): void => {
   emit('changed');
 };
@@ -266,7 +271,7 @@ const measurementsList = computed<MeasurementOption[]>(() =>
             name: props.measurementName || `Измерение #${activeMeasurementId.value}`,
             // до загрузки мета kind неизвестен: по умолчанию считаем time-режимом (1),
             // после прихода мета selectedMeasurement возьмёт реальное значение
-            measure_kind: 1,
+            measure_kind: props.measureKind ?? 1,
           }]
         : [])
     : (meta.value?.measurement_list ?? []));
@@ -356,33 +361,29 @@ const runLoad = async (
   lastLoadedKey = loadKey();
   try {
     loading.value = true;
-    const [metaRes] = await Promise.all([
+    const [metaRes, dataRes] = await Promise.all([
       store.fetchMeasurementsMeta({ meas_id: measId }),
       store.fetchMeasurementsData(params),
     ]);
     if (isManaged.value) localMeta.value = metaRes ?? null;
     if (loadKey() !== lastLoadedKey) return;   // ответ устарел — не перетираем таблицу
-    mapFromStore();
+    mapFromRows(dataRes ?? []);
   } catch (e) {
     console.error('Ошибка загрузки измерений:', e);
+    rows.value = [];
     ElMessage.error('Не удалось загрузить данные');
   } finally {
     loading.value = false;
   }
 };
 
-const formatValue = (row: EditableRow, ind: frontend.IIndicatorSet): string => {
-  const v = row.values[String(ind.id)];
-  return v === null || v === undefined ? '—' : Number(v).toFixed(ind.value_precision ?? 2);
-};
-
-const mapFromStore = (): void => {
-  const list = [...(store.measurements_data ?? [])];
+const mapFromRows = (list: frontend.IMeasurementsData[]): void => {
+  const sorted = [...list];
   if (isProbeKind.value) {
-    list.sort((a, b) =>  (((a as any).probe_num ?? 0) - ((b as any).probe_num ?? 0)));
+    sorted.sort((a, b) => (((a as any).probe_num ?? 0) - ((b as any).probe_num ?? 0)));
   }
 
-  rows.value = (list ?? []).map((r: frontend.IMeasurementsData) => ({
+  rows.value = sorted.map((r: frontend.IMeasurementsData) => ({
     rowKey: `db-${r.id}`,
     sampleId: r.id,
     measuredAt: r.measured_at,
@@ -396,12 +397,16 @@ const mapFromStore = (): void => {
   }));
 };
 
+const formatValue = (row: EditableRow, ind: frontend.IIndicatorSet): string => {
+  const v = row.values[String(ind.id)];
+  return v === null || v === undefined ? '—' : Number(v).toFixed(ind.value_precision ?? 2);
+};
 
 // ---------- добавление строки (только uncontrolled) ----------
 let newRowSeq = 0;
 
 const addRow = async (): Promise<void> => {
-  if (isManaged.value) return;
+  if (isManaged.value || !metaReady.value) return;
   if (!activeMeasurementId.value) return;
   rows.value.push({
     rowKey: `new-${++newRowSeq}`,
@@ -467,7 +472,7 @@ const creatingRows = new WeakSet<EditableRow>(); // защита от гонки
 
 const createRowIfReady = async (row: EditableRow): Promise<void> => {
   if (isManaged.value) return;
-  if (row.sampleId !== null || !isRowReady(row) || creatingRows.has(row)) return;
+  if (!metaReady.value || row.sampleId !== null || !isRowReady(row) || creatingRows.has(row)) return;
 
   const dup = findProbeDuplicate(row);
   if (dup) {
@@ -480,6 +485,19 @@ const createRowIfReady = async (row: EditableRow): Promise<void> => {
 
   creatingRows.add(row);
   try {
+    if (isProbeKind.value) {
+      const matOk = materialOptions.value.some(m => m.id === activeMaterialId.value);
+      if (!matOk) {
+        ElMessage.warning('Выбранный материал не относится к этому измерению');
+        return;   // без создания; finally ниже снимет creatingRows
+      }
+    } else {
+      const opOk = operationsList.value.some(op => op.id === row.operationId);
+      if (!opOk) {
+        ElMessage.warning('Выбранная операция не относится к этому измерению');
+        return;
+      }
+    }    
     const payload: frontend.ISamplePayload = {
       measurement_id: activeMeasurementId.value!,
       measured_at: isProbeKind.value ? fmtNowLocal() : row.measuredAt!,
@@ -703,6 +721,20 @@ watch(
   },
 );
 
+// managed: вид измерения проявился из мета после загрузки — перезагружаем данные
+watch(isProbeKind, () => {
+  rows.value = [];
+  lastLoadedKey = '';
+  if (isManaged.value) {
+    loadData();
+    return;
+  }
+  if (isProbeKind.value) {
+    loadData();   // материал не выбран — runLoad вернётся рано, таблица ждёт выбора
+  }
+  // время-режим: главный watch на стор уже перезагрузил по дате
+});
+
 // uncontrolled: следим за стором, как раньше
 watch(
   [selectedMeasurementId, selectedDate, selectedMaterialId],
@@ -720,6 +752,18 @@ watch(
     loadData();
   },
 );
+
+// мета приехала/сменилась: валидируем материал, чистим строки с чужим контекстом
+watch(materialOptions, (opts) => {
+  if (isManaged.value || hydrating) return;
+  const id = tableStore.selectedMaterialId;
+  if (id !== null && !opts.some(m => m.id === id)) {
+    rows.value = [];
+    tableStore.setSelection({ materialId: null });
+    tableStore.saveToStorage();
+  }
+});
+
 
 </script>
 

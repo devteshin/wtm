@@ -56,8 +56,13 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         server: {
             proxy: {
                 "/api": {
-                    target: env.VITE_PROXY_TARGET || "http://localhost:8080",
-                    changeOrigin: true
+                    target: env.VITE_PROXY_TARGET || "http://127.0.0.1:8080",
+                    changeOrigin: true,
+                    configure: (proxy) => {
+                        proxy.on("error", (err) => {
+                            console.error("[vite] proxy error:", err.message);
+                        });
+                    }
                 }
             },
             host: env.VITE_HOST || "0.0.0.0",

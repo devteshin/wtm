@@ -69,6 +69,7 @@ export default defineStore("app_store", () => {
     const scada_rows = ref<frontend.IScadaTestRow[]>([]);
     const scada_error = ref<string | null>(null);
     const scada_loading = ref(false);
+    
 
     const doLogin = (payload: frontend.ILoginPayload) => api.doLogin(payload);
 
@@ -178,11 +179,41 @@ export default defineStore("app_store", () => {
         }
     };
 
-    /** запрос к API для получения данных для ввода показателей измерения*/
-    const fetchMeasurementsMeta = (params?: frontend.IMeasurementsMetaQueryParams) => {
-        return api.fetchMeasurementsMeta(params).then(body => measurements_meta.value = body).finally(() => loading.value = false);
-    };
+    const metaInFlight = new Map<number, Promise<frontend.IMeasurementsMeta>>();
+    /** мета по meas_id: каждая карточка читает только свою запись */
+    const metasById = ref<Record<number, frontend.IMeasurementsMeta>>({});
+    /** чтение меты конкретного измерения (для читателей вне managed-пути) */
+    const metaByMeasId = (measId: number): frontend.IMeasurementsMeta | null =>
+        metasById.value[measId] ?? null;    
 
+    /** запрос к API для получения данных для ввода показателей измерения*/
+    //const fetchMeasurementsMeta = (params?: frontend.IMeasurementsMetaQueryParams) => {
+    //    return api.fetchMeasurementsMeta(params).then(body => measurements_meta.value = body).finally(() => loading.value = false);
+    //};
+
+    /** запрос мета измерения; параллельные вызовы с одним meas_id ждут один и тот же промис */
+    const fetchMeasurementsMeta = (
+        params?: frontend.IMeasurementsMetaQueryParams,
+    ): Promise<frontend.IMeasurementsMeta> => {
+        const measId = params?.meas_id ?? 0;
+
+        const pending = metaInFlight.get(measId);
+        if (pending) return pending;
+
+        const p = api.requestSafe(() => api.fetchMeasurementsMeta(params))
+            .then(body => {
+                metasById.value = { ...metasById.value, [measId]: body };
+                return body;
+            })
+            .finally(() => {
+                metaInFlight.delete(measId);
+                loading.value = false;
+            });
+
+        metaInFlight.set(measId, p);
+        return p;
+    };
+    
     /** запрос к API для получения данных для отчета по остаткам материалов */
     const fetchMaterialsMeta = () => {
         return api.fetchMaterialsMeta().then(body => materials_meta.value = body).finally(() => loading.value = false);

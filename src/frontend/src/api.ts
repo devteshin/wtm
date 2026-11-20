@@ -106,7 +106,28 @@ class ClientAPI {
         }
         return (await response.json()) as T;
     }
-    
+
+    private static sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }    
+
+    /** ретрай для идемпотентных GET: переживаем обрывы соединения и случайные 5xx */
+    async requestSafe<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+        let lastErr: unknown;
+        for (let i = 0; i < attempts; i++) {
+            try {
+                return await fn();
+            } catch (e) {
+                lastErr = e;
+                const status = (e as { status?: number }).status;
+                // 4xx — осмысленный ответ сервера, повторять бессмысленно
+                if (typeof status === "number" && status >= 400 && status < 500) throw e;
+                await ClientAPI.sleep(150 * 2 ** i);   // 150, 300, 600, 1200 мс
+            }
+        }
+        throw lastErr;
+    }
+
     requestHeaders(): HeadersInit {
         return this.token ? { token: this.token } : {};
     }
