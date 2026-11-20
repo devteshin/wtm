@@ -181,6 +181,7 @@ const reloadAll = (): void => {
 let hydrating = true;
 
 onMounted(async () => {
+  console.log('[multi_layout]: mounted');
   store.loadFromStorage();
 
   try {
