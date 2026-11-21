@@ -234,7 +234,7 @@ async def select_selection_data(
     return report_result
 
 async def select_processing_schemes(conn: Connection):
-    q_processing_schemes = "SELECT id, name FROM production_sequences ORDER BY name WHERE done = 0"
+    q_processing_schemes = "SELECT id, name FROM production_sequences WHERE done = 0 ORDER BY name"
     async with conn.cursor() as cur:
         await cur.execute(q_processing_schemes)
         processing_schemes = await cur.fetchall()
