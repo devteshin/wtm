@@ -1,9 +1,20 @@
 <template>
   <div class="indicators-table">
-    <el-table v-if="modelValue.length" :data="modelValue" style="width: 100%" max-height="250">
-      <el-table-column prop="element" label="">
+    <el-table
+      v-if="modelValue.length"
+      :data="modelValue"
+      style="width: 100%"
+      max-height="250"
+      :show-header="false"
+    >
+      <el-table-column prop="element" min-width="110">
         <template #default="scope">
-          <el-select v-model="scope.row.element" style="width: 90px">
+          <el-select
+            v-model="scope.row.element"
+            size="small"
+            placeholder="—"
+            filterable
+          >
             <el-option
               v-for="item in availableOptions"
               :key="item.code"
@@ -13,38 +24,37 @@
           </el-select>
         </template>
       </el-table-column>
-      <el-table-column prop="min" label="min">
+
+      <el-table-column prop="min" width="90">
         <template #default="scope">
-          <el-input type="number" v-model.number="scope.row.min" placeholder="" />
+          <el-input v-model="scope.row.min" size="small" placeholder="мин" />
         </template>
       </el-table-column>
-      <el-table-column prop="max" label="max">
+
+      <el-table-column prop="max" width="90">
         <template #default="scope">
-          <el-input type="number" v-model.number="scope.row.max" placeholder="" />
+          <el-input v-model="scope.row.max" size="small" placeholder="макс" />
         </template>
       </el-table-column>
-      <el-table-column fixed="right" label="" width="40">
+
+      <el-table-column width="36" align="center">
         <template #default="scope">
-          <el-button
-            link
-            type="danger"
-            size="small"
-            @click.prevent="removeRow(scope.$index)"
-          >
-            <Delete style="width: 16px; height: 16px;" />
+          <el-button text size="small" @click.prevent="removeRow(scope.$index)">
+            <el-icon><Delete /></el-icon>
           </el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-button class="mt-4" style="width: 100%" @click="addRow">
-      Добавить
+
+    <el-button class="add-row" text bg @click="addRow">
+      Добавить показатель
     </el-button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Delete } from '@element-plus/icons-vue';
+import { Delete, Plus } from '@element-plus/icons-vue';
 import useApplicationStore from '@/store';
 import type { TableConditionItem } from '@/storeMaterialsReport';
 
@@ -76,7 +86,17 @@ const addRow = () => {
 </script>
 
 <style scoped>
-.indicators-table {
+.indicators-table :deep(.el-table .cell) {
+  padding: 2px 4px;
+}
+
+.add-row {
+  margin-top: 8px;
   width: 100%;
+  border-style: dashed;
+}
+
+.indicators-table :deep(.el-button:hover .el-icon) {
+  color: var(--el-color-danger);
 }
 </style>

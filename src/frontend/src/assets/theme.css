@@ -1,0 +1,233 @@
+/* ============================================================
+   theme.css — «осовременивание» Element Plus
+   Подключать ПОСЛЕ стилей element-plus (после `import 'element-plus/dist/index.css'`)
+   или после <link> на CDN — порядок важен, иначе переопределения перебьются.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. Дизайн-токены (CSS-переменные Element Plus)
+   ------------------------------------------------------------ */
+:root {
+  /* Акцентный цвет: спокойный синий вместо дефолтного #409eff */
+  --el-color-primary: #3b82f6;
+  --el-color-primary-light-3: #69a1f8;
+  --el-color-primary-light-5: #91b9fa;
+  --el-color-primary-light-7: #b9d2fc;
+  --el-color-primary-light-8: #cddbfd;
+  --el-color-primary-light-9: #ecf2fe;
+  --el-color-primary-dark-2: #2f6fd4;
+
+  /* Скругления */
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+
+  /* Границы — светлее и мягче дефолта */
+  --el-border-color: #e4e7ed;
+  --el-border-color-light: #ebeef3;
+  --el-border-color-lighter: #f0f2f5;
+  --el-border-color-extra-light: #f5f7fa;
+
+  /* Текст */
+  --el-text-color-primary: #1f2329;
+  --el-text-color-regular: #4e5969;
+  --el-text-color-secondary: #86909c;
+  --el-text-color-placeholder: #a8abb2;
+
+  /* Фон страницы и лёгкие заливки */
+  --el-bg-color-page: #f5f7fa;
+  --el-fill-color-light: #f5f7fa;
+  --el-fill-color-lighter: #fafbfc;
+
+  /* Шрифт — системный sans вместо засечек */
+  --el-font-family: 'Roboto', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ------------------------------------------------------------
+   2. База страницы
+   ------------------------------------------------------------ */
+body {
+  font-family: var(--el-font-family);
+  background: var(--el-bg-color-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Если где-то шрифт задан вручную с засечками — перебиваем */
+.el-table,
+.el-table th,
+.el-table td,
+.el-input__inner,
+.el-textarea__inner,
+.el-select__wrapper,
+.el-button,
+.el-checkbox__label,
+.el-switch__label,
+.el-radio__label,
+.el-form-item__label,
+.el-collapse-item__header,
+.el-dialog,
+.el-drawer,
+.el-message,
+.el-tag {
+  font-family: inherit;
+}
+
+/* ------------------------------------------------------------
+   3. Карточки: белые блоки на сером фоне вместо серых панелей
+   Используйте класс .app-card на своей обёртке (панель фильтров,
+   зона таблицы) вместо «серого блока с рамкой».
+   ------------------------------------------------------------ */
+.app-card {
+  background: #fff;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  padding: 16px;
+  transition: box-shadow 0.2s ease;
+}
+
+/* ------------------------------------------------------------
+   4. Поля ввода и селекты: без жёстких рамок, с мягкой обводкой
+   ------------------------------------------------------------ */
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  box-shadow: 0 0 0 1px var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
+  transition: box-shadow 0.15s ease;
+}
+
+.el-input__wrapper:hover,
+.el-select__wrapper:hover,
+.el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px #c9cdd4;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1.5px var(--el-color-primary);
+}
+
+/* ------------------------------------------------------------
+   5. Кнопки
+   ------------------------------------------------------------ */
+.el-button {
+  font-weight: 500;
+  border-radius: var(--el-border-radius-base);
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--el-color-primary);
+  --el-button-border-color: var(--el-color-primary);
+}
+
+/* ------------------------------------------------------------
+   6. Таблица
+   ------------------------------------------------------------ */
+
+/* Заголовок: светло-серый фон, без «жирной канцелярской» шапки */
+.el-table {
+  --el-table-border-color: #f0f2f5;
+  --el-table-header-bg-color: #fafbfc;
+  --el-table-header-text-color: #86909c;
+  --el-table-row-hover-bg-color: #f5f8ff;
+  --el-table-tr-bg-color: #ffffff;
+  font-size: 13px;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+/* Зебру гасим: чередование убрали, остаётся hover */
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: transparent;
+}
+
+/* Скругление углов самой таблицы (когда лежит в карточке) */
+.el-table--border {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Итоговая строка (show-summary) — приглушённая, но заметная */
+.el-table__footer-wrapper td.el-table__cell {
+  background: #fafbfc;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+/* Цифры по колонкам с классом .num — ровное выравнивание разрядов
+   Добавляйте этот класс к колонкам «Кол-во», «Нетто», «Брутто», «Mo, %» */
+.el-table .num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Пустые значения: тире вместо пустоты.
+   Если рендерите «—» сами — красьте его приглушённо */
+.el-table .empty-cell {
+  color: #c0c4cc;
+}
+
+/* Подсветка выбранных строк (подбор) */
+.el-table .row-selected td.el-table__cell {
+  background: var(--el-color-primary-light-9);
+}
+
+.el-table .cell {
+  word-break: keep-all;
+}
+
+.el-table .num .cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   7. Прочие компоненты
+   ------------------------------------------------------------ */
+.el-switch__label {
+  color: var(--el-text-color-regular);
+}
+
+.el-switch {
+  --el-switch-on-color: var(--el-color-primary);
+}
+
+.el-switch__core {
+  height: 20px;
+  border-radius: 10px;
+}
+
+.el-switch__core .el-switch__action {
+  height: 16px;
+  width: 16px;
+}
+
+
+.el-form-item {
+  margin-bottom: 16px; /* воздух между фильтрами (было тесно) */
+}
+
+.el-form-item__label {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+/* Чипы фильтров */
+.el-tag {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Плавность на интерактивных элементах */
+.el-button,
+.el-input__wrapper,
+.el-select__wrapper,
+.el-tag,
+.el-switch {
+  transition: all 0.15s ease;
+}

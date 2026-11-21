@@ -17,4 +17,5 @@ const { isAuth } = storeToRefs(useApplicationStore());
 <style lang="scss">
 @import "element-plus/dist/index.css";
 @import "@/styles.css";
+@import "@/assets/theme.css";
 </style>

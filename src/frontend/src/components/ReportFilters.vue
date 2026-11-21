@@ -650,6 +650,22 @@ defineExpose({ refreshOptions })
 </template>
 
 <style scoped>
+.filter-form {
+  padding: 4px 4px 0;
+}
+
+.filter-form :deep(.el-form-item) {
+  margin-bottom: 18px;
+}
+
+.filter-form :deep(.el-form-item__label) {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  font-weight: 500;
+  margin-bottom: 4px;
+  padding-bottom: 0;
+}
+
 .item-remote-select-wrapper {
   display: flex;
   align-items: stretch;
@@ -671,10 +687,9 @@ defineExpose({ refreshOptions })
   box-sizing: border-box;
 }
 
-.el-form-item__content {
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 100%;
+
+.filter-form :deep(.el-form-item__content) {
+  margin-bottom: 0; 
 }
 
 .apply-button {

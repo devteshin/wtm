@@ -35,8 +35,7 @@
                 <el-switch
                   v-model="isDetailedMode"
                   :disabled="isDetailedModeDisabled"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
+                  size='small'
                   @change="handleSwitchDetailedMode"
                 />
                 <span class="switch-description">
@@ -48,11 +47,10 @@
               <div class="switch-container">
                 <el-switch
                   v-model="isOnlyNonZeroMode"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
+                  size='small'
                 />
                 <span class="switch-description">
-                  {{ isOnlyNonZeroMode ? 'только материалы в наличие на складе' : 'все материалы (включая отсутствующие)' }}
+                  {{ isOnlyNonZeroMode ? 'только материалы в наличии' : 'все материалы' }}
                 </span>
               </div>
             </el-form-item>
@@ -68,11 +66,10 @@
                 <el-switch
                   v-model="isElementOrderMode"
                   :disabled="isElementOrderModeDisabled"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
+                  size='small'
                 />
                 <span class="switch-description">
-                  {{ isElementOrderMode ? 'сортировка по первому показателю' : 'сортировка по материалам' }}
+                  {{ isElementOrderMode ? 'сортировка по показателю' : 'сортировка по материалам' }}
                 </span>
               </div>
             </el-form-item>
@@ -90,11 +87,10 @@
                 <el-switch
                   v-model="isSelectionEnabled"
                   :disabled="isSelectionModeDisabled"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
+                  size='small'
                 />
                 <span class="switch-description">
-                  {{ isSelectionEnabled ? 'выбор материалов доступен' : 'выбор материалов отключен' }}
+                  выбор материалов
                 </span>
               </div>
             </el-form-item>
@@ -102,11 +98,10 @@
               <div class="switch-container">
                 <el-switch
                   v-model="isSelectionControlEnabled"
-                  active-color="#13ce66"
-                  inactive-color="#ff4949"
+                  size='small'
                 />
                 <span class="switch-description">
-                  {{ isSelectionControlEnabled ? 'подбор материалов открыт' : 'подбор материалов скрыт' }}
+                  {{ isSelectionControlEnabled ? 'подбор открыт' : 'панель подбора' }}
                 </span>
               </div>
             </el-form-item>
@@ -251,9 +246,9 @@ const basicColumns = ref([
   { prop: 'tare_type', label: 'Тара', width: '80', align: 'left' },
   { prop: 'material_mark', label: 'Вид', width: '100', align: 'left' },
   { prop: 'material_group', label: 'Группа', width: '100', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right', formatType: 'weight' }
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer', className: 'num' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight', className: 'num' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right', formatType: 'weight', className: 'num' }
 ]);
 
 const detailedColumns = ref([
@@ -264,16 +259,16 @@ const detailedColumns = ref([
   { prop: 'tare_mark', label: 'Маркировка', width: '120', align: 'left' },
   { prop: 'material_mark', label: 'Вид', width: '100', align: 'left' },
   { prop: 'material_group', label: 'Группа', width: '100', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer' },
-  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight' },
-  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right', formatType: 'weight' }
+  { prop: 'rest_tare_amount', label: 'Кол-во', width: '100', align: 'right', formatType: 'integer', className: 'num' },
+  { prop: 'rest_net_weight', label: 'Нетто', width: '100', align: 'right', formatType: 'weight', className: 'num' },
+  { prop: 'rest_gross_weight', label: 'Брутто', width: '100', align: 'right', formatType: 'weight', className: 'num' }
 ]);
 
 const selectionColumns = ref([
   { prop: 'stock_name', label: 'Склад', minWidth: '80', align: 'left' },
   { prop: 'material', label: 'Материал', minWidth: '300', align: 'left' },
-  { prop: 'rest_tare_amount', label: 'Кол-во', minWidth: '100', align: 'right', formatType: 'integer' },
-  { prop: 'rest_net_weight', label: 'Нетто', minWidth: '100', align: 'right', formatType: 'weight' },
+  { prop: 'rest_tare_amount', label: 'Кол-во', minWidth: '100', align: 'right', formatType: 'integer', className: 'num' },
+  { prop: 'rest_net_weight', label: 'Нетто', minWidth: '100', align: 'right', formatType: 'weight', className: 'num' },
 ]);
 
 
@@ -417,6 +412,8 @@ const onRemoveMaterial = async (materialId: number) => {
 .page-splitter {
   height: calc(100vh - 120px);
   width: 100%;
+  background: transparent;
+  
 }
 
 .panel-inner {
@@ -428,8 +425,8 @@ const onRemoveMaterial = async (materialId: number) => {
 }
 
 .sidebar-inner {
-  background-color: #f5f7fa;
-  padding: 20px;
+  background-color: #fff;
+  padding: 20px 16px;
   overflow: auto;
 }
 
@@ -464,22 +461,15 @@ const onRemoveMaterial = async (materialId: number) => {
 .switch-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .switch-description {
-  font-size: 14px;
+  font-size: 13px;
   color: #606266;
   white-space: nowrap;
 }
 
-:deep(.el-table) {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-:deep(.el-table__body tr:hover) {
-  cursor: pointer;
-}
 
 .apply-button {
   margin-top: 20px;

@@ -9,8 +9,6 @@
           :summary-method="getSummary"
           :row-key="getRowKey"
           style="width: 100%; height: 100%"
-          stripe
-          border
           show-overflow-tooltip
           @cell-dblclick="(row, column, cell, event) => emit('cell-dblclick', row, column, cell, event)"
           @selection-change="onSelectionChange"
@@ -33,6 +31,7 @@
             :width="column.width"
             :fixed="column.fixed"
             :align="column.align"
+            :class-name="column.className"
           >
 
             <template #header="scope">
@@ -76,6 +75,7 @@ interface Column {
   fixed?: string;
   align?: string;
   formatType?: string;
+  className?: string;
 }
 
 const isSelectionActive = () =>
@@ -329,7 +329,8 @@ defineExpose({ refresh, unselectByMaterialId  });
   position: absolute;
   inset: 0;
   overflow: auto;
-  border-radius: 4px;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .no-data-message {
@@ -339,7 +340,7 @@ defineExpose({ refresh, unselectByMaterialId  });
 }
 
 :deep(.el-table) {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 :deep(.el-table__body tr:hover) {
