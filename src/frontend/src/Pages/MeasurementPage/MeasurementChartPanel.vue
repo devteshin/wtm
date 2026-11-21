@@ -77,7 +77,6 @@ const { selectedMeasurementId, selectedOperationId, selectedMaterialId, period }
 const store = useApplicationStore();
 
 const measurementsList = computed(() => store.measurements_meta?.measurement_list ?? []);
-
 const operationsList = computed(() => store.measurements_meta?.operation_list ?? []);
 const materialsList = computed(() => store.measurements_meta?.material_list ?? []);
 

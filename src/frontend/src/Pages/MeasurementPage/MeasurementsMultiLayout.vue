@@ -37,7 +37,7 @@
     <div v-else-if="loading" class="empty" v-loading="true"></div>
     <div v-else-if="cards.length === 0" class="empty">Для выбранной схемы измерения не заданы</div>
 
-    <div v-else class="cards">
+    <div v-else class="cards-scroll">
       <el-card v-for="card in cards" :key="card.key" class="card">
         <MeasurementTable
           :ref="registerRef(card.key)"
@@ -49,6 +49,7 @@
           :material-id="card.kind === 'probe' ? card.materialId : undefined"
           :material-name="card.kind === 'probe' ? card.materialName : ''"
           :measure-kind="card.kind === 'probe' ? 2 : 1"
+          :meta="metas[card.measurementId] ?? null"
         />
       </el-card>
     </div>
@@ -56,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Refresh } from '@element-plus/icons-vue';
 import { storeToRefs } from 'pinia';
@@ -73,6 +74,8 @@ type SchemeCard =
 const store = useMeasurementsMultiStore();
 const app_store = useApplicationStore();
 const { selectedSchemeId, selectedDate, loading, metas } = storeToRefs(store);
+const REFRESH_INTERVAL_MS = 60_000;
+let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
 const schemeModel = computed<number | null>({
   get: () => selectedSchemeId.value,
@@ -206,23 +209,49 @@ onMounted(async () => {
   }
 
   hydrating = false;
+  refreshTimer = setInterval(autoRefreshTick, REFRESH_INTERVAL_MS);
 });
+
+onUnmounted(() => {
+  if (refreshTimer !== undefined) clearInterval(refreshTimer);
+});
+
+const autoRefreshTick = (): void => {
+  if (document.hidden) return;          // фоновая вкладка — пропускаем
+  if (loading.value) return;            // идёт смена схемы — не вмешиваемся
+  reloadAll();
+};
 
 </script>
 
 <style scoped>
 .multi-layout {
+  height: calc(100vh - 120px);         
   display: flex;
   flex-direction: column;
   gap: 16px;
   max-width: 1440px;
   margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .toolbar {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* карточки скроллятся в собственном контейнере */
+.cards-scroll {
+  flex: 1;
+  min-height: 0;          
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 16px;
 }
 
 .toolbar-scheme { width: 360px; }

@@ -106,12 +106,12 @@ const routes: Array<RouteRecordRaw> = [
         },
     },
     {
-        path: '/test_scada',
-        component: () => import('@/Pages/TestScada.vue')
+        path: "/measurements_control",
+        component: () => import("@/Pages/MeasurementPage/MeasurementsMultiLayout.vue"),
     },
     {
-        path: "/multi_layout",
-        component: () => import("@/Pages/MeasurementPage/MeasurementsMultiLayout.vue")
+        path: '/test_scada',
+        component: () => import('@/Pages/TestScada.vue')
     },
 
     {

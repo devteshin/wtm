@@ -120,7 +120,8 @@ const routes = computed(() => {
                 { label: "Операции", path: `/stock/${stockID}/operations`, icon: "MessageBox" },
                 { label: "Материалы", path: `/material`, icon: "MessageBox" },
                 { label: "Производство", path: `/production`, icon: "MessageBox" },
-                { label: "Измерения", path: `/measurements?editable=0`, query: { editable: "0" }, icon: "MessageBox" }
+                { label: "Измерения", path: `/measurements?editable=0`, query: { editable: "0" }, icon: "MessageBox" },
+                { label: "Контроль измерений", path: `/measurements_control`, icon: "MessageBox" },
             );
         }
     }

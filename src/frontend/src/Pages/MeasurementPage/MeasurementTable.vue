@@ -175,6 +175,7 @@ const props = withDefaults(
     measurementName?: string;
     materialName?: string;
     measureKind?: 1 | 2;
+    meta?: frontend.IMeasurementsMeta | null;
   }>(),
   {
     editable: true,
@@ -259,7 +260,9 @@ const somethingChanged = (): void => {
 // иначе затирали бы друг другу store.measurements_meta
 const localMeta = ref<frontend.IMeasurementsMeta | null>(null);
 const meta = computed<frontend.IMeasurementsMeta | null>(() =>
-  isManaged.value ? localMeta.value : store.measurements_meta ?? null);
+  isManaged.value
+    ? (props.meta ?? localMeta.value)
+    : store.measurements_meta ?? null);
 
 type MeasurementOption = frontend.IMeasurementsMeta['measurement_list'][number];
 
@@ -333,9 +336,17 @@ const loadData = async (): Promise<void> => {
   if (!activeMeasurementId.value) return;
 
   const measId = activeMeasurementId.value;
+  const metaPromise = store.fetchMeasurementsMeta({ meas_id: measId })
+    .catch(e => {
+      console.error('Ошибка загрузки справочника измерения:', e);
+      return null;
+    });
 
   if (isProbeKind.value) {
-    if (activeMaterialId.value === null) return;
+    if (activeMaterialId.value === null) {
+      await metaPromise;   // данные подтянутся после выбора материала
+      return;
+    }
     const materialId = activeMaterialId.value;
     await runLoad(measId, { meas_id: measId, material_id: materialId });
     return;
@@ -362,11 +373,13 @@ const runLoad = async (
   try {
     loading.value = true;
     const [metaRes, dataRes] = await Promise.all([
-      store.fetchMeasurementsMeta({ meas_id: measId }),
+      props.meta
+        ? Promise.resolve(props.meta)                 // мета уже у родителя — не дублируем
+        : store.fetchMeasurementsMeta({ meas_id: measId }),
       store.fetchMeasurementsData(params),
     ]);
-    if (isManaged.value) localMeta.value = metaRes ?? null;
-    if (loadKey() !== lastLoadedKey) return;   // ответ устарел — не перетираем таблицу
+    if (isManaged.value && !props.meta) localMeta.value = metaRes ?? null;
+    if (loadKey() !== lastLoadedKey) return;
     mapFromRows(dataRes ?? []);
   } catch (e) {
     console.error('Ошибка загрузки измерений:', e);
