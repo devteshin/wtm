@@ -1197,7 +1197,7 @@ async def select_base_raw_material(conn: Connection, operation: str):
             (
                 SELECT ps_id, stage - 1 AS stage FROM production_sequence_items AS psi
                 INNER JOIN operations AS o ON o.id = psi.operation AND o.name = %(operation)s
-            ) prev_psi ON prev_psi.ps_id = psi.ps_id AND prev_psi.stage = psi.stage
+            ) prev_psi ON prev_psi.ps_id = psi.ps_id AND prev_psi.stage >= psi.stage
         )
         LEFT JOIN material AS m ON m.id = sd.material
         WHERE sd.doc_type = 0

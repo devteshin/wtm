@@ -93,20 +93,20 @@ const handleAddRawMaterialOptions = () => {
 
 
 const raw_materials_options = computed<frontend.IBaseRawMaterial[]>(() => {
-  const baseItems = doc_base_raw_materials.value;
-  const addedItems = uniqueDocRawMaterials();
+const baseItems = doc_base_raw_materials.value;
+const addedItems = uniqueDocRawMaterials();
 
-  const baseIds = new Set(baseItems.map(i => i.material_id));
+const baseIds = new Set(baseItems.map(i => i.material_id));
 
-  const onlyNewInDoc = addedItems.filter(i => !baseIds.has(i.material_id));
+const onlyNewInDoc = addedItems.filter(i => !baseIds.has(i.material_id));
 
-  // Собираем все ID, которые уже есть в результате
-  const existingIds = new Set([
-    ...baseIds,
-    ...onlyNewInDoc.map(i => i.material_id),
-  ]);
+// Собираем все ID, которые уже есть в результате
+const existingIds = new Set([
+  ...baseIds,
+  ...onlyNewInDoc.map(i => i.material_id),
+]);
 
-  const onlyNewAddedMaterial = addedMaterial.value
+const onlyNewAddedMaterial = addedMaterial.value
     .filter(i => !existingIds.has(i.id))
     .map(i => ({ material_id: i.id, material: i.name }));
 
