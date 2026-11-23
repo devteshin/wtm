@@ -1,6 +1,6 @@
 <template>
   <el-container class="footer-layout">
-    <el-aside v-if="selectionIndRows.length" width="20%">
+<!--     <el-aside v-if="selectionIndRows.length" width="20%">
       <div class="table-wrapper">
         <el-table
           :data="selectionIndRows"
@@ -25,6 +25,22 @@
         </el-table>
       </div>
     </el-aside>
+ -->
+    <el-aside v-if="selectionIndRows.length" width="auto" class="ind-aside">
+      <div class="ind-badges">
+        <el-tag
+          v-for="item in selectionIndRows"
+          :key="item.ind"
+          effect="plain"
+          size="large"
+          class="ind-badge"
+        >
+          {{ item.ind }}: {{ formatCell(item.percent, 'percent') }}%
+        </el-tag>
+      </div>
+    </el-aside>
+
+
 
     <el-main>
       <div class="table-wrapper">
@@ -314,6 +330,25 @@ defineExpose({ refresh });
 .actions-wrapper .el-button {
   width: 100%;
   margin-left: 0; /* el-button тянется к соседу, в колонке не нужно */
+}
+
+.ind-aside {
+  padding: 8px;
+}
+
+.ind-badges {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ind-badge {
+  font-weight: 600;
+  min-width: 92px;          /* выравнивает короткие подписи: S и Mo станут одной ширины */
+  justify-content: center;  /* контент тега — flex, так центрируем текст */
 }
 
 </style>

@@ -12,8 +12,7 @@
                 <div class="switch-container">
                 <el-switch 
                     v-model="isActiveOperationMode"
-                    active-color="#13ce66"
-                    inactive-color="#ff4949"
+                    size='small'
                 />
                 <span class="switch-description">
                     {{ isActiveOperationMode ? 'активные операции' : 'выполненные операции' }}
@@ -31,9 +30,9 @@
           v-loading="store.loading"
           :data="store.operations"
           :row-style="{ cursor: 'pointer' }"
-          :border="true"
+          height="100%"
           style="width: 100%"
-          table-layout="fixed"
+          empty-text="Операций пока нет"
           @row-click="handleRowClick"
         >
           <!-- Колонки данных -->
@@ -43,6 +42,7 @@
             :prop="col.prop"
             :label="col.label"
             :width="col.width"
+            :min-width="col.minWidth"
           />
 
           <!-- Колонка с иконкой действия -->
@@ -177,7 +177,7 @@ const columns = [
   {
     label: "Операция",
     prop: "operation",
-    width: "400",
+    minWidth: "400"
   },
   {
     label: "Кол-во циклов (смен)",
@@ -276,14 +276,20 @@ const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
 <style scoped>
 .operations-layout {
   height: calc(100vh - 120px);
+  gap: 10px;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 .left-panel {
   background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow: auto;
 }
 
 .btn-new-operation {
@@ -297,7 +303,10 @@ const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
 }
 
 .right-panel {
-  padding: 0 16px 16px 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  padding: 12px;
   overflow: hidden;
 }
 
@@ -307,17 +316,6 @@ const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
   overflow: auto;
 }
 
-.table-scroll-container::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-.table-scroll-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-.table-scroll-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
 .switch-container {
   display: flex;
   align-items: center;
@@ -325,9 +323,7 @@ const onSelectionConfirmed = async (items: frontend.IRawMaterial[]) => {
 }
 
 .switch-description {
-  font-size: 14px;
-  color: #606266;
-  white-space: nowrap;
+  font-size: 13px;
 }
 
 </style>

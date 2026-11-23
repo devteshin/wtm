@@ -8,7 +8,7 @@
    1. Дизайн-токены (CSS-переменные Element Plus)
    ------------------------------------------------------------ */
 :root {
-  /* Акцентный цвет: спокойный синий вместо дефолтного #409eff */
+/*    Акцентный цвет: спокойный синий вместо дефолтного #409eff 
   --el-color-primary: #3b82f6;
   --el-color-primary-light-3: #69a1f8;
   --el-color-primary-light-5: #91b9fa;
@@ -16,28 +16,79 @@
   --el-color-primary-light-8: #cddbfd;
   --el-color-primary-light-9: #ecf2fe;
   --el-color-primary-dark-2: #2f6fd4;
+ */
+
+ /* приглушённый индиго
+  --el-color-primary: #4f6af0; 
+  --el-color-primary-light-3: #7d8ff4;
+  --el-color-primary-light-5: #a3b0f7;
+  --el-color-primary-light-7: #cbd2fa;
+  --el-color-primary-light-8: #dde2fc;
+  --el-color-primary-light-9: #eef1fd;
+  --el-color-primary-dark-2: #3f55c0;
+ */
+  
+/*   --el-color-primary: #5470c6;
+  --el-color-primary-light-3: #7b8cd2;
+  --el-color-primary-light-5: #a4b1e1;
+  --el-color-primary-light-7: #cfd6ef;
+  --el-color-primary-light-8: #e0e4f5;
+  --el-color-primary-light-9: #eef1f9;
+  --el-color-primary-dark-2: #435a9e; 
+ */
+/*   --el-color-primary: #0d9488;
+  --el-color-primary-light-3: #3fb0a5;
+  --el-color-primary-light-5: #70c9bf;
+  --el-color-primary-light-7: #b5e2dd;
+  --el-color-primary-light-8: #d3efec;
+  --el-color-primary-light-9: #e8f6f4;
+  --el-color-primary-dark-2: #0a7670;
+ */
+
+/*   --el-color-primary: #6366f1;
+  --el-color-primary-light-3: #898df5;
+  --el-color-primary-light-5: #b1b4f8;
+  --el-color-primary-light-7: #d5d7fb;
+  --el-color-primary-light-8: #e6e8fd;
+  --el-color-primary-light-9: #f3f4fe;
+  --el-color-primary-dark-2: #5052c1;
+ */ 
+
+/*   --el-color-primary: #0d9488;
+  --el-color-primary-light-3: #38b0a4;
+  --el-color-primary-light-5: #6ccbc2;
+  --el-color-primary-light-7: #a8e0da;
+  --el-color-primary-light-8: #c9ece8;
+  --el-color-primary-light-9: #e8f6f4;
+  --el-color-primary-dark-2: #0a7670;
+ */
+
+  /* акцент — терракота */
+  --el-color-primary: #a85438;
+  --el-color-primary-light-3: #bf7a5f;
+  --el-color-primary-light-5: #d2a48f;
+  --el-color-primary-light-7: #e8cec2;
+  --el-color-primary-light-8: #f1ded5;
+  --el-color-primary-light-9: #f9efe9;
+  --el-color-primary-dark-2: #86422c;
+
+  /* тёплые нейтрали */
+  --el-bg-color-page: #f6f1e9;
+  --el-fill-color-light: #f3ede3;
+  --el-border-color: #e6dfd3;
+  --el-border-color-light: #ece5da;
+  --el-border-color-lighter: #f0eae1;
+  --el-text-color-primary: #3d362f;
+  --el-text-color-regular: #5c5449;
+  --el-text-color-secondary: #8a8175;
+
+  /* danger — темнее и холоднее primary, чтобы не путались */
+  --el-color-danger: #b3261e;
 
   /* Скругления */
   --el-border-radius-base: 8px;
   --el-border-radius-small: 6px;
   --el-border-radius-round: 20px;
-
-  /* Границы — светлее и мягче дефолта */
-  --el-border-color: #e4e7ed;
-  --el-border-color-light: #ebeef3;
-  --el-border-color-lighter: #f0f2f5;
-  --el-border-color-extra-light: #f5f7fa;
-
-  /* Текст */
-  --el-text-color-primary: #1f2329;
-  --el-text-color-regular: #4e5969;
-  --el-text-color-secondary: #86909c;
-  --el-text-color-placeholder: #a8abb2;
-
-  /* Фон страницы и лёгкие заливки */
-  --el-bg-color-page: #f5f7fa;
-  --el-fill-color-light: #f5f7fa;
-  --el-fill-color-lighter: #fafbfc;
 
   /* Шрифт — системный sans вместо засечек */
   --el-font-family: 'Roboto', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -128,11 +179,12 @@ body {
 
 /* Заголовок: светло-серый фон, без «жирной канцелярской» шапки */
 .el-table {
-  --el-table-border-color: #f0f2f5;
-  --el-table-header-bg-color: #fafbfc;
-  --el-table-header-text-color: #86909c;
-  --el-table-row-hover-bg-color: #f5f8ff;
+  --el-table-border-color: #ece5da;
+  --el-table-header-bg-color: #faf7f2;
+  --el-table-header-text-color: #8a8175;
+  --el-table-row-hover-bg-color: #f9efe9;
   --el-table-tr-bg-color: #ffffff;
+  --el-table-bg-color: #ffffff;
   font-size: 13px;
 }
 
@@ -142,20 +194,33 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* Зебру гасим: чередование убрали, остаётся hover */
-.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
-  background: transparent;
-}
-
 /* Скругление углов самой таблицы (когда лежит в карточке) */
 .el-table--border {
+  border: 1px solid var(--el-table-border-color);
   border-radius: 8px;
   overflow: hidden;
 }
 
+/* Прямые псевдолинии EP на скруглении дают разрывы — гасим их */
+.el-table--border::before,
+.el-table--border::after,
+.el-table--border .el-table__inner-wrapper::before,
+.el-table--border .el-table__inner-wrapper::after {
+  display: none;
+}
+
+.el-table__inner-wrapper::before {
+  display: none;
+}
+
+.el-table--border .el-table__border-left-patch,
+.el-table--border .el-table__border-right-patch {
+  display: none;
+}
+
 /* Итоговая строка (show-summary) — приглушённая, но заметная */
 .el-table__footer-wrapper td.el-table__cell {
-  background: #fafbfc;
+  background: var(--el-color-primary-light-9);
   font-weight: 600;
   color: #1f2329;
 }
@@ -230,4 +295,32 @@ body {
 .el-tag,
 .el-switch {
   transition: all 0.15s ease;
+}
+
+.empty-state {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
+}
+
+/* ------------------------------------------------------------
+   8. Скроллбары: тёплые, тонкие — для всех зон скролла
+   ------------------------------------------------------------ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--el-fill-color-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d8cfc2;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c9bfb0;
 }

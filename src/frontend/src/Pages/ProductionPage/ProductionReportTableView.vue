@@ -18,7 +18,7 @@
       <!-- Кнопка экспорта в Excel -->
       <el-button
         size="small"
-        type="success"
+        plain
         :loading="exportLoading"
         @click="exportToExcelClick"
       >
@@ -44,8 +44,6 @@
         v-else
         :data="store.production_report_data"
         style="height: 100%"
-        border
-        stripe
       >
         <el-table-column prop="operation_date_in" label="Дата переработки" width="120" />
         <el-table-column prop="process" label="Техпроцесс" min-width="140">
@@ -275,11 +273,12 @@ const exportToExcelClick = () => {
   flex-direction: column;
   width: 100%;
   max-width: 100%;
-  height: calc(100vh - 120px);
-  max-height: calc(100vh - 20px);
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   box-sizing: border-box;
 }
+
 .tables-controls {
   display: flex;
   align-items: center;
@@ -287,24 +286,23 @@ const exportToExcelClick = () => {
   padding: 8px 12px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-  z-index: 10;
-  position: sticky;
-  top: 0;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
   margin-bottom: 8px;
 }
+
 .controls-title {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--el-text-color-primary);
 }
+
 .separator-line {
   width: 1px;
   height: 24px;
-  background: #e5e7eb;
+  background: var(--el-border-color-lighter);
 }
+
 .tables-scroll-area {
   flex: 1;
   min-height: 0;
@@ -314,17 +312,7 @@ const exportToExcelClick = () => {
   width: 100%;
   box-sizing: border-box;
 }
-.tables-scroll-area::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
-}
-.tables-scroll-area::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-.tables-scroll-area::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
+
 .overlay-loader {
   position: absolute;
   inset: 0;
@@ -336,15 +324,17 @@ const exportToExcelClick = () => {
   color: #333;
   font-weight: 500;
 }
+
 .error-state {
   padding: 24px;
   text-align: center;
-  color: #dc2626;
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  border-radius: 6px;
+  color: var(--el-color-danger);
+  background: var(--el-color-danger-light-9);
+  border: 1px solid var(--el-color-danger-light-8);
+  border-radius: 8px;
   margin-top: 16px;
 }
+
 .dbl-click-cell {
   cursor: pointer;
   user-select: none;
@@ -352,5 +342,12 @@ const exportToExcelClick = () => {
 .pagination-area {
   padding: 12px 0 8px;
   text-align: right;
+}
+
+.empty-state {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
 }
 </style>

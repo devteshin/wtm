@@ -2,8 +2,7 @@
 import { onMounted, onBeforeUnmount, computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import useApplicationStore from "@/store";
-import { ElMessage, ElMessageBox } from "element-plus";
-import dayjs from "dayjs";
+import { formatTwoDecimal, formatInteger } from '@/utils/numberFormat';
 
 const router = useRouter();
 const store = useApplicationStore();
@@ -52,30 +51,73 @@ const columns = [
 </script>
 
 <template>
-    <el-row
-        v-if="store.isAuth"
-        justify="center">
-        <el-col
-            v-loading="store.loading"
-            :span="24"
-            :sm="20">
-            <div class="button-row" style="margin-bottom: 20px;">
-                <el-button type="success" plain @click="createDoc()">Новый документ</el-button>
-            </div>    
-            <el-table
-                :data="store.operation"
-                :row-style="{cursor: 'pointer'}"
-                :border="true"
-                style="width: 95%"
-                table-layout="auto"
-                @row-click="handleRowClick">
-                <el-table-column
-                    v-for="col in columns"
-                    :key="col.prop"
-                    :prop="col.prop"
-                    :label="col.label" />
-            </el-table>
-        </el-col>
-    </el-row>
+  <div v-if="store.isAuth" class="operation-docs">
+    <div class="docs-card">
+      <div class="docs-toolbar">
+        <h3 class="docs-title">Документы операции</h3>
+        <el-button type="primary" @click="createDoc">Новый документ</el-button>
+      </div>
+
+      <div class="docs-table-area" v-loading="store.loading">
+        <el-table
+          :data="store.operation"
+          :row-style="{ cursor: 'pointer' }"
+          height="100%"
+          empty-text="Документов пока нет"
+          @row-click="handleRowClick"
+        >
+          <el-table-column prop="doc_number" label="Номер документа" min-width="220" />
+          <el-table-column prop="doc_date" label="Дата" width="140" />
+          <el-table-column prop="material" label="Материал" min-width="260" />
+          <el-table-column prop="net_weight" label="Нетто" width="140" align="right" class-name="num">
+              <template #default="{ row }">{{ formatTwoDecimal(row.net_weight) }}</template>
+          </el-table-column>
+          <el-table-column prop="tare_amount" label="Кол-во" width="110" align="right" class-name="num">
+            <template #default="{ row }">{{ formatInteger(row.tare_amount) }}</template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
+  </div>
 </template>
 
+<style scoped>
+.operation-docs {
+  height: calc(100vh - 120px);
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+}
+
+.docs-card {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.docs-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.docs-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.docs-table-area {
+  flex: 1;
+  min-height: 0;
+}
+
+</style>

@@ -48,7 +48,7 @@
               <el-button
                 v-if = "isRemoteSearch"
                 type="info"
-                :plain="true"
+                plain
                 size="small"
                 :loading="productOptionsLoading"
                 :disabled="productOptionsLoading"
@@ -62,7 +62,7 @@
                   Показать все
               </el-button>
 
-              <el-button type="primary" @click="openCreateProduct">
+              <el-button plain type="primary" @click="openCreateProduct">
                 + Новый продукт
               </el-button>
             </div>
@@ -134,17 +134,20 @@
     </el-form>
 
     <div class="form-footer" v-if="!loading">
-      <el-button @click="handleClose">Закрыть</el-button>
       <el-button
         v-if="currentOperationId > 0"
         type="danger"
+        text
         @click="handleDelete"
       >
         Удалить операцию
       </el-button>
+
+      <div class="footer-spacer" />
+
+      <el-button @click="handleClose">Закрыть</el-button>
       <el-button
         v-if="currentOperationId > 0 && !isTaskItemsBlocked"
-        type="primary"
         @click="onOpenMaterialSelection"
       >
         {{ taskId ? 'Открыть подбор материалов' : 'Добавить новое задание' }}
@@ -442,7 +445,7 @@ const openCreateProduct = async () => {
     const existing = productOptions.value.find(item => item.id === newProductID)
     if (existing) {
       const confirmed = await ElMessageBox.confirm(
-        'Такой продукт уже есть в списке. Выбрать этот прудукт?',
+        'Такой продукт уже есть в списке. Выбрать этот продукт?',
         'Подтверждение выбора',
         { confirmButtonText: 'Да', cancelButtonText: 'Нет', type: 'warning' }
       ).catch(() => false)
@@ -530,11 +533,24 @@ const rules = {
 .product-select {
   flex: 1;
 }
+
 .form-footer {
   margin-top: 24px;
-  text-align: right;
+  padding-top: 16px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  display: flex;
+  align-items: center;
 }
+
+.footer-spacer {
+  flex: 1;
+}
+
 .form-footer .el-button {
   min-width: 100px;
+}
+
+.operation-items-form {
+  max-width: 760px;
 }
 </style>

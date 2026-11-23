@@ -247,9 +247,9 @@ const closeCoeffTables = () => {
 }
 
 .sidebar {
-  background-color: #f5f7fa;
-  padding: 20px;
-  border-right: 1px solid #e6e9ef;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px 16px;
   flex-shrink: 0;
   width: 400px;
   overflow: auto;

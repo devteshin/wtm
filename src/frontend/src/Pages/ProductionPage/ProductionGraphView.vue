@@ -22,7 +22,7 @@
 
       <span class="separator-line" />
 
-      <el-button size="small" type="success" @click="saveGraphAsSvg">
+      <el-button size="small" plain @click="saveGraphAsSvg">
         <template #icon><el-icon :size="14"><Download /></el-icon></template>
         Сохранить как SVG
       </el-button>

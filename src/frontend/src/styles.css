@@ -1,5 +1,5 @@
 body {
-    background-color: var(--el-fill-color-blank);
+    background-color: var(--el-bg-color-page, #f6f1e9);
 }
 
 .mt {
@@ -10,33 +10,20 @@ body {
     margin-bottom: 1rem;
 }
 
-.el-table .cell {
-    word-break: break-word !important;
-    text-overflow: initial !important;
-}
-
 .text-center {
     text-align: center;
 }
 
 .completed-row {
-    background-color: #c9ebb7 !important;
+    background-color: #dcead2 !important;
 }
 
 .non-hover.el-table {
     --el-table-row-hover-bg-color: none !important;
 }
 
-/* .non-hover.el-table>.el-table__row {
-    cursor: default;
-} */
-
-/* .el-table__row {
-    cursor: pointer;
-} */
-
 .el-table thead {
-    color: black !important;
+    color: var(--el-text-color-primary) !important;
 }
 
 .el-main {
@@ -58,24 +45,9 @@ body {
     flex-grow: 1;
 }
 
-/* .category-row {
-    background-color: #66b1ff5e !important;
-}
-.row-done {
-    background-color: #66ff7291 !important;
-} */
-
 .row-disabled {
     background: var(--el-fill-color-light) !important;
     cursor: not-allowed !important;
-}
-
-.el-switch__core .el-switch__inner {
-    padding: 8px 25px 8px 25px !important;
-}
-
-.el-switch__core .el-switch__inner .is-text {
-    font-size: 18px;
 }
 
 .el-select {

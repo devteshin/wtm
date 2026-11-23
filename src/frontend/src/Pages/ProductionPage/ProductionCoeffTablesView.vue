@@ -8,7 +8,7 @@
 
       <el-button
         size="small"
-        type="success"
+        plain
         :loading="exportLoading"
         @click="exportToExcelClick"
       >

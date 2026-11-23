@@ -25,13 +25,13 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="min" width="90">
+      <el-table-column prop="min" min-width="90">
         <template #default="scope">
           <el-input v-model="scope.row.min" size="small" placeholder="мин" />
         </template>
       </el-table-column>
 
-      <el-table-column prop="max" width="90">
+      <el-table-column prop="max" min-width="90">
         <template #default="scope">
           <el-input v-model="scope.row.max" size="small" placeholder="макс" />
         </template>
@@ -86,6 +86,10 @@ const addRow = () => {
 </script>
 
 <style scoped>
+.indicators-table {
+  width: 100%;
+}
+
 .indicators-table :deep(.el-table .cell) {
   padding: 2px 4px;
 }

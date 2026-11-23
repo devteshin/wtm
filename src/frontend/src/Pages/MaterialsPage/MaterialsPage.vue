@@ -30,7 +30,7 @@
           @make-report="handleMakeReport"
         >
           <template #after-material>
-            <el-form-item>
+            <div class="switch-row">
               <div class="switch-container">
                 <el-switch
                   v-model="isDetailedMode"
@@ -42,8 +42,8 @@
                   развернуть материалы
                 </span>
               </div>
-            </el-form-item>
-            <el-form-item>
+            </div>
+            <div class="switch-row">
               <div class="switch-container">
                 <el-switch
                   v-model="isOnlyNonZeroMode"
@@ -53,7 +53,7 @@
                   {{ isOnlyNonZeroMode ? 'только материалы в наличии' : 'все материалы' }}
                 </span>
               </div>
-            </el-form-item>
+            </div>
           </template>
           <template #actions>
 
@@ -61,7 +61,7 @@
               <IndicatorsTable v-model="tableCondition" />
             </el-form-item>
 
-            <el-form-item>
+            <div class="switch-row">
               <div class="switch-container">
                 <el-switch
                   v-model="isElementOrderMode"
@@ -72,7 +72,7 @@
                   {{ isElementOrderMode ? 'сортировка по показателю' : 'сортировка по материалам' }}
                 </span>
               </div>
-            </el-form-item>
+            </div>
 
             <el-button
               type="primary"
@@ -82,7 +82,7 @@
               Сформировать
             </el-button>
 
-            <el-form-item>
+            <div class="switch-row">
               <div class="switch-container">
                 <el-switch
                   v-model="isSelectionEnabled"
@@ -93,8 +93,8 @@
                   выбор материалов
                 </span>
               </div>
-            </el-form-item>
-            <el-form-item>
+            </div>
+            <div class="switch-row">
               <div class="switch-container">
                 <el-switch
                   v-model="isSelectionControlEnabled"
@@ -104,7 +104,7 @@
                   {{ isSelectionControlEnabled ? 'подбор открыт' : 'панель подбора' }}
                 </span>
               </div>
-            </el-form-item>
+            </div>
           </template>
         </ReportFilters>
 
@@ -412,8 +412,7 @@ const onRemoveMaterial = async (materialId: number) => {
 .page-splitter {
   height: calc(100vh - 120px);
   width: 100%;
-  background: transparent;
-  
+  background: var(--el-bg-color-page);
 }
 
 .panel-inner {
@@ -472,8 +471,7 @@ const onRemoveMaterial = async (materialId: number) => {
 
 
 .apply-button {
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin: 14px 0;
   width: 100%;
 }
 
@@ -482,5 +480,13 @@ const onRemoveMaterial = async (materialId: number) => {
   color: #999;
   font-size: 14px;
 }
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;   /* ровный вертикальный ритм между тумблерами */
+}
+
 
 </style>
