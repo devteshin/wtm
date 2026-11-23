@@ -344,7 +344,7 @@ async def select_measurements_data(conn: Connection, meas_id: int = 0, operation
     , md.probe_num
     , measured_at
     , DATE_FORMAT(measured_at, '%%d.%%m.%%Y %%H:%%i') AS measured_at_fmt
-    , JSON_OBJECTAGG(mv.indicator_id, mv.value) AS vals
+    , JSON_OBJECTAGG(IFNULL(mv.indicator_id, 0), IFNULL(mv.value, 0)) AS vals
     FROM measurement_data AS md
     LEFT JOIN measurement AS m ON m.id = md.measurement_id
     LEFT JOIN operations AS o ON o.id = md.operation_id
