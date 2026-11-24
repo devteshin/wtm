@@ -50,7 +50,8 @@
           :material-name="card.kind === 'probe' ? card.materialName : ''"
           :measure-kind="card.kind === 'probe' ? 2 : 1"
           :meta="metas[card.measurementId] ?? null"
-           @loaded="onCardLoaded(card.key)"
+          @loaded="onCardLoaded(card.key, $event)"
+
         />
       </el-card>
     </div>
@@ -106,6 +107,7 @@ const cards = computed<SchemeCard[]>(() => {
 
     if (kind === 2) {
       // probe: карточка на каждую пару «измерение × материал»
+      console.log(metas.value);
       for (const matId of item.material_ids) {
         const matName = metas.value[item.measurement_id]?.material_list
           .find(m => m.id === matId)?.name ?? `Материал #${matId}`;
@@ -130,6 +132,7 @@ const cards = computed<SchemeCard[]>(() => {
     }
   }
   return out;
+  
 });
 
 // ---------- загрузка схемы ----------
@@ -183,7 +186,7 @@ const registerRef = (key: string) => (el: any): void => {
 /** key карточки → число строк последней загрузки; ключа нет — карточка ещё не отчиталась, показываем */
 const loadedCounts = ref<Record<string, number>>({});
 
-const onCardLoaded = (key: string) => (rowCount: number): void => {
+const onCardLoaded = (key: string, rowCount: number): void => {
   loadedCounts.value[key] = rowCount;
 };
 
