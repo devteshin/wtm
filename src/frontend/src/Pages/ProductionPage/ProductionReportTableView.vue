@@ -33,11 +33,8 @@
         <el-skeleton animated />
       </div>
 
-      <div
-        v-else-if="!store.production_report_data.length"
-        class="empty-state"
-      >
-        {{ total === 0 ? 'Нет данных по выбранным фильтрам.' : 'Загрузка данных...' }}
+      <div v-else-if="!store.production_report_data.length" class="empty-state">
+        {{ reportBuilt ? 'Нет данных по выбранным фильтрам.' : 'Задайте фильтры и нажмите «Сформировать»' }}
       </div>
 
       <el-table
@@ -129,6 +126,7 @@ import { exportToExcel } from '@/utils/excelExport'
 import { useProductionReportStore } from '@/storeProductionReport'
 import useApplicationStore from '@/store'
 
+const reportBuilt = ref(false)   // отчёт формировали в этой сессии?
 const loading = ref(false)
 const error = ref<string | null>(null)
 const exportLoading = ref(false)
@@ -188,8 +186,9 @@ const refresh = async () => {
       page: isFullMode.value ? 0 : currentPage.value,
     })
 
-    total.value = Number(result.total) ?? 0
+    total.value = Number(result.total) || 0
     store.production_report_data = result.data ?? []
+    reportBuilt.value = true;
   } catch (err) {
     console.error('fetchProductionReportData error:', err)
     store.production_report_data = []
@@ -246,6 +245,15 @@ const onSizeChange = (size: number) => {
   refresh()
 }
 
+// возврат на страницу: отчёт не восстанавливаем — пользователь формирует его сам
+onMounted(() => {
+  reportStore.resetPagination();
+  store.production_report_data = [];
+  total.value = 0;
+  reportBuilt.value = false;
+});
+
+
 const exportToExcelClick = () => {
   const sheets = [
     {
@@ -269,6 +277,7 @@ const exportToExcelClick = () => {
 
 <style scoped>
 .tables-wrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;

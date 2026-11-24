@@ -1,5 +1,6 @@
 <template>
     <el-menu
+        class="top-menu"
         :ellipsis="false"
         :router="true"
         mode="horizontal">
@@ -30,28 +31,14 @@
                 </el-button>
             </template>
             <template #default>
-                <el-row :gutter="0">
-                    <el-col :span="10">
-                        <div><b>ID:</b> {{ store.currentUser?.id }}</div>
-                    </el-col>
-                    <el-col :span="14">
-                        <div><b>Логин:</b> {{ store.currentUser?.login }}</div>
-                    </el-col>
-                </el-row>
-                <el-row class="mt">
-                    <el-col :span="12">
-                        <el-button
-                            size="small"
-                            type="danger"
-                            round
-                            @click="handleLogOut">
-                            выход
-                        </el-button>
-                    </el-col>
-                    <el-col :span="12">
-                        <ChangePasswordDialog />
-                    </el-col>
-                </el-row>
+            <div class="user-info">
+                <div class="user-info__row"><span>ID</span><span>{{ store.currentUser?.id }}</span></div>
+                <div class="user-info__row"><span>Логин</span><span>{{ store.currentUser?.login }}</span></div>
+            </div>
+            <div class="user-actions">
+                <el-button size="small" type="danger" round @click="handleLogOut">Выход</el-button>
+                <ChangePasswordDialog />
+            </div>
             </template>
         </el-popover>
     </el-menu>
@@ -60,46 +47,11 @@
 <script setup lang="ts">
 import useApplicationStore from "@/store";
 import ChangePasswordDialog from "./ChangePasswordDialog.vue";
-import { useRoute } from "vue-router";
 import { computed } from "vue";
 
 const store = useApplicationStore();
 const handleLogOut = () => store.logOut();
-const route = useRoute();
 
-/* const routes = computed(() => {
-    const menuRoutes = [
-        {
-            label: "Список складов",
-            path: "/",
-            icon: "Guide"
-        }
-    ];
-    if (route.params.stockID) {
-        menuRoutes.push({
-            label: "Задачи",
-            path: `/stock/${route.params.stockID as string}`,
-            icon: "MessageBox"
-        });
-        menuRoutes.push({
-            label: "Операции",
-            path: `/stock/${route.params.stockID as string}/operations`,
-            icon: "MessageBox"
-        });
-        menuRoutes.push({
-            label: "Материалы",
-            path: `/stock/${route.params.stockID as string}/materials`,
-            icon: "MessageBox"
-        });
-        menuRoutes.push({
-            label: "Производство",
-            path: `/stock/${route.params.stockID as string}/production`,
-            icon: "MessageBox"
-        });
-    }
-    return menuRoutes;
-});
- */
 const routes = computed(() => {
     //const stockID = route.params.stockID as string;
     const stockID = store.currentStockID;
@@ -147,3 +99,30 @@ const routes = computed(() => {
 
 
 </script>
+
+<style scoped>
+.top-menu {
+  padding-right: 16px;   /* воздух до правого края экрана */
+}
+
+.user-badge {
+  margin-top: 0.5rem;    /* вертикальное центрирование кнопки в строке меню */
+}
+
+.user-info__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+}
+.user-info__row span:first-child {
+  color: var(--el-text-color-secondary);
+}
+.user-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+</style>

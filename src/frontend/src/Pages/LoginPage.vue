@@ -1,99 +1,92 @@
 <template>
-    <el-row
-        style="margin-top: 20vh;"
-        justify="center">
-        <el-col
-            class="grid-content"
-            :sm="8"
-            :md="8"
-            :lg="8"
-            :span="18">
-            <el-card>
-                <el-form
-                    ref="ruleFormRef"
-                    label-position="right"
-                    :model="loginForm"
-                    :rules="rules"
-                    status-icon>
-                    <el-form-item
-                        :label-width="60"
-                        label="Логин"
-                        prop="login">
-                        <el-input
-                            v-model="loginForm.login"
-                            type="text" />
-                    </el-form-item>
-                    <el-form-item
-                        :label-width="60"
-                        label="Пароль"
-                        prop="password">
-                        <el-input
-                            v-model="loginForm.password"
-                            type="password" />
-                    </el-form-item>
-                    <el-form-item>
-                        <el-button
-                            class="mt"
-                            type="success"
-                            @click="handleLogin"
-                            @keydown.enter="handleLogin">
-                            Войти
-                        </el-button>
-                    </el-form-item>
-                </el-form>
-            </el-card>
-        </el-col>
-    </el-row>
+  <div class="login-page">
+    <el-card class="login-card">
+      <el-form
+        ref="ruleFormRef"
+        label-position="top"
+        :model="loginForm"
+        :rules="rules"
+        status-icon
+        @submit.prevent="handleLogin">
+        <el-form-item label="Логин" prop="login">
+          <el-input v-model="loginForm.login" autofocus />
+        </el-form-item>
+        <el-form-item label="Пароль" prop="password">
+          <el-input v-model="loginForm.password" type="password" show-password />
+        </el-form-item>
+        <el-button
+          class="login-submit"
+          type="primary"
+          native-type="submit"
+          :loading="submitting">
+          Войти
+        </el-button>
+      </el-form>
+    </el-card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount } from "vue";
+import { reactive, ref, onMounted } from "vue";
 import useApplicationStore from "@/store";
-import { ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 
-/** ссылка на HTML элемент формы */
 const ruleFormRef = ref();
-/** данные формы */
+const submitting = ref(false);
+
 const loginForm = reactive({
-    login: "",
-    password: ""
+  login: "",
+  password: ""
 });
-/** правила проверки формы */
+
 const rules = {
-    login: {
-        required: true, message: 'Поле "логин" обязательно к заполнению', trigger: "blur"
-    },
-    password: {
-        required: true, message: 'Поле "пароль" обязательно к заполнению', trigger: "blur"
-    }
-};
-const router = useRouter();
-const store = useApplicationStore();
-/** запрос к API на авторизацию (получение токена) */
-const handleLogin = async () => {
-    if (!ruleFormRef.value) return;
-    if (await ruleFormRef.value.validate(valid => valid) === false) return;
-    store.doLogin(loginForm).catch(error => {
-        if (!ruleFormRef.value) return;
-        ruleFormRef.value.resetFields();
-        return ElMessageBox.alert(error as string, "Ошибка", {
-            confirmButtonText: "OK"
-        });
-    });
+  login: {
+    required: true, message: 'Поле "логин" обязательно к заполнению', trigger: "blur"
+  },
+  password: {
+    required: true, message: 'Поле "пароль" обязательно к заполнению', trigger: "blur"
+  }
 };
 
-/** наблюдение за нажатием кнопки Enter для убоства входа на форме */
-const keypressEnter = (event) => { if (event.key === "Enter") handleLogin().catch(reason => {alert(reason);}); };
-/**
-         * 1) Проверка токена
-         * 2) Включение отслеживания нажатия Enter
-         */
+const router = useRouter();
+const store = useApplicationStore();
+
+/** Запрос к API на авторизацию (получение токена) */
+const handleLogin = async (): Promise<void> => {
+  if (!ruleFormRef.value || submitting.value) return;
+  const valid = await ruleFormRef.value.validate(() => true).catch(() => false);
+  if (!valid) return;
+
+  submitting.value = true;
+  try {
+    await store.doLogin(loginForm);
+    await router.push("/");
+  } catch (error) {
+    ruleFormRef.value?.resetFields();
+    ElMessage.error(error as string);
+  } finally {
+    submitting.value = false;
+  }
+};
+
+/** Проверка сохранённого токена: авторизованного сразу пропускаем */
 onMounted(async () => {
-    store.checkToken();
-    if (store.isAuth) await router.push("/");
-    document.addEventListener("keypress", keypressEnter);
+  store.checkToken();
+  if (store.isAuth) await router.push("/");
 });
-/** Отписка от наблюдения за нажатием Enter */
-onBeforeUnmount(() => document.removeEventListener("keypress", keypressEnter));
 </script>
+
+<style scoped>
+.login-page {
+  max-width: 400px;
+  margin: 20vh auto 0;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 8px;
+}
+</style>

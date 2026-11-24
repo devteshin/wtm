@@ -85,6 +85,7 @@ declare namespace frontend {
     export type IStock = {
         id: number
         name: string
+        tasks_count: number
     }
 
     export type IMaterialGroups = {
