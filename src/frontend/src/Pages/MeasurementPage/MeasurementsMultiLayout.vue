@@ -38,7 +38,7 @@
     <div v-else-if="cards.length === 0" class="empty">Для выбранной схемы измерения не заданы</div>
 
     <div v-else class="cards-scroll">
-      <el-card v-for="card in cards" :key="card.key" class="card">
+      <el-card v-for="card in cards" :key="card.key" class="card" v-show="loadedCounts[card.key] !== 0">
         <MeasurementTable
           :ref="registerRef(card.key)"
           :editable="false"
@@ -50,6 +50,7 @@
           :material-name="card.kind === 'probe' ? card.materialName : ''"
           :measure-kind="card.kind === 'probe' ? 2 : 1"
           :meta="metas[card.measurementId] ?? null"
+           @loaded="onCardLoaded(card.key)"
         />
       </el-card>
     </div>
@@ -162,6 +163,7 @@ const loadScheme = async (): Promise<void> => {
 
 watch(selectedSchemeId, async (id) => {
   if (hydrating) return;   // гидрацией управляет onMounted
+  loadedCounts.value = {};
   if (id === null) {
     store.scheme_measurements = [];
     metas.value = {};
@@ -176,6 +178,13 @@ const tableRefs = new Map<string, { reload: () => Promise<void> }>();
 const registerRef = (key: string) => (el: any): void => {
   if (el) tableRefs.set(key, el);
   else tableRefs.delete(key);
+};
+
+/** key карточки → число строк последней загрузки; ключа нет — карточка ещё не отчиталась, показываем */
+const loadedCounts = ref<Record<string, number>>({});
+
+const onCardLoaded = (key: string) => (rowCount: number): void => {
+  loadedCounts.value[key] = rowCount;
 };
 
 const reloadAll = (): void => {

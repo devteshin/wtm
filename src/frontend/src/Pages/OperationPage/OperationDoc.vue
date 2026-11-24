@@ -4,12 +4,11 @@ import { useRouter } from "vue-router";
 import useApplicationStore from "@/store";
 import { useMaterialsReportStore } from '@/storeMaterialsReport';
 import { ElMessage, ElMessageBox } from "element-plus";
-import dayjs from "dayjs";
 import OperationDocItems from "./OperationDocItems.vue";
 import { Delete, Plus } from '@element-plus/icons-vue';
 import RawMaterialGrid from './RawMaterialGrid.vue';
 import MaterialsPage from '../MaterialsPage/MaterialsPage.vue';
-import DebugDrawerContent from '../DebugDrawerContent.vue';
+import { formatTwoDecimal, formatInteger } from '@/utils/numberFormat';
 
 
 const router = useRouter();
@@ -55,15 +54,17 @@ type RawMaterialsTableColumn = {
   prop: string;
   label: string;
   width?: number;
+  align?: 'left' | 'center' | 'right';
+  formatter?: (row: any, column: any, cellValue: any) => string;  
 };
 
 
 // Колонки таблицы сырья
 const RawMaterialsColumns: RawMaterialsTableColumn[] = [
-    { prop: 'material', label: 'Материал' },
-    { prop: 'tare_id', label: 'Номер', width: 100 },
-    { prop: 'net_weight', label: 'Нетто', width: 100 },
-] as const;
+  { prop: 'material', label: 'Материал' },
+  { prop: 'tare_id', label: 'Номер', width: 100, align: 'right', formatter: (row) => formatInteger(row.tare_id) },
+  { prop: 'net_weight', label: 'Нетто', width: 110, align: 'right', formatter: (row) => formatTwoDecimal(row.net_weight) },
+];
 
 const handleGridCellClick = async (tareId: number) => {
   if (doc_raw_materials.value.some(item => item.tare_id === tareId && item.material === selectedBaseMaterial.value?.material)) {
@@ -578,12 +579,13 @@ const onDrawerClose = () => {
                         />
                     </div>
 
-                    <div class="button-row">
-                        <el-button type="success" plain @click="saveDoc">Сохранить</el-button>
-                        <el-button type="success" plain @click="closeDoc">Закрыть</el-button>
-                        <el-button type="danger" plain @click="deleteDoc">Удалить</el-button>
-                        <el-button type="success" plain @click="addMaterial">Добавить продукт</el-button>
-                    </div>
+                  <div class="button-row">
+                    <el-button type="danger" text @click="deleteDoc">Удалить</el-button>
+                    <div class="row-spacer" />
+                    <el-button @click="addMaterial">Добавить продукт</el-button>
+                    <el-button @click="closeDoc">Закрыть</el-button>
+                    <el-button type="primary" @click="saveDoc">Сохранить</el-button>
+                  </div>
                 </div>
 
                 <!-- Отступ после кнопок -->
@@ -714,16 +716,17 @@ const onDrawerClose = () => {
                             :data="doc_raw_materials_with_totals"
                             :row-class-name="({ row }) => (row.material?.includes( 'Итого') ? 'total-row' : '')"
                             style="width: 100%"
-                            border
                         >
-                            <el-table-column
-                                v-for="col in RawMaterialsColumns"
-                                :key="col.prop"
-                                :prop="col.prop"
-                                :label="col.label"
-                                :width="col.width"
-                            />
-
+                          <el-table-column
+                            v-for="col in RawMaterialsColumns"
+                            :key="col.prop"
+                            :prop="col.prop"
+                            :label="col.label"
+                            :width="col.width"
+                            :align="col.align"
+                            :formatter="col.formatter"
+                            class-name="num"
+                          />
                             <el-table-column v-if="!isGridMode" label="" width="50" fixed="right">
                                 <template #default="scope">
                                     <el-button
@@ -755,7 +758,7 @@ const onDrawerClose = () => {
                     }"
                   />              
                 </div>  
-                <div v-else v-for="material in doc_material_list" :key="material" class="material-item">
+                <div v-else v-for="material in doc_material_list" :key="material">
                     <OperationDocItems
                         :material="material"
                         :operation="doc_operation"
@@ -792,12 +795,19 @@ const onDrawerClose = () => {
   height: calc(100vh - 120px);
   display: flex;
   box-sizing: border-box;
+  padding: 10px;
+  gap: 10px;
+}
+
+.page-container > * {
+  min-width: 0;
 }
 
 .sidebar {
-  background-color: #f5f7fa;
-  padding: 20px;
-  border-right: 1px solid #e6e9ef;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  padding: 16px;
   flex-shrink: 0;
   width: 600px;
   overflow: hidden;
@@ -838,7 +848,7 @@ const onDrawerClose = () => {
 
 .divider {
   height: 1px;
-  background-color: #e4e7ed;
+  background-color: var(--el-border-color-lighter);
   margin: 0;
   flex-shrink: 0;
 }
@@ -852,21 +862,20 @@ const onDrawerClose = () => {
 .table-title {
   display: inline-block;
   font-weight: 500;
-  color: #333;
+  color: var(--el-text-color-primary);
 }
 
 :deep(.el-table tr.total-row) {
   font-weight: bold;
-  background-color: #f5f7fa !important;
+  background-color: #faf7f2 !important;
 }
 
 /* Блок подбора материалов */
 .raw-material-picker-block {
   margin-top: 16px;
   padding: 12px;
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
+  background: #faf7f2;
+  border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -911,28 +920,26 @@ const onDrawerClose = () => {
 .table-area {
   flex: 1;
   min-height: 0;
-  position: relative;
   height: 100%;
   margin-top: 16px;
 }
 
 .right-block {
-  padding: 0 20px 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);  
+  padding: 16px 20px 20px;
   box-sizing: border-box;
-  position: relative;
-  width: 100%;
   height: 100%;
   overflow: hidden;
+  
 }
 
 .table-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: auto;
-  border-radius: 4px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;   /* горизонталь теперь у табличных обёрток */
 }
 
 .right-wrapper {
@@ -948,6 +955,13 @@ const onDrawerClose = () => {
   gap: 8px;                 /* лучше 8px, чем 2px — так не слипается */
 }
 
+.row-spacer { flex: 1; }
+
+.item-remote-select {
+  flex: 1;
+  min-width: 0;
+}
+
 @media (max-width: 768px) {
   .page-container {
     flex-direction: column;
@@ -957,13 +971,13 @@ const onDrawerClose = () => {
     width: 100%;
     height: auto;
     min-height: 300px;
-    border-right: none;
     border-bottom: 1px solid #e6e9ef;
   }
 
   .right-block {
     height: calc(100vh - 120px - 300px);
     min-height: 200px;
+    flex: 1;
   }
 
   .picker-row {
@@ -973,10 +987,8 @@ const onDrawerClose = () => {
 
   .material-select,
   .range-input-group,
-  .el-button {
-    width: 100%;
-  }
 
+  .picker-row .el-button { width: 100% }
   
 }
 </style>

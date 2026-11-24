@@ -2,35 +2,37 @@
   <div class="grid-container">
     <div class="grid-header">
       <span class="header-title">Выбор номеров</span>
-      <el-button
-        size="small"
-        link                
-        class="close-btn"
-        @click="emit('close-selection')"
-      >
-        Закрыть подбор
-      </el-button>
+      <div class="header-actions">
+        <span v-if="selectedNumbers.length" class="selected-count">
+          выбрано: {{ selectedNumbers.length }}
+        </span>
+        <el-button size="small" link class="close-btn" @click="emit('close-selection')">
+          Закрыть подбор
+        </el-button>
+      </div>
     </div>
 
-    <div class="grid-body">
-      <div
+    <div v-if="numbers.length" class="grid-body">
+      <button
         v-for="num in numbers"
         :key="num"
         class="grid-cell"
-        :class="{ 'is-selected': selectedNumbers.includes(num) }"
+        :class="{ 'is-selected': selectedSet.has(num) }"
         @click="handleCellClick(num)"
       >
         {{ num }}
-      </div>
+      </button>
     </div>
+    <div v-else class="grid-empty">Нет номеров для подбора</div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 
 interface IRawMaterialGridProps {
   numbers: number[];
-  selectedNumbers: number[]; // массив уже выбранных номеров
+  selectedNumbers: number[];
 }
 
 const props = defineProps<IRawMaterialGridProps>();
@@ -39,6 +41,8 @@ const emit = defineEmits<{
   (e: 'close-selection'): void;
 }>();
 
+const selectedSet = computed(() => new Set(props.selectedNumbers));
+
 const handleCellClick = (tareId: number) => {
   emit('cell-click', tareId);
 };
@@ -46,74 +50,101 @@ const handleCellClick = (tareId: number) => {
 
 <style scoped>
 .grid-container {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
   margin-top: 20px;
-  overflow: hidden;
-  background: #fff;
-  /* Было: max-height: 50vh; */
   height: 100%;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
 }
 
 .grid-header {
-  background: #f5f7fa;
-  padding: 8px 12px;
-  font-weight: 500;
-  color: #333;
-  border-bottom: 1px solid #e4e7ed;
-  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color);
+  flex-shrink: 0;
 }
 
 .header-title {
-  line-height: 1;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selected-count {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 
 .close-btn {
-  padding: 0 8px;
   font-size: 13px;
-  color: #666;
 }
-
 .close-btn:hover {
-  color: #ff4d4f;
+  color: var(--el-color-danger);
 }
 
 .grid-body {
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 1px;
-  background: #e4e7ed;
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  background: #fff;
 }
 
 .grid-cell {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
   background: #fff;
-  height: 32px;
+  border: 0;
+  border-right: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 13px;
+  color: var(--el-text-color-primary);
   cursor: pointer;
   user-select: none;
-  color: #333;
-  font-size: 13px;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-/* Стиль для уже выбранного номера */
-.grid-cell.is-selected {
-  background-color: #d4edda; /* светло-зелёный */
-  color: #155724;            /* тёмно-зелёный текст */
-  opacity: 0.8;
+  transition: background-color 0.15s, color 0.15s;
 }
 
 .grid-cell:hover:not(.is-selected) {
-  background-color: #f0f7ff;
+  background-color: var(--el-fill-color-light);
+}
+
+.grid-cell.is-selected {
+  background-color: var(--el-color-primary-light-8);
+  color: var(--el-color-primary-dark-2);
+  font-weight: 600;
+}
+
+.grid-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--el-text-color-secondary);
+}
+
+@media (max-width: 1024px) {
+  .grid-cell {
+    height: 40px;
+    font-size: 14px;
+  }
 }
 </style>

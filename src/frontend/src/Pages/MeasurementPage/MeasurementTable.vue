@@ -1,53 +1,36 @@
 <template>
   <div class="measurement-table">
-    <!-- Тулбар: в managed-режиме селекты — неактивные заголовки, кнопок загрузки/добавления нет -->
     <div class="toolbar">
-      <el-select
-        v-model="measurementModel"
-        class="toolbar-measurement"
-        placeholder="Измерение"
-        filterable
-        :disabled="isManaged"
-      >
-        <el-option
-          v-for="m in measurementsList"
-          :key="m.id"
-          :label="m.name"
-          :value="m.id"
-        />
-      </el-select>
+      <!-- managed: заголовок-строка вместо «неактивных заголовков» -->
+      <div v-if="isManaged" class="managed-caption">
+        <span class="managed-title">
+          {{ measurementName || `Измерение #${activeMeasurementId}` }}
+        </span>
+        <span v-if="isProbeKind" class="managed-sub">
+          {{ materialName || `Материал #${activeMaterialId}` }}
+        </span>
+        <span v-else class="managed-sub">{{ managedDateLabel }}</span>
+      </div>
 
-      <el-select
-        v-if="isProbeKind"
-        v-model="materialModel"
-        class="toolbar-material"
-        placeholder="Материал"
-        filterable
-        :disabled="isManaged"
-      >
-        <el-option
-          v-for="mat in materialOptions"
-          :key="mat.id"
-          :label="mat.name"
-          :value="mat.id"
-        />
-      </el-select>
+      <!-- uncontrolled: обычный рабочий тулбар -->
+      <template v-else>
+        <el-select v-model="measurementModel" class="toolbar-measurement"
+                  placeholder="Измерение" filterable>
+          <el-option v-for="m in measurementsList" :key="m.id" :label="m.name" :value="m.id" />
+        </el-select>
 
-      <template v-if="!isProbeKind">
-        <el-button v-if="!isManaged" :icon="ArrowLeft" circle @click="shiftDay(-1)" />
-        <el-date-picker
-          v-model="dateModel"
-          class="toolbar-date"
-          type="date"
-          :clearable="false"
-          format="DD.MM.YYYY"
-          value-format="YYYY-MM-DD"
-          :disabled="isManaged"
-        />
-        <el-button v-if="!isManaged" :icon="ArrowRight" circle @click="shiftDay(1)" />
-      </template>
+        <el-select v-if="isProbeKind" v-model="materialModel" class="toolbar-material"
+                  placeholder="Материал" filterable>
+          <el-option v-for="mat in materialOptions" :key="mat.id" :label="mat.name" :value="mat.id" />
+        </el-select>
 
-      <template v-if="!isManaged">
+        <template v-if="!isProbeKind">
+          <el-button :icon="ArrowLeft" circle @click="shiftDay(-1)" />
+          <el-date-picker v-model="dateModel" class="toolbar-date" type="date"
+            :clearable="false" format="DD.MM.YYYY" value-format="YYYY-MM-DD" />
+          <el-button :icon="ArrowRight" circle @click="shiftDay(1)" />
+        </template>
+
         <el-button type="primary" :disabled="!canLoad" @click="loadData">Заполнить</el-button>
         <el-button v-if="canEdit" :disabled="!canLoad" @click="addRow">Добавить строку</el-button>
       </template>
@@ -60,9 +43,9 @@
         :data="rows"
         highlight-current-row
         v-loading="loading"
-        border
         row-key="rowKey"
         height="100%"
+        scrollbar-always-on
       >
         <el-table-column label="Время измерения" width="200">
           <template #default="{ row }">
@@ -190,10 +173,16 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'changed'): void;         // что-то сохранилось/удалилось — родитель обновляет панель последних
+  (e: 'loaded', rowCount: number): void;
 }>();
 
 /** Managed-режим: выбором управляет родитель через пропсы */
 const isManaged = computed(() => props.measurementId !== undefined);
+
+const managedDateLabel = computed<string>(() => {
+  const [y, m, d] = (activeDate.value ?? '').split('-');
+  return d && m && y ? `${d}.${m}.${y}` : '';
+});
 
 const tableStore = useMeasurementsTableStore();
 const { selectedMeasurementId, selectedMaterialId, selectedDate } = storeToRefs(tableStore);
@@ -381,6 +370,7 @@ const runLoad = async (
     if (isManaged.value && !props.meta) localMeta.value = metaRes ?? null;
     if (loadKey() !== lastLoadedKey) return;
     mapFromRows(dataRes ?? []);
+    emit('loaded', rows.value.length);
   } catch (e) {
     console.error('Ошибка загрузки измерений:', e);
     rows.value = [];
@@ -806,6 +796,50 @@ watch(materialOptions, (opts) => {
   min-height: 0;
 }
 
+/* токены темы для таблицы: сетка мягче дефолтной, шапка — подложка из токенов */
+:deep(.el-table) {
+  --el-table-border-color: var(--el-border-color-lighter);
+  --el-table-header-bg-color: var(--el-fill-color-light);
+  --el-table-header-text-color: var(--el-text-color-primary);
+
+  /* высоты полей в ячейках — только через переменную */
+  --el-input-height: 36px;
+}
+
+:deep(.el-table .el-table__cell) { padding: 4px 8px; }
+
+/* эталон borderless-полей в ячейках: текст без рамки, рамка — на hover/focus */
+:deep(.el-table .el-input__inner) {
+  font-size: 18px;
+  font-weight: 500;
+}
+:deep(.el-table .el-input__wrapper) {
+  box-shadow: none;
+  background: transparent;
+}
+:deep(.el-table .el-input:not(.is-disabled) .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
+  background: #fff;
+}
+:deep(.el-table .el-input:not(.is-disabled) .el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1.5px var(--el-color-primary) inset;
+  background: #fff;
+}
+
+:deep(.el-table .el-select__wrapper) {
+  box-shadow: none;
+  background: transparent;
+  min-height: var(--el-input-height, 36px);   /* не хардкодить высоту */
+}
+:deep(.el-table .el-select__wrapper.is-hovering:not(.is-disabled)) {
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
+  background: #fff;
+}
+:deep(.el-table .el-select__wrapper.is-focused) {
+  box-shadow: 0 0 0 1.5px var(--el-color-primary) inset;
+  background: #fff;
+}
+
 /* выравнивание внутри el-input-number — только через :deep, инлайном не достать */
 :deep(.el-input-number .el-input__inner) {
   text-align: right;
@@ -815,5 +849,35 @@ watch(materialOptions, (opts) => {
   display: block;
   text-align: right;
   width: 100%;
+}
+
+.managed-caption {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+.managed-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--el-text-color-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.managed-sub {
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* адаптив высот полей — через переменную, без дублей базы */
+@media (max-width: 1024px) {
+  :deep(.el-table) { --el-input-height: 40px; }
+}
+@media (max-width: 480px) {
+  :deep(.el-table) { --el-input-height: 32px; }
+  :deep(.el-table .el-input__inner) { font-size: 16px; }
 }
 </style>

@@ -1,20 +1,17 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, computed, ref, PropType, watch } from "vue";
-import { useRouter } from "vue-router";
+import { onMounted, computed, ref, PropType, nextTick, watch, onBeforeUnmount  } from "vue";
 import useApplicationStore from "@/store";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import type { TableInstance } from 'element-plus'
-import dayjs from "dayjs";
-import TextInputDialog from "@/components/TextInputDialog.vue";
 import DialogNewMaterial from "./DialogNewMaterial.vue";
-import {
-  Check,
-  Edit
-} from '@element-plus/icons-vue';
+import { Check, Edit } from '@element-plus/icons-vue';
 import { ArrowRight, CaretBottom } from '@element-plus/icons-vue';
+import { formatTwoDecimal } from '@/utils/numberFormat';
 
-const router = useRouter();
 const store = useApplicationStore();
+
+const tableRef = ref<TableInstance>();
+const relayout = () => tableRef.value?.doLayout();
 
 const props = defineProps({
     operation: { type: String, required: true },
@@ -43,6 +40,8 @@ const nextOperationColumnEnabled = ref(false);
 const insertColumnEnabled = ref(false);
 const tableLayout = ref<TableInstance['tableLayout']>('fixed');
 
+const asItem = (row: unknown) => row as frontend.IArrivalItems;
+
 onMounted(async () => {
   if (props.material) {
     material.value = (props.material);
@@ -50,8 +49,23 @@ onMounted(async () => {
     material.value = (props.operation_material);
   };
   start_items_num.value = await getStartItemsNum(material.value);
+  await nextTick();
+  relayout();
 });
 
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResize);
+  clearTimeout(resizeTimer);
+});
+
+// пересчёт при изменении набора колонок
+watch([tareColumnEnabled, shapeColumnEnabled, nextOperationColumnEnabled, insertColumnEnabled],
+  () => nextTick(relayout));
+
+// пересчёт при изменении окна — тот же триггер, что даёт devtools
+let resizeTimer: ReturnType<typeof setTimeout>;
+const onResize = () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(relayout, 150); };
+window.addEventListener('resize', onResize);
 
 async function getStartItemsNum(material: string) {
   if (material === '') {
@@ -253,16 +267,16 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
 
 <template v-if="store.isAuth">
      <div class="common-layout">
-      <el-container>
-        <el-header height="10%" >
+      <el-container class="material-item">
+
+        <el-header height="auto" class="block-header">
           <div class="form-row">
-            <el-input disabled
-              v-model="material" 
-              style="max-width: 420px"
-              >
+            <el-input disabled v-model="material" class="product-input">
               <template #prepend>Продукт</template>
+              <template #append>
+                <el-button :icon="Edit" @click="dialogVisible = true" />
+              </template>
             </el-input>
-            <el-button type="primary" :icon="Edit" @click="dialogVisible = true" style="margin-left: 10px;" />
             <DialogNewMaterial
               v-model:dialogVisible="dialogVisible"
               :operation_material_list = "props.operation_product_list"
@@ -272,35 +286,33 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
               @submit="onMaterialChanged"
             />
           </div>
+
           <div class="form-row">
             <el-input
-              v-model.number="start_items_num" :min=1 :max="99999" :disabled="insertColumnEnabled"
+              v-model.number="start_items_num" :min=1 :max="99999" :disabled="insertColumnEnabled"  class="num-input"
               @change="(value: string) => {
                 const numValue = Number(value);
-                console.log(value);
                 if (numValue < 1) {
                   start_items_num = 1;
                 } else if (numValue > 99999) {
                   start_items_num = 99999; 
                 }
               }"
-              style="max-width: 160px"
               type="number"
               >
               <template #prepend>Номер</template>
             </el-input>          
             <el-input
-              v-model.number="add_items_num" :min="1" :max="300"
+              v-model.number="add_items_num" :min="1" :max="300" class="num-input"
               @change="(value: string) => {
                 const numValue = Number(value);
                 if (numValue < 1) {add_items_num = 1} else {if (numValue > 300) {add_items_num = 300}}
                 }"
-              style="max-width: 160px;"
               type="number"
               >
               <template #prepend>Кол-во</template>
             </el-input>
-            <el-select v-model="tare_default" placeholder="Тара" style="width: 100px">
+            <el-select v-model="tare_default" placeholder="Тара" class="tare-select">
               <el-option
                 v-for="item in store.arrival?.tare_options"
                 :key="item.tare_type_id"
@@ -308,33 +320,39 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
                 :value="item.tare_type"
               />
             </el-select>
-            <el-button type="success" :icon="Check" @click="addItems(add_items_num, start_items_num)" style="margin-left: 10px;"/>
+            <el-tooltip content="Добавить строки">
+              <el-button plain :icon="Check" @click="addItems(add_items_num, start_items_num)" style="margin-left: 10px;"/>
+            </el-tooltip>
           </div>
-          <el-checkbox v-model="tareColumnEnabled" label="тара" border />
-          <el-checkbox v-model="shapeColumnEnabled" label="вид материала" border />
-          <el-checkbox v-model="nextOperationColumnEnabled" label="следующая операция" border />            
-          <el-checkbox v-model="insertColumnEnabled" label="вставить строки" border />            
+
+          <div class="form-row options-row">
+            <el-checkbox v-model="tareColumnEnabled" label="тара" />
+            <el-checkbox v-model="shapeColumnEnabled" label="вид материала" />
+            <el-checkbox v-model="nextOperationColumnEnabled" label="следующая операция" />
+            <el-checkbox v-model="insertColumnEnabled" label="вставить строки" />
+          </div>
         </el-header>
-        <el-main>
+
+        <el-main class="el-main">
           <div class="table-wrapper">
-            <el-table :data="paginatedItems" :table-layout=tableLayout border>
-              <el-table-column prop="tare_id" label="Номер">
+            <el-table ref="tableRef" :data="paginatedItems" :table-layout="tableLayout" scrollbar-always-on>
+              <el-table-column prop="tare_id" label="Номер" width="90" align="center">
                 <template #default="scope">
                   <el-input type="number" v-model.number="scope.row.tare_id" placeholder="" disabled
                   ></el-input>
                 </template>
               </el-table-column>  
-              <el-table-column prop="gross_weight" label="Вес">
+              <el-table-column prop="gross_weight" label="Вес" min-width="160">
                 <template #default="scope">
                   <el-input type="number" v-model.number="scope.row.gross_weight" placeholder="Введите вес"
                   ></el-input>
                 </template>
               </el-table-column>
   
-              <el-table-column prop="tare_type" label="Тара">
+              <el-table-column prop="tare_type" label="Тара" min-width="130">
                 <template #default="scope">
-                  <el-select v-model="scope.row.tare_type" :disabled="!tareColumnEnabled" placeholder="Тара" style="width: 100px"
-                    @change="onTareChange(scope.row.tare_type, scope.row)" 
+                  <el-select v-model="scope.row.tare_type" :disabled="!tareColumnEnabled" placeholder="Тара"
+                    @change="onTareChange(scope.row.tare_type, asItem(scope.row))" 
                   >
                     <el-option
                       v-for="item in store.arrival?.tare_options"
@@ -345,7 +363,7 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column prop="shape_ids" label="Вид">
+              <el-table-column prop="shape_ids" label="Вид" min-width="170">
                 <template #default="scope">
                   <el-select v-model="scope.row.shape_ids" :disabled="!shapeColumnEnabled" placeholder=""
                   clearable multiple >
@@ -365,9 +383,9 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
                      <el-tooltip content="Заполнить следующую строку" placement="top">
                        <el-button
                          size="small"
-                         type="primary"
+                         plain
                          :disabled="!hasNextRow(scope.$index)"
-                         @click="fillDownShapeIdsSingle(scope.$index, scope.row)"
+                         @click="fillDownShapeIdsSingle(scope.$index, asItem(scope.row))"
                        >
                          <ArrowRight style="width: 14px; height: 14px;" />
                        </el-button>
@@ -378,7 +396,7 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
                       <el-button
                         size="small"
                         :disabled="!hasMoreRows(scope.$index)"
-                        @click="handleFillDownWithConfirm(scope.$index, scope.row)"
+                        @click="handleFillDownWithConfirm(scope.$index, asItem(scope.row))"
                       >
                         <CaretBottom style="width: 14px; height: 14px;" />
                       </el-button>
@@ -389,7 +407,7 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
               <el-table-column v-if="nextOperationColumnEnabled" prop="next_operation_flag" label="След. этап" width="100">
                 <template #default="scope">
                   <el-select v-model="scope.row.next_operation_flag" :disabled="!nextOperationColumnEnabled" placeholder="" clearable
-                    @change="onNextOperationFlagChange(scope.row.next_operation_flag, scope.row)" 
+                    @change="onNextOperationFlagChange(scope.row.next_operation_flag, asItem(scope.row))" 
                   >
                     <el-option
                       v-for="item in flag_options"
@@ -400,9 +418,9 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column v-if="insertColumnEnabled" label="" width="50">
+              <el-table-column v-if="insertColumnEnabled" label="" width="60">
                 <template #default="scope">
-                  <el-button size="small" @click="handleInsertRow(scope.$index, scope.row)" :disabled="!insertColumnEnabled">
+                  <el-button size="small" @click="handleInsertRow(scope.$index, asItem(scope.row))" :disabled="!insertColumnEnabled">
                     +
                   </el-button>
                 </template>
@@ -420,9 +438,10 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
               @size-change="handleSizeChange"
             />
   
-            <div class="form-row">
-              <el-text class="mx-1" type="success" size="large" >Итого вес: {{ totalWeight.toLocaleString('ru-RU') }}</el-text>
-            </div>
+              <div class="form-row">
+                <span class="total-label">Итого вес:</span>
+                <span class="total-value">{{ formatTwoDecimal(totalWeight) }}</span>
+              </div>
           </div>
         </el-main>
       </el-container>
@@ -432,59 +451,97 @@ async function handleFillDownWithConfirm(index: number, sourceRow: frontend.IArr
 </template>
 
 <style scoped>
-.form-row {
-  margin-bottom: 10px;
-}
-
-.el-row {
-  margin-bottom: 2px;
-}
-.el-row:last-child {
-  margin-bottom: 10;
-}
-.el-col {
-  border-radius: 4px;
-}
-
-.grid-content {
-  border-radius: 4px;
-  min-height: 36px;
-}
-
-.button-row {
+.block-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
 }
 
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-input { flex: 0 1 420px; }
+.num-input { width: 160px; flex-shrink: 0; }
+.tare-select { width: 140px; flex-shrink: 0; }
+
+.options-row { gap: 20px; }
+
+:deep(.el-table .el-table__cell) {
+  padding: 4px 8px;
+}
 
 :deep(.el-table .el-input__inner) {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 500;
-  height: 32px;
 }
 
-/* Для экранов < 1024px (планшеты/смартфоны) */
+:deep(.el-table .el-input__wrapper) {
+  box-shadow: none;
+  background: transparent;
+}
+:deep(.el-table .el-input:not(.is-disabled) .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
+  background: #fff;
+}
+:deep(.el-table .el-input:not(.is-disabled) .el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1.5px var(--el-color-primary) inset;
+  background: #fff;
+}
+
+:deep(.el-table .el-select__wrapper) {
+  box-shadow: none;
+  background: transparent;
+  min-height: var(--el-input-height, 36px);
+}
+:deep(.el-table .el-select__wrapper.is-hovering:not(.is-disabled)) {
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
+  background: #fff;
+}
+:deep(.el-table .el-select__wrapper.is-focused) {
+  box-shadow: 0 0 0 1.5px var(--el-color-primary) inset;
+  background: #fff;
+}
+
+:deep(.el-table) {
+  --el-input-height: 36px;
+}
+
 @media (max-width: 1024px) {
-  :deep(.el-table .el-input__inner) {
-    font-size: 18px;
-    height: 28px;
-  }
+  :deep(.el-table) { --el-input-height: 40px; }
 }
 
-/* Для очень маленьких экранов (< 480px) */
 @media (max-width: 480px) {
-  :deep(.el-table .el-input__inner) {
-    font-size: 14px;
-    height: 24px;
-  }
-}  
+  :deep(.el-table) { --el-input-height: 32px; }
+  :deep(.el-table .el-input__inner) { font-size: 16px; }
+}
 
 .table-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* отступ между элементами */
+  gap: 16px;
+  min-width: 0;
 }
 
+.table-wrapper > .el-table {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.total-label {
+  color: var(--el-text-color-secondary);
+  font-size: 15px;
+}
+.total-value {
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.material-item {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
 </style>

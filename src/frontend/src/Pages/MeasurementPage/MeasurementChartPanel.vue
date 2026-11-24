@@ -127,6 +127,24 @@ const build = async (): Promise<void> => {
   }
 };
 
+// кэшируем: тема за время жизни страницы не меняется
+let palette: { series: string[]; border: string; text: string; textSecondary: string } | null = null;
+const getPalette = () => {
+  if (!palette) {
+    const cssVar = (name: string): string =>
+      getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    palette = {
+      series: [1, 2, 3, 4, 5, 6]
+        .map(i => cssVar(`--chart-color-${i}`))
+        .filter(Boolean),
+      border: cssVar('--el-border-color-lighter'),
+      text: cssVar('--el-text-color-primary'),
+      textSecondary: cssVar('--el-text-color-secondary'),
+    };
+  }
+  return palette;
+};
+
 const render = (): void => {
   const rows = store.measurements_chart;
   if (!chart || !rows.length) return;
@@ -175,7 +193,39 @@ const render = (): void => {
     .sort((a, b) => a.orderNum - b.orderNum)
     .map(s => ({ name: s.name, type: 'bar', data: s.values }));
 
+  const t = getPalette();
+
   chart.setOption({
+    color: t.series,
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#fff',
+      borderColor: t.border,
+      textStyle: { color: t.text },
+    },
+    legend: { top: 0, textStyle: { color: t.textSecondary } },
+    grid: { left: 50, right: 20, top: 40, bottom: 40 },
+    xAxis: {
+      type: 'category',
+      data: xLabels,
+      axisLabel: {
+        show: true,
+        interval: Math.ceil(xLabels.length / 6),
+        rotate: 0,
+        color: t.textSecondary,
+      },
+      axisLine: { lineStyle: { color: t.border } },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: t.textSecondary },
+      splitLine: { lineStyle: { color: t.border, type: 'dashed' } },
+    },
+    series,
+  }, true);
+
+/*     chart.setOption({
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
     grid: { left: 50, right: 20, top: 40, bottom: 40 },
@@ -191,6 +241,7 @@ const render = (): void => {
     yAxis: { type: 'value' },
     series,
   }, true);
+ */
 };
 
 // ---------- восстановление состояния ----------
