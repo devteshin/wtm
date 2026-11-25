@@ -6,7 +6,7 @@
       <span class="separator-line" />
       <el-button
         size="small"
-        type="success"
+        plain
         :loading="exportLoading"
         @click="exportToExcelClick"
       >
@@ -69,7 +69,7 @@
       <!-- Сводная таблица за 6 месяцев -->
       <div class="table-card">
         <h4 class="table-title">Сводная таблица за 6 месяцев</h4>
-        <el-table ref="tableRef" :data="pivotTableData" border size="small" style="width: 100%" :key="tableRenderKey">
+        <el-table ref="tableRef" :data="pivotTableData" border size="small" style="width: 100%">
           <el-table-column prop="bucket" label="Корзина" width="120" fixed>
             <template #default="{ row }">
               <el-tag :type="getTagType(row.bucket)" size="small">{{ row.bucket }}</el-tag>
@@ -108,7 +108,6 @@ import { Download } from '@element-plus/icons-vue'
 import { exportToExcel } from '@/utils/excelExport'
 import { useMetricsReportStore } from '@/storeMetricsReport'
 import useApplicationStore from '@/store'
-import { ElTable } from 'element-plus'
 
 // --- Типы ---
 interface SnapshotRow {
@@ -131,16 +130,24 @@ let chart: ECharts | null = null
 let resizeObserver: ResizeObserver | null = null
 
 const tableRef = ref<any>(null)
-const tableRenderKey = ref(0)
 
 // --- Константы ---
-const BUCKETS = ['0-30', '31-90', '91-180', '181+'] as const
-const BUCKET_COLORS: Record<string, string> = {
-  '0-30': '#91cc75',
-  '31-90': '#5470c6',
-  '91-180': '#fac858',
-  '181+': '#ee6666',
-}
+const BUCKETS = ['0-30', '31-90', '91-180', '181+'] as const;
+
+// Цвет корзин — из токенов темы; семантика совпадает с getTagType:
+// чем старше запас, тем «тревожнее» цвет
+const cssVar = (name: string): string =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const BUCKET_COLOR_VARS: Record<string, string> = {
+  '0-30': '--el-color-success',
+  '31-90': '--el-color-info',
+  '91-180': '--el-color-warning',
+  '181+': '--el-color-danger',
+};
+const bucketColor = (bucket: string): string =>
+  cssVar(BUCKET_COLOR_VARS[bucket] ?? '--el-color-info');
+
 const MONTHS_SHORT = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 
 // --- Computed: данные ---
@@ -202,26 +209,27 @@ const pivotTableData = computed(() =>
 const chartOption = computed(() => {
   const dates = sortedDates.value.map(d => formatMonth(d))
 
-  const series = BUCKETS.map(bucket => ({
-    name: bucket,
-    type: 'line' as const,
-    stack: 'total',
-    areaStyle: { color: BUCKET_COLORS[bucket], opacity: 0.7 },
-    lineStyle: { color: BUCKET_COLORS[bucket], width: 1 },
-    itemStyle: { color: BUCKET_COLORS[bucket] },
-    data: sortedDates.value.map(date => {
-      const row = rawData.value.find(r => r.inventory_date === date && r.aging_bucket === bucket)
-      return row?.net_weight || 0
-    }),
-  }))
+  const series = BUCKETS.map(bucket => {
+    const color = bucketColor(bucket);
+    return {
+      name: bucket,
+      type: 'line' as const,
+      stack: 'total',
+      areaStyle: { color, opacity: 0.7 },
+      lineStyle: { color, width: 1 },
+      itemStyle: { color },
+      data: sortedDates.value.map(date =>
+        rawData.value.find(r => r.inventory_date === date && r.aging_bucket === bucket)?.net_weight || 0),
+    };
+  });
 
   return {
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'cross' },
-      backgroundColor: 'rgba(255,255,255,0.95)',
-      borderColor: '#ddd',
-      textStyle: { color: '#333' },
+      backgroundColor: '#fff',
+      borderColor: cssVar('--el-border-color-lighter'),
+      textStyle: { color: cssVar('--el-text-color-primary') },
       valueFormatter: (val: number) => formatNumber(val) + ' кг',
     },
     legend: { top: 'bottom', data: [...BUCKETS] },
@@ -230,20 +238,17 @@ const chartOption = computed(() => {
       type: 'category',
       boundaryGap: false,
       data: dates,
-      axisLabel: { fontSize: 11 },
+      axisLabel: { fontSize: 11, color: cssVar('--el-text-color-secondary') },
     },
     yAxis: {
       type: 'value',
       name: 'кг',
-      axisLabel: {
-        fontSize: 11,
-        formatter: (val: number) => formatAxisLabel(val),
-      },
+      axisLabel: { fontSize: 11, formatter: (val: number) => formatAxisLabel(val) },
+      splitLine: { lineStyle: { color: cssVar('--el-border-color-lighter'), type: 'dashed' } },
     },
     series,
-  }
-})
-
+  };
+})  
 // --- Методы форматирования ---
 
 const formatNumber = (n: number): string =>
@@ -322,7 +327,6 @@ const fetchData = async () => {
 
     rawData.value = store.metrics_inventory_aging;
 
-    tableRenderKey.value++  // принудительно пересоздаём таблицу
     await nextTick() // Важно: ждём, чтобы computed-поля (pivotTableData и т.п.) пересчитались
 
     // Принудительно пересчитываем ширину колонок
@@ -361,7 +365,7 @@ const exportToExcelClick = () => {
       },
     ]
 
-    exportToExcel(sheets, 'storage_liftime')
+    exportToExcel(sheets, 'storage_lifetime')
   } finally {
     exportLoading.value = false
   }
@@ -382,6 +386,7 @@ defineExpose({ fetchData })
 
 <style scoped>
 .tables-wrapper {
+  position: relative;   /* привязка overlay-loader */
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -396,11 +401,7 @@ defineExpose({ fetchData })
   padding: 8px 12px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-  z-index: 10;
-  position: sticky;
-  top: 0;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
   margin-bottom: 8px;
 }
 
@@ -408,13 +409,13 @@ defineExpose({ fetchData })
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--el-text-color-primary);
 }
 
 .separator-line {
   width: 1px;
   height: 24px;
-  background: #e5e7eb;
+  background: var(--el-border-color);
 }
 
 .tables-scroll-area {
@@ -437,35 +438,37 @@ defineExpose({ fetchData })
   flex: 1;
   min-width: 180px;
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--el-border-color);
   border-radius: 8px;
   padding: 12px 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
 }
 
 .kpi-label {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--el-text-color-secondary);
   margin-bottom: 4px;
 }
 
 .kpi-value {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--el-text-color-primary);
 }
 
-.kpi-value.danger { color: #dc2626; }
-.kpi-value.warning { color: #d97706; }
-.kpi-value.success { color: #16a34a; }
+.kpi-value.danger { color: var(--el-color-danger); }
+.kpi-value.warning { color: var(--el-color-warning); }
+.kpi-value.success { color: var(--el-color-success); }
 
 /* --- Сетка: таблица + график --- */
 .content-grid {
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 340px minmax(0, 1fr);   /* minmax(0) рвёт петлю с canvas ECharts */
   gap: 16px;
   margin-bottom: 16px;
 }
+
+.content-grid > .table-card { min-width: 0; }
 
 .chart-container {
   width: 100%;
@@ -475,10 +478,10 @@ defineExpose({ fetchData })
 /* --- Карточки таблиц --- */
 .table-card {
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--el-border-color);
   border-radius: 8px;
   padding: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
   margin-bottom: 16px;
 }
 
@@ -486,15 +489,15 @@ defineExpose({ fetchData })
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
-  border-bottom: 1px solid #f3f4f6;
+  color: var(--el-text-color-primary);
+  border-bottom: 1px solid var(--el-border-color-lighter);
   padding-bottom: 6px;
 }
 
 /* --- Тренды --- */
-.trend-down { color: #16a34a; font-weight: 500; }
-.trend-up { color: #dc2626; font-weight: 500; }
-.trend-flat { color: #6b7280; }
+.trend-down { color: var(--el-color-success); font-weight: 500; }
+.trend-up { color: var(--el-color-danger); font-weight: 500; }
+.trend-flat { color: var(--el-text-color-secondary); }
 
 /* --- Состояния --- */
 .overlay-loader {
@@ -505,29 +508,24 @@ defineExpose({ fetchData })
   align-items: center;
   justify-content: center;
   z-index: 5;
-  color: #333;
+  color: var(--el-text-color-primary);
   font-weight: 500;
 }
 
 .error-state {
   padding: 24px;
   text-align: center;
-  color: #dc2626;
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
+  color: var(--el-color-danger);
+  background: var(--el-color-danger-light-9);
+  border: 1px solid var(--el-color-danger-light-8);
   border-radius: 6px;
   margin-top: 16px;
 }
 
-/* --- Скроллбар --- */
-.tables-scroll-area::-webkit-scrollbar { width: 8px; }
-.tables-scroll-area::-webkit-scrollbar-track { background: #f1f1f1; }
-.tables-scroll-area::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-
 /* --- Адаптивность --- */
 @media (max-width: 900px) {
   .content-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .kpi-card {
     min-width: 140px;

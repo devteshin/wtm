@@ -1,15 +1,14 @@
 <template>
   <el-container class="page-container">
-    <el-aside width="400px" class="sidebar">
-
+    <el-aside class="sidebar">
       <el-form label-position="top" class="filter-form">
 
         <!-- Селект вида метрик — в самом верху -->
         <el-form-item label="Вид отчёта">
           <el-select
             v-model="selectedMetricType"
+            class="filter-select"
             placeholder="Выберите вид отчёта"
-            style="width: 100%"
             @change="handleMetricTypeChange"
           >
             <el-option
@@ -21,24 +20,24 @@
           </el-select>
         </el-form-item>
 
-          <el-form-item
-            v-if="config.showMaterial"
-            label="Вид материалов"
+        <el-form-item
+          v-if="metricConfig.showMaterial"
+          label="Вид материалов"
+        >
+          <el-checkbox-group
+            v-model="reportStore.checkedArrivalDocType"
+            :min="1"
           >
-            <el-checkbox-group
-              v-model="reportStore.checkedArrivalDocType"
-              :min="1"
+            <el-checkbox
+              v-for="arrival_type in arrivalDocTypes"
+              :key="arrival_type"
+              :value="arrival_type"
             >
-              <el-checkbox
-                v-for="arrival_type in arrivalDocTypes"
-                :key="arrival_type"
-                :label="arrival_type"
-                :value="arrival_type"
-              >
-                {{ arrival_type }}
-              </el-checkbox>
-            </el-checkbox-group>
-          </el-form-item>
+              {{ arrival_type }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+
         <!-- Общие фильтры -->
         <ReportFilters
           ref="filtersRef"
@@ -68,22 +67,18 @@
           :show-product-coeff-tables="metricConfig.showProductCoeffTables"
         >
           <template #actions>
-            <div style="margin-top: 24px;">
-              <el-button
-                type="primary"
-                @click="handleMakeReport"
-                class="apply-button"
-                style="width: 100%"
-                :disabled="!selectedMetricType"
-              >
-                Сформировать
-              </el-button>
-            </div>
+            <el-button
+              type="primary"
+              class="apply-button"
+              :disabled="!selectedMetricType"
+              @click="handleMakeReport"
+            >
+              Сформировать
+            </el-button>
           </template>
         </ReportFilters>
 
       </el-form>
-
     </el-aside>
 
     <el-container class="right-container">
@@ -108,11 +103,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, shallowRef, type Component, nextTick } from 'vue'
+import { ref, computed, shallowRef, nextTick, type Component } from 'vue'
 import useApplicationStore from '@/store'
 import { useMetricsReportStore } from '@/storeMetricsReport'
 import ReportFilters from '@/components/ReportFilters.vue'
-import { metricTypeOptions, getMetricConfig, type MetricType } from '@/components/metricsConfig'
+import { metricTypeOptions, getMetricConfig } from '@/components/metricsConfig'
 
 // Импорт компонентов отчётов
 import StorageLifetimeReport from './StorageLifetimeReport.vue'
@@ -126,14 +121,11 @@ const reportStore = useMetricsReportStore()
 
 const arrivalDocTypes = ['сырье', 'продукты'] as const
 
-const config = computed(() => getMetricConfig(reportStore.selectedMetricType))
-
 const reportComponents: Record<string, Component> = {
   StorageLifetimeReport,
   TurnoverReport,
   DeficitReport,
 }
-
 
 // ── Метрика ──
 
@@ -196,7 +188,6 @@ const selectedDate = computed({
   set: (value) => reportStore.setFilters({ selectedDate: value }),
 })
 
-
 // ── Восстановление из storage ──
 
 reportStore.loadFromStorage()
@@ -209,7 +200,6 @@ const handleMakeReport = async () => {
   await nextTick()
   reportComponentRef.value?.fetchData()
 }
-
 </script>
 
 <style scoped>
@@ -221,40 +211,44 @@ const handleMakeReport = async () => {
   gap: 10px;
 }
 
+/* панель фильтров — белая карточка в теме, ширина не жёсткая (раздел 7) */
 .sidebar {
-  background-color: #f5f7fa;
+  background: #fff;
   padding: 20px;
-  border-right: 1px solid #e6e9ef;
-  flex-shrink: 0;
-  width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  width: clamp(340px, 26vw, 400px);
   overflow: auto;
 }
 
 .right-container {
   flex: 1;
+  min-width: 0;   /* звено flex-цепочки перед отчётом */
   display: flex;
 }
 
 .content-area {
-  padding: 0px;
+  padding: 0;
   box-sizing: border-box;
   height: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
-.skeleton-placeholder, .future-components-slot {
+.filter-select { width: 100%; }
+
+.apply-button {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.skeleton-placeholder {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
 }
-
-.apply-button {
-  margin-top: 16px;
-}
-
-
 </style>
