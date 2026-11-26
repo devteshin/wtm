@@ -33,8 +33,22 @@
 
         <el-button type="primary" :disabled="!canLoad" @click="loadData">Заполнить</el-button>
         <el-button v-if="canEdit" :disabled="!canLoad" @click="addRow">Добавить строку</el-button>
+
+        <el-button v-if="canEdit && isProbeKind" :type="voiceOpen ? 'warning' : 'default'"
+                  :icon="voiceOpen ? Mute : Microphone" @click="voiceOpen = !voiceOpen">
+          Голос
+        </el-button>
       </template>
     </div>
+
+
+    <VoiceDictationPanel
+      v-if="voiceOpen && isProbeKind"
+      :indicators="indicatorsForVoice"
+      :engine="voiceEngine"
+      debug
+      :on-save="commitVoiceDraft"
+    />
 
     <!-- Таблица: в managed-режиме всегда рендерится, пока идёт загрузка — показывается v-loading -->
     <div class="table-container" v-if="activeMeasurementId">
@@ -138,10 +152,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { ElMessage, ElMessageBox, TableInstance } from 'element-plus';
-import { ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue';
+import { ArrowLeft, ArrowRight, Delete, Microphone, Mute } from '@element-plus/icons-vue';
 import { storeToRefs } from 'pinia';
 import useApplicationStore from '@/store';
 import { useMeasurementsTableStore } from '@/storeMeasurementTable.js';
+import VoiceDictationPanel from '@/components/VoiceDictationPanel.vue';
+import { StubAsrEngine, VoskAsrEngine } from '@/lib/voice/asrEngine';
+import type { VoiceDraft } from '@/lib/voice/useVoiceDictation';
+
 
 const props = withDefaults(
   defineProps<{
@@ -768,6 +786,57 @@ watch(materialOptions, (opts) => {
 });
 
 
+// движок: в dev-режиме без микрофона, на планшете — vosk
+/* const voiceEngine = import.meta.env.DEV
+  ? new StubAsrEngine()
+  : new VoskAsrEngine('/models/vosk-model-small-ru-0.22.tar.gz');
+ */
+const voiceEngine = new VoskAsrEngine('/models/vosk-model-small-ru-0.22-fixed.tar.gz');
+
+
+console.log('[table] создан движок:', voiceEngine);
+
+const voiceOpen = ref(false);
+const debugText = ref('');
+
+const indicatorsForVoice = computed(() =>
+  indicatorSet.value.map((ind) => ({
+    id: ind.id,
+    code: ind.code,
+    unit: ind.measurement_unit,
+    precision: ind.value_precision,
+  })),
+);
+
+// перевод подтверждённого драфта в таблицу — тем же путём, что addRow
+const commitVoiceDraft = async (draft: VoiceDraft): Promise<boolean> => {
+  // дубль номера проверяем до создания строки — иначе драфт потеряется
+  if (draft.probeNum !== null && findProbeDuplicate({
+    rowKey: '', sampleId: null, probeNum: draft.probeNum,
+  } as EditableRow)) {
+    ElMessage.warning(`Проба №${draft.probeNum} уже введена — исправьте номер`);
+    return false; // панель не сбрасывается
+  }
+
+  await addRow();
+  const row = rows.value[rows.value.length - 1];
+  if (!row) return false;
+
+  if (draft.probeNum !== null) {
+    row.probeNum = draft.probeNum;
+    await onKeyChanged(row); // sampleId ещё null — создания не будет, это норма
+  }
+  for (const [id, v] of Object.entries(draft.values)) {
+    const indId = Number(id);
+    if (!Number.isNaN(indId)) {
+      row.values[id] = v.value;
+      await onValueChanged(row, indId); // первый вызов создаст пробу, дальше — UPSERT
+    }
+  }
+  return true;
+};
+
+
 </script>
 
 <style scoped>
@@ -810,7 +879,7 @@ watch(materialOptions, (opts) => {
 
 /* эталон borderless-полей в ячейках: текст без рамки, рамка — на hover/focus */
 :deep(.el-table .el-input__inner) {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
 }
 :deep(.el-table .el-input__wrapper) {
@@ -878,6 +947,6 @@ watch(materialOptions, (opts) => {
 }
 @media (max-width: 480px) {
   :deep(.el-table) { --el-input-height: 32px; }
-  :deep(.el-table .el-input__inner) { font-size: 16px; }
+  :deep(.el-table .el-input__inner) { font-size: 12px; }
 }
 </style>
