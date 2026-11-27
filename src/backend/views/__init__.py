@@ -29,6 +29,7 @@ def index_spa(path: str, filename: str):
 def setup_handlers(app: Application):
     try:
         app.router.add_static("/assets", "static/assets")
+        app.router.add_static("/models", "static/models")
         app.router.add_get("/{path:(?!api).*}",
                            index_spa("static", "index.html"))
     except ValueError:
