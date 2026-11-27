@@ -15,9 +15,17 @@ declare namespace frontend {
         measurement_list: Array<IMeasurement> 
         operation_list: Array<IOpertion>
         material_list: Array<IMaterial>
-        indicator_list: Array<IIndicator>
+        indicators_list: Array<IIndicator>
         indicator_set_list: Array<IIndicatorSet>
+        indicator_voice_synonym: Array<IIndicatorVoiceSynonym>
     }
+
+    export type IIndicatorVoiceSynonym = {
+        id: number
+        indicator_id: number
+        synonym: string
+    }
+
 
     export type IMeasurement = {
         id: number

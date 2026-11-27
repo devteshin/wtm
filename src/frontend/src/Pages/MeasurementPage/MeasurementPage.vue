@@ -22,7 +22,6 @@ import MeasurementChartPanel from './MeasurementChartPanel.vue'
 import MeasurementTable from './MeasurementTable.vue'
 import { useMeasurementsPanelStore } from '@/storeMeasurementPanel.js';
 
-const measurementsStore = useMeasurementsPanelStore();
 
 const props = withDefaults(
   defineProps<{ editable?: boolean }>(),

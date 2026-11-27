@@ -85,6 +85,9 @@ import { useVoiceDictation, type VoiceDraft } from '@/lib/voice/useVoiceDictatio
 import { buildDictionary } from '@/lib/voice/voiceDictionary';
 import type { AsrEngine, StubAsrEngine } from '@/lib/voice/asrEngine';
 import { ElMessage } from 'element-plus';
+import useApplicationStore from '@/store';
+
+const store = useApplicationStore();
 
 export interface PanelIndicator {
   id: number;
@@ -103,9 +106,12 @@ const props = defineProps<{
 }>();
 
 const dictation = useVoiceDictation({
-  engine: props.engine,
-  getDictionary: () => buildDictionary(props.indicators),
-  onSave: (d) => props.onSave(d),
+    engine: props.engine,
+    getDictionary: () => buildDictionary({
+        indicators: props.indicators,
+        synonyms: store.measurements_meta?.indicator_voice_synonym ?? [], 
+    }),
+    onSave: (d) => props.onSave(d),
 });
 
 const { state, partial, draft, canSave, repeatText, warnings, unknown } = dictation;

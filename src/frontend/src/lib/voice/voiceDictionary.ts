@@ -4,23 +4,24 @@
  */
 import type { VoiceDictionary } from './voiceParser';
 
-// ключи — id показателей (indicator.id из БД)
-const SYNONYMS: Record<number, string[]> = {
-  1: ['углерод'],
-  2: ['сера'],
+type DictionaryInput = {
+    indicators: Array<{ id: number; code: string }>;
+    synonyms?: frontend.IIndicatorVoiceSynonym[];
 };
 
-export interface DictionarySource {
-  id: number;
-  code: string;
-}
+export function buildDictionary({ indicators, synonyms = [] }: DictionaryInput): VoiceDictionary {
+    const synonymsMap = new Map<number, string[]>();
 
-export function buildDictionary(indicators: DictionarySource[]): VoiceDictionary {
-  return {
-    indicators: indicators.map((ind) => ({
-      // ключ драфта — строковый id, чтобы совпадал с row.values в таблице
-      id: String(ind.id),
-      synonyms: SYNONYMS[ind.id] ?? [ind.code.toLowerCase()],
-    })),
-  };
+    for (const row of synonyms) {
+        const list = synonymsMap.get(row.indicator_id) ?? [];
+        list.push(row.synonym.toLowerCase());
+        synonymsMap.set(row.indicator_id, list);
+    }
+
+    return {
+        indicators: indicators.map((ind) => ({
+            id: String(ind.id),
+            synonyms: synonymsMap.get(ind.id) ?? [ind.code.toLowerCase()],
+        })),
+    };
 }

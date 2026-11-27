@@ -311,10 +311,18 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
     ORDER BY i.code
     """
 
+    q_indicator_voice_synonym = """
+    SELECT id, indicator_id, synonym
+    FROM measurement_ind_voice_synonym
+    ORDER BY indicator_id, id
+    """
+
+
     operation_list = []
     material_list = []
     indicators_list = []
     indicator_set_list = []
+    indicator_voice_synonym = []
 
     async with conn.cursor() as cur:
         await cur.execute(q_measurement)
@@ -328,13 +336,16 @@ async def select_measurements_meta(conn: Connection, meas_id: int = 0):
             indicators_list = await cur.fetchall()
             await cur.execute(q_indicator_set, {"meas_id": meas_id})
             indicator_set_list = await cur.fetchall()
+            await cur.execute(q_indicator_voice_synonym)
+            indicator_voice_synonym = await cur.fetchall()
 
     return {
         "measurement_list": measurement_list,
         "operation_list": operation_list,
         "material_list": material_list,
         "indicators_list": indicators_list,
-        "indicator_set_list": indicator_set_list
+        "indicator_set_list": indicator_set_list,
+        "indicator_voice_synonym": indicator_voice_synonym
     }
 
 async def select_measurements_data(conn: Connection, meas_id: int = 0, operation_id: int = 0, material_id: int = 0, meas_date_start: str = '', meas_date_end: str = ''):
