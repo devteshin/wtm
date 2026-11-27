@@ -7,7 +7,7 @@
  * отбрасывается без буферизации).
  */
 
-import { createModel } from 'vosk-browser';
+import type { Model as VoskModel } from 'vosk-browser';
 
 export interface AsrHandlers {
   /** промежуточная расшифровка — для строки «что я слышу» */
@@ -93,10 +93,12 @@ export class VoskAsrEngine implements AsrEngine {
   }
 
   async start(handlers: AsrHandlers): Promise<void> {
-    // модель грузится один раз и живёт всё время — см. комментарий в шапке
-    if (!this.model) this.model = await createModel(this.modelUrl);
-    this.ensureRecognizer();
     this.handlers = handlers;
+    if (!this.model) {
+      const vosk = await import('vosk-browser');   // динамический импорт → отдельный чанк
+      this.model = await vosk.createModel(this.modelUrl);
+    }
+    this.ensureRecognizer();
 
     // аудиоконвейер тоже один на всё время жизни движка
     if (!this.stream) {
