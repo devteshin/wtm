@@ -5,7 +5,7 @@
         :type="state === 'listening' ? 'danger' : 'primary'"
         circle
         :icon="state === 'listening' ? CircleClose : Microphone"
-        @click="dictation.toggle()"
+        @click="onToggle"
       />
       <span class="voice-state">
         {{ state === 'listening' ? 'Слушаю… диктуйте' : 'Голосовой ввод выключен' }}
@@ -84,6 +84,7 @@ import { Microphone, CircleClose } from '@element-plus/icons-vue';
 import { useVoiceDictation, type VoiceDraft } from '@/lib/voice/useVoiceDictation';
 import { buildDictionary } from '@/lib/voice/voiceDictionary';
 import type { AsrEngine, StubAsrEngine } from '@/lib/voice/asrEngine';
+import { ElMessage } from 'element-plus';
 
 export interface PanelIndicator {
   id: number;
@@ -111,22 +112,10 @@ const { state, partial, draft, canSave, repeatText, warnings, unknown } = dictat
 
 const debugText = ref('');
 
-const emitDebug = (): void => {
-  console.log('[panel] клик по «Распознать», текст =', JSON.stringify(debugText.value),
-            '| engine =', props.engine);
-
-  const text = debugText.value.trim();
-  if (!text) return;
-  (props.engine as unknown as { emit?: (t: string) => void }).emit?.(text);
-  console.log('[panel] вызов emit выполнен');
-
-  debugText.value = '';
-};
 
 const onDebugSubmit = async (): Promise<void> => {
   const text = debugText.value.trim();
   if (!text) return;
-  console.log('[panel] onDebugSubmit:', JSON.stringify(text));
 
   // движок должен быть в listening — иначе emit уйдёт в никуда
   if (dictation.state.value !== 'listening') {
@@ -134,7 +123,7 @@ const onDebugSubmit = async (): Promise<void> => {
   }
 
   (props.engine as StubAsrEngine).emit(text);
-  debugText.value = '';   // очистка после передачи
+  debugText.value = '';
 };
 
 const isSuspicious = (ind: PanelIndicator): boolean => {
@@ -147,6 +136,15 @@ const onValueUpdate = (id: string, v: number | null): void => {
 };
 
 const numOrNull = (v: number | undefined | null): number | null => v ?? null;
+
+const onToggle = async (): Promise<void> => {
+  try {
+    await dictation.toggle();
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : 'Не удалось включить микрофон');
+  }
+};
+
 
 </script>
 

@@ -46,7 +46,7 @@
       v-if="voiceOpen && isProbeKind"
       :indicators="indicatorsForVoice"
       :engine="voiceEngine"
-      debug
+      :debug="isDev"
       :on-save="commitVoiceDraft"
     />
 
@@ -150,14 +150,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import { ElMessage, ElMessageBox, TableInstance } from 'element-plus';
 import { ArrowLeft, ArrowRight, Delete, Microphone, Mute } from '@element-plus/icons-vue';
 import { storeToRefs } from 'pinia';
 import useApplicationStore from '@/store';
 import { useMeasurementsTableStore } from '@/storeMeasurementTable.js';
 import VoiceDictationPanel from '@/components/VoiceDictationPanel.vue';
-import { StubAsrEngine, VoskAsrEngine } from '@/lib/voice/asrEngine';
+import { createAsrEngine } from '@/lib/voice/asrEngine';
 import type { VoiceDraft } from '@/lib/voice/useVoiceDictation';
 
 
@@ -196,6 +196,7 @@ const emit = defineEmits<{
 
 /** Managed-режим: выбором управляет родитель через пропсы */
 const isManaged = computed(() => props.measurementId !== undefined);
+const isDev = import.meta.env.DEV;
 
 const managedDateLabel = computed<string>(() => {
   const [y, m, d] = (activeDate.value ?? '').split('-');
@@ -705,6 +706,8 @@ onMounted(async () => {
   hydrating = false;
 });
 
+onUnmounted(() => void voiceEngine.dispose());
+
 const createSample = async (payload: frontend.ISamplePayload): Promise<frontend.ISampleCreated> => {
   return store.createMeasurementData(payload);
 };
@@ -785,19 +788,11 @@ watch(materialOptions, (opts) => {
   }
 });
 
-
-// движок: в dev-режиме без микрофона, на планшете — vosk
-/* const voiceEngine = import.meta.env.DEV
-  ? new StubAsrEngine()
-  : new VoskAsrEngine('/models/vosk-model-small-ru-0.22-fixed.tar.gz');
- */
-const voiceEngine = new VoskAsrEngine('/models/vosk-model-small-ru-0.22-fixed.tar.gz');
-
+const voiceEngine = createAsrEngine('/models/vosk-model-small-ru-0.22-fixed.tar.gz');
 
 console.log('[table] создан движок:', voiceEngine);
 
 const voiceOpen = ref(false);
-const debugText = ref('');
 
 const indicatorsForVoice = computed(() =>
   indicatorSet.value.map((ind) => ({
@@ -836,6 +831,8 @@ const commitVoiceDraft = async (draft: VoiceDraft): Promise<boolean> => {
   return true;
 };
 
+// панель скрыли — глушим микрофон
+watch(voiceOpen, (open) => { if (!open) voiceEngine.stop(); });
 
 </script>
 

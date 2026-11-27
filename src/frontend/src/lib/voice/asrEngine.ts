@@ -9,6 +9,11 @@
 
 import type { Model as VoskModel } from 'vosk-browser';
 
+/** dev-лог: в прод-сборке import.meta.env.DEV = false и вызовы вырезаются минификацией */
+const log = (...args: unknown[]): void => {
+  if (import.meta.env.DEV) console.log('[asr]', ...args);
+};
+
 export interface AsrHandlers {
   /** промежуточная расшифровка — для строки «что я слышу» */
   onPartial(text: string): void;
@@ -29,7 +34,7 @@ export class StubAsrEngine implements AsrEngine {
   private handlers: AsrHandlers | null = null;
 
   start(handlers: AsrHandlers): Promise<void> {
-    console.log('[stub] start: подписка установлена');
+    log('[stub] start: подписка установлена');
     this.handlers = handlers;
     return Promise.resolve();
   }
@@ -44,12 +49,12 @@ export class StubAsrEngine implements AsrEngine {
 
   /** подать финальный текст (как будто сработала пауза) */
   emit(text: string): void {
-    console.log('[stub] emit вызван, handlers =', this.handlers ? 'есть' : 'НЕТ');
+    log('[stub] emit вызван, handlers =', this.handlers ? 'есть' : 'НЕТ');
     if (!this.handlers) {
-      console.warn('[stub] ТЕКСТ ПОТЕРЯН: start() не вызывался или вызван stop()');
+      console.warn('[stub] текст потерян: start() не вызывался или вызван stop()');
       return;
     }
-    console.log('[stub] передаю в onFinal:', JSON.stringify(text));
+    log('[stub] передаю в onFinal:', JSON.stringify(text));
     this.handlers.onFinal(text);
   }
 
@@ -102,14 +107,19 @@ export class VoskAsrEngine implements AsrEngine {
 
     // аудиоконвейер тоже один на всё время жизни движка
     if (!this.stream) {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          channelCount: 1,
-          sampleRate: this.sampleRate,
-        },
-      });
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            channelCount: 1,
+            sampleRate: this.sampleRate,
+          },
+        });
+      } catch (err) {
+        console.error('[asr] getUserMedia failed:', err);
+        throw new Error('Не удалось получить доступ к микрофону. Проверьте разрешение браузера.');
+      }
       this.ctx = new AudioContext({ sampleRate: this.sampleRate });
       const source = this.ctx.createMediaStreamSource(this.stream);
       // ScriptProcessorNode устарел, но прост и работает везде; AudioWorklet — позже
@@ -151,4 +161,9 @@ export class VoskAsrEngine implements AsrEngine {
     this.stream = null;
     this.node = null;
   }
+}
+
+export function createAsrEngine(modelUrl: string): AsrEngine {
+  if (import.meta.env.VITE_ASR_STUB === 'true') return new StubAsrEngine();
+  return new VoskAsrEngine(modelUrl);
 }

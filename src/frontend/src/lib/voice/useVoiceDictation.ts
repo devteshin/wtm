@@ -15,6 +15,11 @@ import {
 } from './voiceParser';
 import type { AsrEngine } from './asrEngine';
 
+/** dev-лог: в прод-сборке import.meta.env.DEV = false и вызовы вырезаются */
+const log = (...args: unknown[]): void => {
+  if (import.meta.env.DEV) console.log('[dictation]', ...args);
+};
+
 export type VoiceState = 'idle' | 'listening';
 
 export interface DraftValue extends ParsedValue {
@@ -79,7 +84,7 @@ export function useVoiceDictation(options: UseVoiceDictationOptions) {
   };
 
   const applyCommand = (cmd: VoiceCommand, dict: VoiceDictionary): void => {
-    console.log('[dictation] команда:', cmd.type, cmd);
+    log('[dictation] команда:', cmd.type, cmd);
     switch (cmd.type) {
       case 'save':
         void save();
@@ -107,9 +112,9 @@ export function useVoiceDictation(options: UseVoiceDictationOptions) {
 
   const onFinal = (text: string): void => {
     const dict = options.getDictionary();
-    console.log('[dictation] словарь:', dict.indicators.map(i => `${i.id}:${i.synonyms.join('/')}`));
+    log('[dictation] словарь:', dict.indicators.map(i => `${i.id}:${i.synonyms.join('/')}`));
     const res = parseTranscript(text, dict);
-    console.log('[dictation] parseTranscript →', {
+    log('[dictation] parseTranscript →', {
       kind: res.kind,
       patch: res.patch,
       unknown: res.unknown,
@@ -131,21 +136,28 @@ export function useVoiceDictation(options: UseVoiceDictationOptions) {
 
   const handlers = {
     onPartial: (t: string): void => {
-      console.log('[dictation] partial:', JSON.stringify(t));
+      log('[dictation] partial:', JSON.stringify(t));
       partial.value = t;
     },
     onFinal: (t: string): void => {
-      console.log('[dictation] ФИНАЛ дошёл до композабла:', JSON.stringify(t));
+      log('[dictation] ФИНАЛ дошёл до композабла:', JSON.stringify(t));
       onFinal(t);
     },
   };
 
-  const start = async (): Promise<void> => {
-    console.log('[dictation] start(): подписываюсь на движок =', options.engine);
+const start = async (): Promise<void> => {
+  try {
+    log('[dictation] start(): подписываюсь на движок =', options.engine);
     await options.engine.start(handlers);
     state.value = 'listening';
-    console.log('[dictation] state = listening');
-  };
+    log('[dictation] state = listening');
+  } catch (e) {
+    state.value = 'idle';
+    partial.value = '';
+    throw e;   // панель покажет ElMessage.error — см. ниже
+  }
+};
+
 
   const stop = (): void => {
     options.engine.stop();
@@ -159,7 +171,7 @@ export function useVoiceDictation(options: UseVoiceDictationOptions) {
   };
 
   const save = async (): Promise<void> => {
-    console.log('[dictation] save(): probeNum =', draft.value.probeNum,
+    log('[dictation] save(): probeNum =', draft.value.probeNum,
                 '| значений =', Object.keys(draft.value.values).length);    
     if (!canSave.value) {
       draft.value.warnings.push('нужны номер пробы и хотя бы одно значение');
