@@ -12,6 +12,10 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
             vue(),
             VitePWA({
                 registerType: "autoUpdate",
+                workbox: {
+                    globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
+                    maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+                },                
                 includeAssets: [
                     "favicon.ico",
                     "apple-touch-icon.png",

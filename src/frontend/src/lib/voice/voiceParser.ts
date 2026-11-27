@@ -144,8 +144,20 @@ function readNumberWords(tokens: string[], i: number): { value: number; used: nu
   return used ? { value: val + group, used } : null;
 }
 
-/** вклад слова в дробную часть — одна ведущая цифра: двадцать→2, пятьдесят→5 */
-function fracDigit(n: number): string { return n < 10 ? String(n) : String(n)[0]; }
+/**
+ * Вклад ОДНОГО слова в строку дробных цифр.
+ * Ключевая идея: единицы дают одну цифру, десятки — ведущую цифру разряда,
+ * а вот числа 10–19 — сразу две («пятнадцать» → «15»).
+ * Тогда «восемьдесят» → «8», «восемьдесят пять» → «85», «ноль пять» → «05».
+ */
+function fracTokenDigits(t: string): string | null {
+  if (DIGITS.hasOwnProperty(t)) return String(DIGITS[t]);        // «ноль» → «0», «пять» → «5»
+  if (TEENS.hasOwnProperty(t)) return String(TEENS[t]);          // «пятнадцать» → «15»
+  if (TENS.hasOwnProperty(t)) return String(TENS[t])[0];         // «восемьдесят» → «8»
+  if (HUNDREDS.hasOwnProperty(t) || THOUSANDS.hasOwnProperty(t)) return String(t === 'тысяча' || t === 'тысячи' || t === 'тысяч' ? 1000 : (HUNDREDS as Record<string, number>)[t] ?? 0);
+  return null;
+}
+
 
 /** дробная часть словами: «двадцать пять», «ноль пять», «5» … */
 function readFracWords(tokens: string[], i: number): { value: number; decimals: number; used: number } | null {
@@ -154,13 +166,10 @@ function readFracWords(tokens: string[], i: number): { value: number; decimals: 
     const t = tokens[i + used];
     if (SCALE[t]) { scale = SCALE[t]; used++; break; }
     if (isDigitTok(t)) { digits += t.replace(/[.,]/g, ''); used++; continue; }
-    const nw = readNumberWords(tokens, i + used);
-    if (nw) {
-      digits += fracDigit(nw.value);
-      used += nw.used;
-      continue;
-    }
-    break;
+    const d = fracTokenDigits(t);
+    if (d === null) break;
+    digits += d;
+    used++;
   }
   if (!used || (digits === '' && scale === null)) return null;
   if (scale !== null) {

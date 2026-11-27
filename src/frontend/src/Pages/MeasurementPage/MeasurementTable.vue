@@ -789,7 +789,7 @@ watch(materialOptions, (opts) => {
 // движок: в dev-режиме без микрофона, на планшете — vosk
 /* const voiceEngine = import.meta.env.DEV
   ? new StubAsrEngine()
-  : new VoskAsrEngine('/models/vosk-model-small-ru-0.22.tar.gz');
+  : new VoskAsrEngine('/models/vosk-model-small-ru-0.22-fixed.tar.gz');
  */
 const voiceEngine = new VoskAsrEngine('/models/vosk-model-small-ru-0.22-fixed.tar.gz');
 
